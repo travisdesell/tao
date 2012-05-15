@@ -1,0 +1,23 @@
+To build:
+
+mkdir build
+cd build
+cmake ..
+make
+
+Requirements:
+
+undvc_common (make in a similar fashion)
+
+
+TODO:
+    * add parameter sweep
+    * add GD/CGD
+    * add newton method
+    * add asynchronous newton method
+    * add asynchronous parameter sweep
+    * add genetic search
+
+BUGS:
+
+
