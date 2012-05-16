@@ -1,2 +1,2 @@
 add_library(EvolutionaryAlgorithms evolutionary_algorithm particle_swarm differential_evolution recombination)
-target_link_libraries(EvolutionaryAlgorithms ${UNDVC_COMMON_LIBRARIES})
+target_link_libraries(EvolutionaryAlgorithms DeterministicAlgorithms ${UNDVC_COMMON_LIBRARIES})

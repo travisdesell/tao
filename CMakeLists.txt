@@ -13,4 +13,5 @@ include_directories(${UNDVC_COMMON_INCLUDE_DIRS})
 set(LIBS ${LIBS} ${UNDVC_COMMON_LIBRARIES})
 
 add_subdirectory(evolutionary_algorithms)
+add_subdirectory(deterministic_algorithms)
 add_subdirectory(examples)

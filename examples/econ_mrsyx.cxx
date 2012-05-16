@@ -8,6 +8,8 @@
 #include "particle_swarm.hxx"
 #include "differential_evolution.hxx"
 
+#include "parameter_sweep.hxx"
+
 //from undvc_common
 #include "arguments.hxx"
 
@@ -67,7 +69,7 @@ void initialize_data(char *filename) {
             cleangoods.push_back(cleangood);
             dirtygoods.push_back(dirtygood);
 
-            cout << "read: " << cleanprice << " " << dirtyprice << " " << netwage << " " << " " << time_endowment << " " << virtual_inc << " " << leisuregood << " " << netwage_inst << " " << cleangood << " " << dirtygood << " " << observation_number << endl;
+//            cout << "read: " << cleanprice << " " << dirtyprice << " " << netwage << " " << " " << time_endowment << " " << virtual_inc << " " << leisuregood << " " << netwage_inst << " " << cleangood << " " << dirtygood << " " << observation_number << endl;
 
             t1s.push_back( cleanprice * (dirtyprice / cleanprice) );
             t2s.push_back( dirtyprice * (dirtyprice / cleanprice) );
@@ -357,9 +359,11 @@ int main(int number_arguments, char **argv) {
     min_bound[2] = -5;
     max_bound[2] = 5;
     min_bound[3] = 0;
-    max_bound[3] = 200;
+//    max_bound[3] = 200;
+    max_bound[3] = 2000;
     min_bound[4] = 0;
-    max_bound[4] = 25;
+//    max_bound[4] = 25;
+    max_bound[4] = 250;
     min_bound[5] = 0;
     max_bound[5] = 20;
 
@@ -368,10 +372,23 @@ int main(int number_arguments, char **argv) {
 
     if (search_type.compare("ps") == 0) {
         ParticleSwarm ps(min_bound, max_bound, arguments);
-        ps.iterate(fitness1);
+        ps.iterate(fitness2);
+
     } else if (search_type.compare("de") == 0) {
         DifferentialEvolution de(min_bound, max_bound, arguments);
-        de.iterate(fitness1);
+        de.iterate(fitness2);
+
+    } else if (search_type.compare("sweep") == 0) {
+        vector<double> step_size(6, 0);
+        step_size[0] = 1;
+        step_size[1] = 1;
+        step_size[2] = 1;
+        step_size[3] = 20;
+        step_size[4] = 5;
+        step_size[5] = 5;
+
+        parameter_sweep(min_bound, max_bound, step_size, fitness1);
+
     } else {
         fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
         fprintf(stderr, "Possibilities are:\n");

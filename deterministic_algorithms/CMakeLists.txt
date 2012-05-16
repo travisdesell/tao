@@ -1,0 +1,2 @@
+add_library(DeterministicAlgorithms parameter_sweep)
+target_link_libraries(DeterministicAlgorithms ${UNDVC_COMMON_LIBRARIES})
