@@ -6,12 +6,15 @@ set (TAO_VERSION_MINOR 0)
  
 set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -ftree-vectorize -msse3")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-find_package(UNDVC_COMMON REQUIRED)
-include_directories(${UNDVC_COMMON_INCLUDE_DIRS})
-set(LIBS ${LIBS} ${UNDVC_COMMON_LIBRARIES})
+#find_package(UNDVC_COMMON REQUIRED)
+#include_directories(${UNDVC_COMMON_INCLUDE_DIRS})
+#set(LIBS ${LIBS} ${UNDVC_COMMON_LIBRARIES})
 
+include_directories(undvc_common)
+
+add_subdirectory(undvc_common)
 add_subdirectory(evolutionary_algorithms)
 add_subdirectory(deterministic_algorithms)
 add_subdirectory(examples)
