@@ -23,20 +23,6 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    initialize_fgdo();
-
-    string name = "test";
-    cout << "MySQL client version: " <<  mysql_get_client_info() << endl;
-
-    MYSQL *conn = mysql_init(NULL);
-
-    mysql_real_connect(conn, "localhost", "boincadm", "b0infp@sswb", "milkyway", 0, NULL, 0);
-
-    DBParticleSwarm *ps = new DBParticleSwarm(conn, string(argv[1]));
-
-    mysql_close(conn);
-
-
     check_stop_daemons();
 
     DB_APP app;
