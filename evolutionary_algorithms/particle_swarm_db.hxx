@@ -6,10 +6,10 @@
 #include <vector>
 
 //#include <my_global.h>
-#include <mysql.h>
+//#include <mysql.h>
 
-#include "particle_swarm.hpp"
-#include "../util/util.hpp"
+//#include "particle_swarm.hpp"
+//#include "../util/util.hpp"
 
 using namespace std;
 
