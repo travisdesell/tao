@@ -3,21 +3,22 @@ target_link_libraries(EvolutionaryAlgorithms DeterministicAlgorithms undvc_commo
 
 find_package(MySQL REQUIRED)
 
-find_path(BOINC_INCLUDE_DIR config.h PATHS /boinc/src/boinc/ /boinc/)
+# find_path(BOINC_INCLUDE_DIR config.h PATHS /boinc/src/boinc/ /boinc/)
 
 include_directories(
-	${BOINC_INCLUDE_DIR}
-	${BOINC_INCLUDE_DIR}/api
-	${BOINC_INCLUDE_DIR}/db
-	${BOINC_INCLUDE_DIR}/lib
-	${BOINC_INCLUDE_DIR}/sched
+#	${BOINC_INCLUDE_DIR}
+#	${BOINC_INCLUDE_DIR}/api
+#	${BOINC_INCLUDE_DIR}/db
+#	${BOINC_INCLUDE_DIR}/lib
+#	${BOINC_INCLUDE_DIR}/sched
 	${MYSQL_INCLUDE_DIR}
 )
 
-find_library(boinc HINTS ${BOINC_INCLUDE_DIR}/lib)
-find_library(boinc_lib HINTS ${BOINC_INCLUDE_DIR}/lib)
-find_library(boinc_api HINTS ${BOINC_INCLUDE_DIR}/api)
-find_library(boinc_sched HINTS ${BOINC_INCLUDE_DIR}/sched)
+#find_library(boinc HINTS ${BOINC_INCLUDE_DIR}/lib)
+#find_library(boinc_lib HINTS ${BOINC_INCLUDE_DIR}/lib)
+#find_library(boinc_api HINTS ${BOINC_INCLUDE_DIR}/api)
+#find_library(boinc_sched HINTS ${BOINC_INCLUDE_DIR}/sched)
 
-add_library(BOINCEvolutionaryAlgorithms particle_swarm_db)
-target_link_libraries(BOINCEvolutionaryAlgorithms boinc boinc_lib boinc_api boinc_sched ${MYSQL_LIBRARIES})
+add_library(DBEvolutionaryAlgorithms particle_swarm_db)
+target_link_libraries(DBEvolutionaryAlgorithms ${MYSQL_LIBRARIES})
+#target_link_libraries(DBEvolutionaryAlgorithms boinc boinc_lib boinc_api boinc_sched ${MYSQL_LIBRARIES})

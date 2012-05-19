@@ -17,7 +17,23 @@ using namespace std;
 ParticleSwarm::ParticleSwarm() {
 }
 
-ParticleSwarm::ParticleSwarm(const vector<double> &min_bound, const vector<double> &max_bound, const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, arguments) {
+void
+ParticleSwarm::initialize() {
+    particles = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
+    velocities = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
+
+    local_bests = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
+    local_best_fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
+
+    global_best_fitness = -numeric_limits<double>::max();
+    global_best = vector<double>(number_parameters, 0);
+
+    initialized_individuals = 0;
+    current_particle = 0;
+}
+
+void
+ParticleSwarm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--inertia", false, inertia)) {
         cerr << "Argument '--inertia <F>' not found, using default of 0.95." << endl;
         inertia = 0.95;
@@ -37,17 +53,17 @@ ParticleSwarm::ParticleSwarm(const vector<double> &min_bound, const vector<doubl
         cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.10." << endl;
         initial_velocity_scale = 0.10;
     }
+}
 
-    particles = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-    velocities = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
+ParticleSwarm::ParticleSwarm(const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(arguments) {
+    parse_arguments(arguments);
+    initialize();
+}
 
-    local_bests = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-    local_best_fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
 
-    global_best_fitness = -numeric_limits<double>::max();
-    global_best = vector<double>(number_parameters, 0);
-
-    current_particle = 0;
+ParticleSwarm::ParticleSwarm(const vector<double> &min_bound, const vector<double> &max_bound, const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, arguments) {
+    parse_arguments(arguments);
+    initialize();
 }
 
 ParticleSwarm::ParticleSwarm( const vector<double> &min_bound,                  /* min bound is copied into the search */
@@ -64,31 +80,57 @@ ParticleSwarm::ParticleSwarm( const vector<double> &min_bound,                  
     this->local_best_weight = local_best_weight;
     this->initial_velocity_scale = initial_velocity_scale;
 
-    particles = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-    velocities = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-
-    local_bests = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-    local_best_fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
-
-    global_best_fitness = -numeric_limits<double>::max();
-    global_best = vector<double>(number_parameters, 0);
-
-    current_particle = 0;
+    initialize();
 }
+
+ParticleSwarm::ParticleSwarm( const vector<double> &min_bound,                  /* min bound is copied into the search */
+                              const vector<double> &max_bound,                  /* max bound is copied into the search */
+                              const uint32_t population_size,
+                              const double inertia,                             /* intertia */
+                              const double global_best_weight,                  /* global best weight */
+                              const double local_best_weight,                   /* local best weight */
+                              const double initial_velocity_scale,              /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                              const uint32_t maximum_created,                   /* default value is 0 which means no termination */
+                              const uint32_t maximum_reported                   /* default value is 0 which means no termination */
+                            ) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, population_size, maximum_created, maximum_reported) {
+    this->inertia = inertia;
+    this->global_best_weight = global_best_weight;
+    this->local_best_weight = local_best_weight;
+    this->initial_velocity_scale = initial_velocity_scale;
+
+    initialize();
+}
+
 
 ParticleSwarm::~ParticleSwarm() {
 }
 
 void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
+    id = current_particle;
+    current_particle++;
+    if (current_particle >= population_size) current_particle = 0;
+
+    //We haven't initialied all the particles so generate a random one
+    if (initialized_individuals < particles.size()) {
+        Recombination::random_parameters(min_bound, max_bound, particles[id]);
+        Recombination::random_parameters(min_bound, max_bound, velocities[id]);
+
+        //Set each velocity to the randomly generated position minus where the particle is at now (ie., each velocity
+        //the difference between where the particle is now and some other random position in the search area)
+        for (uint32_t j = 0; j < number_parameters; j++) {
+            velocities[id][j] = initial_velocity_scale * (particles[id][j] - velocities[id][j]);
+        }
+
+        parameters.assign(particles[id].begin(), particles[id].end());
+        individuals_created++;
+        return;
+    }
+
     double r1 = drand48();  //TODO: use a better random number generator
     double r2 = drand48();  //TODO: use a better random number generator
 //    cout << "r1: " << r1 << endl;
 //    cout << "r2: " << r2 << endl;
-
-    id = current_particle;
-    current_particle++;
-    if (current_particle >= population_size) current_particle = 0;
 
     for (uint32_t j = 0; j < number_parameters; j++) {
 //        cout << "particle(b)[" << j << "]: " << particles[id][j] << endl;
@@ -129,10 +171,13 @@ void
 ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, double fitness) throw (string) {
 //    cout <<  current_iteration << ":" << i << " - NEW  : " << fitness << " [ " << vector_to_string(particles[i]) << " ]" << endl;
 
+    if (local_best_fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;
+
     /**
      *  TODO: do we want to also revert the particles current position to parameters, and it's velocity
      *  to what parameters velocity is?
      */
+
     if (fitness > local_best_fitnesses[id]) {
         local_best_fitnesses[id] = fitness;
 //        for (uint32_t i = 0; i < velocities.size(); i++) velocities[id] = parameters[i] - local_bests[i];   //Rewind the velocity
@@ -156,34 +201,6 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) throw (string) {
     srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
-    //TODO: remove this and include it in new_individual, so asynchronous searches will properly initialize.
-
-    //Initialize random population and velocities
-    for (uint32_t i = 0; i < population_size; i++) {
-        Recombination::random_parameters(min_bound, max_bound, particles[i]);
-        Recombination::random_parameters(min_bound, max_bound, velocities[i]);
-
-        local_bests[i].assign(particles[i].begin(), particles[i].end()); //local bests are initialized to copies of the particles
-
-        //Set each velocity to the randomly generated position minus where the particle is at now (ie., each velocity
-        //the difference between where the particle is now and some other random position in the search area)
-        for (uint32_t j = 0; j < number_parameters; j++) {
-            velocities[i][j] = initial_velocity_scale * (particles[i][j] - velocities[i][j]);
-        }
-
-        local_best_fitnesses[i] = objective_function(particles[i]);
-        cout.precision(15);
-//        cout <<  current_iteration << " - LOCAL: " << local_best_fitnesses[i] << " " << vector_to_string(particles[i]) << endl;
-
-        if (local_best_fitnesses[i] > global_best_fitness) {
-            global_best_fitness = local_best_fitnesses[i];
-            global_best.assign(local_bests[i].begin(), local_bests[i].end());
-
-            cout.precision(15);
-//            cout <<  current_iteration << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(particles[i]) << ", velocity: " << vector_to_string(velocities[i]) << endl;
-        }
-    }
 
     cout << "Initialized partilce swarm." << endl;
     cout << "   maximum_iterations: " << maximum_iterations << endl;

@@ -19,14 +19,17 @@ class ParticleSwarmDB : public ParticleSwarm {
         ParticleSwarmDB(MYSQL *conn, std::string name) throw (std::string);
         ParticleSwarmDB(MYSQL *conn, int id) throw (std::string);
 
-        ParticleSwarmDB( const std::vector<std::string> &arguments) throw (std::string);
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::vector<std::string> &arguments) throw (std::string);
 
-        ParticleSwarmDB( const std::vector<double> &min_bound,              /* min bound is copied into the search */
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::vector<double> &min_bound,              /* min bound is copied into the search */
                          const std::vector<double> &max_bound,              /* max bound is copied into the search */
                          const std::vector<std::string> &arguments
                        ) throw (std::string);
 
-        ParticleSwarmDB( const std::string name,
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::string name,
                          const std::vector<double> &min_bound,              /* min bound is copied into the search */
                          const std::vector<double> &max_bound,              /* max bound is copied into the search */
                          const uint32_t population_size,
