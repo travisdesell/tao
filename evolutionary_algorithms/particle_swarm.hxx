@@ -13,6 +13,7 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         double local_best_weight;
         double initial_velocity_scale;
 
+        uint32_t initialized_individuals;
         uint32_t current_particle;
 
         std::vector< std::vector<double> > particles;
@@ -25,6 +26,9 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         std::vector<double> global_best;
 
         ParticleSwarm();
+
+        void initialize();
+        void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
         ParticleSwarm( const std::vector<std::string> &arguments) throw (std::string);
@@ -44,6 +48,18 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
                        const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
                        const uint32_t maximum_iterations                /* default value is 0 which means no termination */
                      ) throw (std::string);
+
+        ParticleSwarm( const std::vector<double> &min_bound,            /* min bound is copied into the search */
+                       const std::vector<double> &max_bound,            /* max bound is copied into the search */
+                       const uint32_t population_size,
+                       const double inertia,                            /* intertia */
+                       const double global_best_weight,                 /* global best weight */
+                       const double local_best_weight,                  /* local best weight */
+                       const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                       const uint32_t maximum_created,                  /* default value is 0 which means no termination */
+                       const uint32_t maximum_reported                  /* default value is 0 which means no termination */
+                     ) throw (std::string);
+
 
         ~ParticleSwarm();
 

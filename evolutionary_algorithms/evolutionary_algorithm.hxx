@@ -27,6 +27,9 @@ class EvolutionaryAlgorithm {
 
         EvolutionaryAlgorithm();
 
+        void initialize();
+        void parse_arguments(const std::vector<std::string> &arguments);
+
     public:
         /**
          *  Create/delete an EvolutionaryAlgorithm

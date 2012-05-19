@@ -17,7 +17,11 @@ using namespace std;
  *  Initialize a differential evolution search from command line parameters
  */
 
-DifferentialEvolution::DifferentialEvolution(const vector<double> &min_bound, const vector<double> &max_bound, const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, arguments) {
+DifferentialEvolution::DifferentialEvolution() {
+}
+
+void
+DifferentialEvolution::parse_arguments(const vector<string> &arguments) {
     string parent_selection_name, recombination_selection_name;
 
     if (!get_argument(arguments, "--parent_scaling_factor", false, parent_scaling_factor)) {
@@ -87,7 +91,10 @@ DifferentialEvolution::DifferentialEvolution(const vector<double> &min_bound, co
     }
 
     directional = argument_exists(arguments, "directional");
+}
 
+void
+DifferentialEvolution::initialize() {
     this->current_individual = 0;
     this->initialized_individuals = 0;
 
@@ -98,6 +105,15 @@ DifferentialEvolution::DifferentialEvolution(const vector<double> &min_bound, co
     fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
 }
 
+DifferentialEvolution::DifferentialEvolution(const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(arguments) {
+    parse_arguments(arguments);
+    initialize();
+}
+
+DifferentialEvolution::DifferentialEvolution(const vector<double> &min_bound, const vector<double> &max_bound, const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, arguments) {
+    parse_arguments(arguments);
+    initialize();
+}
 
 DifferentialEvolution::DifferentialEvolution( const std::vector<double> &min_bound,         /* min bound is copied into the search */
                                               const std::vector<double> &max_bound,         /* max bound is copied into the search */
@@ -132,15 +148,54 @@ DifferentialEvolution::DifferentialEvolution( const std::vector<double> &min_bou
     this->crossover_rate = crossover_rate;
     this->directional = directional;
 
-    this->current_individual = 0;
-    this->initialized_individuals = 0;
+    maximum_created = 0;
+    maximum_reported = 0;
+    this->maximum_iterations = maximum_iterations;
 
-    this->global_best_fitness = -numeric_limits<double>::max();
-    this->global_best_id = 0;
-
-    population = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
-    fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
+    initialize();
 }
+
+DifferentialEvolution::DifferentialEvolution( const std::vector<double> &min_bound,         /* min bound is copied into the search */
+                                              const std::vector<double> &max_bound,         /* max bound is copied into the search */
+                                              const uint32_t population_size,
+                                              const uint16_t parent_selection,              /* How to select the parent */
+                                              const uint16_t number_pairs,                  /* How many individuals to used to calculate differentials */
+                                              const uint16_t recombination_selection,       /* How to perform recombination */
+                                              const double parent_scaling_factor,           /* weight for the parent calculation*/
+                                              const double differential_scaling_factor,     /* weight for the differential calculation */
+                                              const double crossover_rate,                  /* crossover rate for recombination */
+                                              const bool directional,                       /* used for directional calculation of differential (this options is not really a recombination) */
+                                              const uint32_t maximum_created,               /* default value is 0 which means no termination */
+                                              const uint32_t maximum_reported               /* default value is 0 which means no termination */
+                                            ) throw (std::string) : EvolutionaryAlgorithm(min_bound, max_bound, population_size, maximum_iterations) {
+
+    if (parent_selection != PARENT_BEST && parent_selection != PARENT_RANDOM && parent_selection != PARENT_CURRENT_TO_BEST && parent_selection != PARENT_CURRENT_TO_RANDOM) {
+        std::stringstream oss;
+        oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: unknown parent selection type (" << parent_selection << ")";
+        throw oss.str();
+    }
+
+    if (recombination_selection != RECOMBINATION_BINARY && recombination_selection != RECOMBINATION_EXPONENTIAL && recombination_selection != RECOMBINATION_SUM && recombination_selection != RECOMBINATION_NONE) {
+        std::stringstream oss;
+        oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: unknown recombination selection type (" << parent_selection << ")";
+        throw oss.str();
+    }
+
+    this->parent_selection = parent_selection;
+    this->number_pairs = number_pairs;
+    this->recombination_selection = recombination_selection;
+    this->parent_scaling_factor = parent_scaling_factor;
+    this->differential_scaling_factor = differential_scaling_factor;
+    this->crossover_rate = crossover_rate;
+    this->directional = directional;
+
+    this->maximum_created = maximum_created;
+    this->maximum_reported = maximum_reported;
+    maximum_iterations = 0;
+
+    initialize();
+}
+
 
 DifferentialEvolution::~DifferentialEvolution() {
 }
@@ -157,6 +212,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
     if (initialized_individuals < population_size) { //The search has not been fully initalized so keep generating random individuals
         Recombination::random_parameters(min_bound, max_bound, parameters);
         population[id].assign(parameters.begin(), parameters.end());
+        individuals_created++;
         return;
     }
 

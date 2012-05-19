@@ -27,6 +27,11 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         double global_best_fitness;
         uint32_t global_best_id;
 
+        DifferentialEvolution();
+
+        void initialize();
+        void parse_arguments(const std::vector<std::string> &arguments);
+
     public:
         //The following are different types parent selection
         const static uint16_t PARENT_BEST = 0;
@@ -40,6 +45,8 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         const static uint16_t RECOMBINATION_SUM = 2;
         const static uint16_t RECOMBINATION_NONE = 3;
 
+        DifferentialEvolution( const std::vector<std::string> &arguments) throw (std::string);
+
         DifferentialEvolution( const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
                                const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
                                const std::vector<std::string> &arguments) throw (std::string);          /* initialize the DE from command line arguments */
@@ -47,15 +54,30 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         DifferentialEvolution( const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
                                const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
                                const uint32_t population_size,
-                               const uint16_t parent_selection              = PARENT_BEST,              /* How to select the parent */
-                               const uint16_t number_pairs                  = 1,                        /* How many individuals to used to calculate differntials */
-                               const uint16_t recombination_selection       = RECOMBINATION_BINARY,     /* How to perform recombination */
-                               const double parent_scaling_factor           = 0.5,                      /* weight for the parent calculation*/
-                               const double differential_scaling_factor     = 0.5,                      /* weight for the differential calculation */
-                               const double crossover_rate                  = 0.5,                      /* crossover rate for recombination */
-                               const bool directional                       = false,                    /* used for directional calculation of differential (this options is not really a recombination) */
-                               const uint32_t maximum_iterations            = 0                         /* default value is 0 which means no termination */
+                               const uint16_t parent_selection,                                         /* How to select the parent */
+                               const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                               const uint16_t recombination_selection,                                  /* How to perform recombination */
+                               const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                               const double differential_scaling_factor,                                /* weight for the differential calculation */
+                               const double crossover_rate,                                             /* crossover rate for recombination */
+                               const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                               const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
                              ) throw (std::string);
+
+        DifferentialEvolution( const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
+                               const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
+                               const uint32_t population_size,
+                               const uint16_t parent_selection,                                         /* How to select the parent */
+                               const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                               const uint16_t recombination_selection,                                  /* How to perform recombination */
+                               const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                               const double differential_scaling_factor,                                /* weight for the differential calculation */
+                               const double crossover_rate,                                             /* crossover rate for recombination */
+                               const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                               const uint32_t maximum_created,                                          /* default value is 0 which means no termination */
+                               const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
+                             ) throw (std::string);
+
 
         ~DifferentialEvolution();
 
