@@ -66,51 +66,31 @@ ParticleSwarmDB::construct_from_database(MYSQL *conn, MYSQL_ROW row) throw (stri
 
     current_particle = atoi(row[6]);
 
-    //particles
-    //local_bests
-    //velocities
-    //local_best_fitnesses
-    //can calculate global_best and global_best_fitnesses from these
+    string_to_2d_vector<double>(row[7], atod, particles);
+    string_to_2d_vector<double>(row[8], atod, local_bests);
+    string_to_2d_vector<double>(row[9], atod, velocities);
+    string_to_vector<double>(row[10], atod, local_best_fitness);
 
-    ostringstream oss;
-    oss << "SELECT * FROM particle WHERE particle_swarm_id = " << this->id;
-    mysql_query(conn, oss.str().c_str());
-    MYSQL_RES *result = mysql_store_result(conn);
-
-    if (result) {
-        int num_results = mysql_num_rows(result);
-        if (num_results > number_particles) {
-            cout << "ERROR: got " << num_results << " results when looking up particles for search " << name << ", with a max number of particles: " << number_particles;
-            return;
+    //calculate global_best and global_best_fitness
+    global_best_fitness = -numeric_limits<double>::max();
+    for (uint32_t i = 0; i < local_bests.size(); i++) {
+        if (global_best_fitness < local_best_fitnesses[i]) {
+            global_best.assign(local_best);
+            global_best_fitness = local_best_fitnesses[i];
         }
-
-        global_best = NULL;
-        while ((row = mysql_fetch_row(result))) {
-            try {
-                DBParticle* p = new DBParticle(row);
-                particles->at(p->get_position()) = p;
-
-                cout << p << endl;
-
-                if (global_best == NULL || p->get_fitness() > global_best->get_fitness()) global_best = p;
-            } catch (string exception_message) {
-                cerr << exception_message << endl;
-            }
-        }
-        mysql_free_result(result);
     }
 
     //inherited from EvolutionaryAlgorithm
-    current_iteration = atoi(row[7]);
-    maximum_iteration = atoi(row[7]);
-    created_individuals = atoi(row[7]);
-    maximum_created = atoi(row[7]);
-    reported_individuals = atoi(row[7]);
-    maximum_reported = atoi(row[7]);
+    current_iteration = atoi(row[11]);
+    maximum_iteration = atoi(row[12]);
+    created_individuals = atoi(row[13]);
+    maximum_created = atoi(row[14]);
+    reported_individuals = atoi(row[15]);
+    maximum_reported = atoi(row[16]);
 
-    population_size = atoi(row[8]);
-    min_bound = string_to_vector<double>(row[8], atod);
-    max_bound = string_to_vector<double>(row[8], atod);
+    population_size = atoi(row[17]);
+    string_to_vector<double>(row[18], atod, min_bound);
+    string_to_vector<double>(row[19], atod, max_bound);
     number_parameters = min_bound.size();
 }
 
