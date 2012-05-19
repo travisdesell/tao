@@ -24,7 +24,11 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         double global_best_fitness;
         std::vector<double> global_best;
 
+        ParticleSwarm();
+
     public:
+        ParticleSwarm( const std::vector<std::string> &arguments) throw (std::string);
+
         ParticleSwarm( const std::vector<double> &min_bound,            /* min bound is copied into the search */
                        const std::vector<double> &max_bound,            /* max bound is copied into the search */
                        const std::vector<std::string> &arguments
@@ -34,23 +38,23 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         ParticleSwarm( const std::vector<double> &min_bound,            /* min bound is copied into the search */
                        const std::vector<double> &max_bound,            /* max bound is copied into the search */
                        const uint32_t population_size,
-                       const double inertia                 = 0.95,     /* intertia */
-                       const double global_best_weight      = 2.0,      /* global best weight */
-                       const double local_best_weight       = 2.0,      /* local best weight */
-                       const double initial_velocity_scale  = 0.1,      /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
-                       const uint32_t maximum_iterations    = 0         /* default value is 0 which means no termination */
+                       const double inertia,                            /* intertia */
+                       const double global_best_weight,                 /* global best weight */
+                       const double local_best_weight,                  /* local best weight */
+                       const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                       const uint32_t maximum_iterations                /* default value is 0 which means no termination */
                      ) throw (std::string);
 
         ~ParticleSwarm();
 
         /**
-         *  The following methods are used for asynchronous optimization and are purely virtual
+         *  The following methods are used for asynchronous optimization
          */
-        void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
-        void insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);
+        virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
+        virtual void insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);
 
         /**
-         *  The following method is for synchronous optimization and is purely virtual
+         *  The following method is for synchronous optimization 
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
 };

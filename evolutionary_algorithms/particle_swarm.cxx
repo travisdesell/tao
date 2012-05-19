@@ -13,6 +13,10 @@
 
 using namespace std;
 
+
+ParticleSwarm::ParticleSwarm() {
+}
+
 ParticleSwarm::ParticleSwarm(const vector<double> &min_bound, const vector<double> &max_bound, const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(min_bound, max_bound, arguments) {
     if (!get_argument(arguments, "--inertia", false, inertia)) {
         cerr << "Argument '--inertia <F>' not found, using default of 0.95." << endl;
@@ -117,6 +121,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 //        cout << "particle   [" << j << "]: " << particles[id][j] << endl << endl;
     }
     parameters.assign(particles[id].begin(), particles[id].end());
+
+    individuals_created++;
 }
 
 void
@@ -144,7 +150,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         cout <<  current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
     }
 
-    evaluations_done++;
+    individuals_reported++;
 }
 
 void

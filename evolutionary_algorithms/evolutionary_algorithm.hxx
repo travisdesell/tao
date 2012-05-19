@@ -9,9 +9,15 @@
 
 class EvolutionaryAlgorithm {
     protected:
+        //For iterative EAs
         uint32_t maximum_iterations;
         uint32_t current_iteration;
-        uint32_t evaluations_done;
+
+        //For asynchronous EAs
+        uint32_t maximum_created;
+        uint32_t individuals_created;
+        uint32_t maximum_reported;
+        uint32_t individuals_reported;
 
         uint32_t number_parameters;
         std::vector<double> min_bound;
@@ -19,10 +25,15 @@ class EvolutionaryAlgorithm {
 
         uint32_t population_size;
 
+        EvolutionaryAlgorithm();
+
     public:
         /**
          *  Create/delete an EvolutionaryAlgorithm
          */
+        EvolutionaryAlgorithm( const std::vector<std::string> &arguments    /* initialize the DE from command line arguments */
+                             ) throw (std::string);
+
         EvolutionaryAlgorithm( const std::vector<double> &min_bound,        /* min bound is copied into the search */
                                const std::vector<double> &max_bound,        /* max bound is copied into the search */
                                const std::vector<std::string> &arguments    /* initialize the DE from command line arguments */
@@ -31,8 +42,16 @@ class EvolutionaryAlgorithm {
         EvolutionaryAlgorithm( const std::vector<double> &min_bound,    /* min bound is copied into the search */
                                const std::vector<double> &max_bound,    /* max bound is copied into the search */
                                const uint32_t population_size,
-                               const uint32_t maximum_iterations = 0    /* default value is 0 which means no termination */
+                               const uint32_t maximum_iterations        /* default value is 0 which means no termination */
                              ) throw (std::string);
+
+        EvolutionaryAlgorithm( const std::vector<double> &min_bound,    /* min bound is copied into the search */
+                               const std::vector<double> &max_bound,    /* max bound is copied into the search */
+                               const uint32_t population_size,
+                               const uint32_t maximum_created,          /* default value is 0 which means no termination */
+                               const uint32_t maximum_reported          /* default value is 0 which means no termination */
+                             ) throw (std::string);
+
 
 
         ~EvolutionaryAlgorithm();
