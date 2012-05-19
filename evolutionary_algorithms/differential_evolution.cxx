@@ -263,6 +263,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 
 //    cout << "new individual: " << vector_to_string(parameters) << endl;
 //    cout << "population[" << id << "]: " << vector_to_string(population[id]) << endl;
+    individuals_created++;
 }
 
 
@@ -285,6 +286,7 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
         }
     }
+    individuals_reported++;
 }
 
 /**
