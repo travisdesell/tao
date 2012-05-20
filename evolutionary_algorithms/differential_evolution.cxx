@@ -344,7 +344,7 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
         modified = true;
     }
     individuals_reported++;
-    return true;
+    return modified;
 }
 
 /**
