@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 
 #include "recombination.hxx"
 

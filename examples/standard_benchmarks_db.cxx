@@ -27,7 +27,7 @@
  */
 typedef double (*objective_function)(const vector<double> &);
 
-int main(uint32_t argc /* number of command line arguments */, char **argv /* command line argumens */ ) {
+int main(int argc /* number of command line arguments */, char **argv /* command line argumens */ ) {
     vector<string> arguments(argv, argv + argc);
 
     //assign the objective function variable to the objective function we're going to use
@@ -42,14 +42,14 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     else if (objective_function_name.compare("rastrigin") == 0)     f = rastrigin;
     else if (objective_function_name.compare("rosenbrock") == 0)    f = rosenbrock;
     else {
-        fprintf(stderr, "Improperly specified objective function: '%s'\n", objective_function_name.c_str());
-        fprintf(stderr, "Possibilities are:\n");
-        fprintf(stderr, "    sphere\n");
-        fprintf(stderr, "    ackley\n");
-        fprintf(stderr, "    griewank\n");
-        fprintf(stderr, "    rastrigin\n");
-        fprintf(stderr, "    rosenbrock\n");
-        exit(0);
+        cerr << "Improperly specified objective function: '" << objective_function_name.c_str() << "'" << endl;
+        cerr << "Possibilities are:" << endl;
+        cerr << "    sphere" << endl;
+        cerr << "    ackley" << endl;
+        cerr << "    griewank" << endl;
+        cerr << "    rastrigin" << endl;
+        cerr << "    rosenbrock" << endl;
+        exit(1);
     }
 
     /**
@@ -83,7 +83,7 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     MYSQL *conn = mysql_init(NULL);
 
     if (conn == NULL) {
-        printf("Error initializing mysql %u: %s\n", mysql_errno(conn), mysql_error(conn));
+        cerr << "Error initializing mysql: " << mysql_errno(conn) << ", '" << mysql_error(conn) << "'" << endl;
         exit(1);
     }
 
@@ -94,7 +94,7 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     get_argument(arguments, "--db_password", true, db_password);
 
     if (mysql_real_connect(conn, db_host.c_str(), db_user.c_str(), db_password.c_str(), db_name.c_str(), 0, NULL, 0) == NULL) {
-        printf("Error connecting to database %u: %s\n", mysql_errno(conn), mysql_error(conn));
+        cerr << "Error connecting to database: " << mysql_errno(conn) << ", '" << mysql_error(conn) << "'" << endl;
         exit(1);
     }
 
@@ -115,7 +115,7 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             } else {
                 cout << "Creating new database particle swarm search called '" << search_name << "'." << endl;
                 ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
-                exit(0);
+                exit(1);
                 ps.iterate(f);
             }
 
@@ -129,16 +129,16 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             } else {
                 cout << "Creating new database differential evolution search called '" << search_name << "'." << endl;
                 DifferentialEvolutionDB de(conn, min_bound, max_bound, arguments);
-                exit(0);
+                exit(1);
                 de.iterate(f);
             }
 
         } else {
-            fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
-            fprintf(stderr, "Possibilities are:\n");
-            fprintf(stderr, "    de     -       differential evolution\n");
-            fprintf(stderr, "    ps     -       particle swarm optimization\n");
-            exit(0);
+            cerr << "Improperly specified search type: '" << search_type.c_str() << "'" << endl;
+            cerr << "Possibilities are:" << endl;
+            cerr << "    de     -       differential evolution" << endl;
+            cerr << "    ps     -       particle swarm optimization" << endl;
+            exit(1);
         }
     } catch (string err_msg) {
         cout << "search failed with error message: " << endl;

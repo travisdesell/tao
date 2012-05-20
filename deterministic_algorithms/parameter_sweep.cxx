@@ -1,6 +1,8 @@
 #include <vector>
 #include <limits>
 
+#include "stdint.h"
+
 #include "parameter_sweep.hxx"
 #include "vector_io.hxx"
 
