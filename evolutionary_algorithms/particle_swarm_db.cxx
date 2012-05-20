@@ -193,6 +193,10 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
             int particle_id = atoi(particle_row[1]);
             local_best_fitnesses[particle_id] = atof(particle_row[2]);
 
+            if (local_best_fitnesses[particle_id] < -1.79768e+308) {
+                local_best_fitnesses[particle_id] = -numeric_limits<double>::max();
+            }   
+
             string_to_vector<double>(particle_row[3], atof, particles[particle_id]);
             string_to_vector<double>(particle_row[4], atof, velocities[particle_id]);
             string_to_vector<double>(particle_row[5], atof, local_bests[particle_id]);

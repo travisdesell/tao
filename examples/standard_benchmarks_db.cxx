@@ -115,6 +115,7 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             } else {
                 cout << "Creating new database particle swarm search called '" << search_name << "'." << endl;
                 ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
+                exit(0);
                 ps.iterate(f);
             }
 
@@ -124,12 +125,11 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             if (DifferentialEvolutionDB::search_exists(conn, search_name)) {
                 cout << "Restarting database differential evolution search called '" << search_name << "'." << endl;
                 DifferentialEvolutionDB de(conn, search_name);
-                cout << de << endl;
                 de.iterate(f);
             } else {
                 cout << "Creating new database differential evolution search called '" << search_name << "'." << endl;
                 DifferentialEvolutionDB de(conn, min_bound, max_bound, arguments);
-                cout << de << endl;
+                exit(0);
                 de.iterate(f);
             }
 
