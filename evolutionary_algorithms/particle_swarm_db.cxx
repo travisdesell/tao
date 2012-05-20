@@ -347,7 +347,7 @@ ParticleSwarmDB::new_individual(uint32_t &id, vector<double> &parameters) throw 
 }
 
 bool
-ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters, double fitness) throw (string) {
+ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters, double fitness, uint32_t seed) throw (string) {
     bool modified = ParticleSwarm::insert_individual(id, parameters, fitness);
 
     if (modified) {
@@ -359,6 +359,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
                        << ", parameters = '" << vector_to_string<double>(particles[id]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[id]) << "'"
+                       << ", seed = " << seed 
                        << " WHERE "
                        << "     particle_swarm_id = " << this->id
                        << " AND position = " << id;

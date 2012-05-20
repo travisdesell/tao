@@ -179,8 +179,14 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                     else results[k].validate_state = VALIDATE_STATE_INVALID;
                 }
 
-                //TODO: insert seed as well (for nbody)?
-                ea->insert_individual(position, result_parameters, result_fitness_i);
+                uint32_t seed = 0;
+                try {
+                    seed = parse_xml<uint32_t>(wu.xml_doc, "seed");
+                } catch (string error_message) {
+                    //can ignore if it's not there since it's optional
+                }
+
+                ea->insert_individual(position, result_parameters, result_fitness_i, seed);
 
                 exit(1);
                 return 0;

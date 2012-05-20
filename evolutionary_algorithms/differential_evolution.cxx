@@ -323,7 +323,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 
 
 bool
-DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (string) {
+DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness, uint32_t seed) throw (string) {
     bool modified = false;
     if (fitnesses[id] < fitness) {
         if (fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;

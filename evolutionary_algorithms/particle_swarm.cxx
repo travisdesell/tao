@@ -168,7 +168,7 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 }
 
 bool
-ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, double fitness) throw (string) {
+ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, double fitness, uint32_t seed) throw (string) {
     bool modified = false;
 //    cout <<  current_iteration << ":" << i << " - NEW  : " << fitness << " [ " << vector_to_string(particles[i]) << " ]" << endl;
 

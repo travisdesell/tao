@@ -359,7 +359,7 @@ DifferentialEvolutionDB::new_individual(uint32_t &id, vector<double> &parameters
 }
 
 bool
-DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &parameters, double fitness) throw (string) {
+DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &parameters, double fitness, uint32_t seed) throw (string) {
     bool modified = DifferentialEvolution::insert_individual(id, parameters, fitness);
 
     if (modified) {
@@ -368,6 +368,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
                          << " SET "
                          << "  fitness = " << fitnesses[id]
                          << ", parameters = '" << vector_to_string<double>(population[id]) << "'"
+                         << ", seed = " << seed
                          << " WHERE "
                          << "     differential_evolution_id = " << this->id
                          << " AND position = " << id;
