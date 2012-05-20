@@ -68,6 +68,7 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
          */
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string); /* Returns true if the individual is inserted. */
+        virtual bool would_insert(uint32_t id, double fitness);
 
         /**
          *  The following method is for synchronous optimization 

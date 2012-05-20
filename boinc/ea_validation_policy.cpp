@@ -15,7 +15,10 @@
 #include "validate_util.h"
 #include "validate_util2.h"
 
-#include "../searches/db_particle_swarm.hpp"
+#include "particle_swarm_db.hxx"
+#include "differential_evolution_db.hxx"
+
+#include "parse_xml.hxx"
 
 #define FITNESS_ERROR_BOUND 10e-10
 
@@ -33,30 +36,52 @@
 int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, bool& retry) {
     retry = false;
 
-    if (results.size() == 1) {
-        int particle_swarm_id;
-        int position;
-        double result_fitness;
-        RESULT result = results[0];
+    string search_name;
+    int search_id;
+    int position;
+    double result_fitness;
+    vector<double> result_parameters;
+    RESULT result = results[0];
 
+    try {
+        search_name = parse_xml<string>(wu.xml_doc, "search_name");
+        search_id = parse_xml<int>(wu.xml_doc, "search_id");
+        position = parse_xml<int>(wu.xml_doc, "position");
+        parse_xml_vector<double>(wu.xml_doc, "parameters", result_parameters);
+    } catch (string error_message) {
+        log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed with error: %s\n", result.id, result.name, error_message.c_str());
+        result.outcome = RESULT_OUTCOME_VALIDATE_ERROR;
+        result.validate_state = VALIDATE_STATE_INVALID;
+        exit(1);
+        return 0;
+    }
+
+    if (results.size() == 1) {
         try {
-            particle_swarm_id = parse_xml<int>(wu.xml_doc, "particle_swarm_id", atoi);
-            position = parse_xml<int>(wu.xml_doc, "position", atoi);
-            result_fitness = parse_xml<double>(result.stderr_out, "search_likelihood", atof);
+            result_fitness = parse_xml<double>(result.stderr_out, "search_likelihood");
         } catch (string error_message) {
             log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed with error: %s\n", result.id, result.name, error_message.c_str());
             result.outcome = RESULT_OUTCOME_VALIDATE_ERROR;
             result.validate_state = VALIDATE_STATE_INVALID;
-            exit(0);
+            exit(1);
             return 0;
         }
-        
+
         /**
          *  Need to check and see if the particle is not in the database
          */
-        DBParticle *particle = new DBParticle(boinc_db.mysql, particle_swarm_id, position);
+        bool would_insert = false;
+        if (search_name.substr(0,3).compare("ps_") == 0) {
+            ParticleSwarmDB ps(boinc_db.mysql, search_id);
+            would_insert = ps.would_insert(position, result_fitness);
+        } else if (search_name.substr(0,3).compare("de_") == 0) {
+            DifferentialEvolutionDB de(boinc_db.mysql, search_id);
+            would_insert = de.would_insert(position, result_fitness);
+        } else {
+            log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed because it was of an unkown search name (needs to start with de_ or ps_): '%s'\n", result.id, result.name, search_name.c_str());
+        }
 
-        if (particle->get_in_database() && result_fitness <= particle->get_fitness()) {
+        if (!would_insert) {  //This is a result we aren't going to use, so check to see if we need to use adaptive validation, or just mork it valid otherwise
             DB_HOST_APP_VERSION hav;
             int retval = hav_lookup(hav, result.hostid, generalized_app_version_id(result.app_version_id, result.appid));
 
@@ -73,8 +98,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                 }
             }
         }
-	delete particle;
-        //otherwise the result will stay inconclusive 
+        //otherwise the result will stay inconclusive and another will be generated for a quorum
     } else {
         int min_quorum = wu.min_quorum;
         if (min_quorum <= 1) min_quorum = 2;    //It will start as 1 but we need to increase it because of adaptive validation
@@ -90,7 +114,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
             matches.resize(results.size());
 
             try {
-                result_fitness_i = parse_xml<double>(results[i].stderr_out, "search_likelihood", atof);
+                result_fitness_i = parse_xml<double>(results[i].stderr_out, "search_likelihood");
             } catch (string error_message) {
                 log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed with error: %s\n", results[i].id, results[i].name, error_message.c_str());
                 results[i].outcome = RESULT_OUTCOME_VALIDATE_ERROR;
@@ -112,7 +136,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                 }
 
                 try {
-                    result_fitness_j = parse_xml<double>(results[j].stderr_out, "search_likelihood", atof);
+                    result_fitness_j = parse_xml<double>(results[j].stderr_out, "search_likelihood");
                 } catch (string error_message) {
                     log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed with error: %s\n", results[j].id, results[j].name, error_message.c_str());
                     results[j].outcome = RESULT_OUTCOME_VALIDATE_ERROR;
@@ -143,14 +167,25 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                     if (matches[k]) results[k].validate_state = VALIDATE_STATE_VALID;
                     else results[k].validate_state = VALIDATE_STATE_INVALID;
                 }
-                exit(0);
+
+                //TODO: cache these searches?
+                if (search_name.substr(0,3).compare("ps_") == 0) {
+                    ParticleSwarmDB ps(boinc_db.mysql, search_id);
+                    ps.insert_individual(position, result_parameters, result_fitness_i);
+                } else if (search_name.substr(0,3).compare("de_") == 0) {
+                    DifferentialEvolutionDB de(boinc_db.mysql, search_id);
+                    de.insert_individual(position, result_parameters, result_fitness_i);
+                } else {
+                    log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed because it was of an unkown search name (needs to start with de_ or ps_): '%s'\n", result.id, result.name, search_name.c_str());
+                }
+                exit(1);
                 return 0;
             }
         }
     }
 
     cout << "SUCCESS!" << endl;
-    exit(0);
+    exit(1);
     return 0;
 }
 
@@ -158,7 +193,7 @@ void check_pair(RESULT& new_result, RESULT& canonical_result, bool& retry) {
     double new_fitness, canonical_fitness;
 
     try {
-        new_fitness = parse_xml<double>(new_result.stderr_out, "search_likelihood", atof);
+        new_fitness = parse_xml<double>(new_result.stderr_out, "search_likelihood");
     } catch (string error_message) {
         log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_pair([RESULT#%d %s]) failed with error: %s\n", new_result.id, new_result.name, error_message.c_str());
         new_result.outcome = RESULT_OUTCOME_VALIDATE_ERROR;
@@ -167,10 +202,10 @@ void check_pair(RESULT& new_result, RESULT& canonical_result, bool& retry) {
     }
 
     try {
-        canonical_fitness = parse_xml<double>(canonical_result.stderr_out, "search_likelihood", atof);
+        canonical_fitness = parse_xml<double>(canonical_result.stderr_out, "search_likelihood");
     } catch (string error_message) {
         log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed with TERMINAL error: %s -- COULD NOT PARSE CANONICAL RESULT XML\n", canonical_result.id, canonical_result.name, error_message.c_str());
-        exit(0);
+        exit(1);
     }
 
     if (fabs(new_fitness - canonical_fitness) < FITNESS_ERROR_BOUND) {
@@ -180,6 +215,6 @@ void check_pair(RESULT& new_result, RESULT& canonical_result, bool& retry) {
     }
 
     cout << "CHECK PAIR SUCCESS!" << endl;
-    exit(0);
+    exit(1);
 }
 

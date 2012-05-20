@@ -177,7 +177,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
      *  to what parameters velocity is?
      */
 
-    if (fitness > local_best_fitnesses[id]) {
+    if (local_best_fitnesses[id] < fitness) {
         if (local_best_fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;
 
         local_best_fitnesses[id] = fitness;
@@ -189,7 +189,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         modified = true;
     }
 
-    if (fitness > global_best_fitness) {
+    if (global_best_fitness < fitness) {
         global_best_fitness = fitness;
         global_best.assign(parameters.begin(), parameters.end());
 
@@ -200,6 +200,12 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
     individuals_reported++;
     return modified;
 }
+
+bool
+ParticleSwarm::would_insert(uint32_t id, double fitness) {
+    return local_best_fitnesses[id] < fitness;
+}
+
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) throw (string) {

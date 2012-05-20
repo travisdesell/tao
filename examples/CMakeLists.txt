@@ -1,5 +1,5 @@
-include_directories ("${PROJECT_SOURCE_DIR}/evolutionary_algorithms")
-include_directories ("${PROJECT_SOURCE_DIR}/deterministic_algorithms")
+include_directories (${PROJECT_SOURCE_DIR}/evolutionary_algorithms)
+include_directories (${PROJECT_SOURCE_DIR}/deterministic_algorithms)
 
 add_executable(EconMrsyx econ_mrsyx)
 target_link_libraries(EconMrsyx undvc_common EvolutionaryAlgorithms DeterministicAlgorithms)

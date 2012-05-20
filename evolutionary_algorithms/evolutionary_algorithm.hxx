@@ -64,6 +64,7 @@ class EvolutionaryAlgorithm {
          */
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string) = 0;
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string) = 0;     /* Returns true if the individual is inserted. */
+        virtual bool would_insert(uint32_t id, double fitness) = 0;                                                                     /* Returns true if the individual would be inserted. */
 
         /**
          *  The following method is for synchronous optimization and is purely virtual

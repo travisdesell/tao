@@ -347,6 +347,12 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
     return modified;
 }
 
+
+bool
+DifferentialEvolution::would_insert(uint32_t id, double fitness) {
+    return fitnesses[id] < fitness;
+}
+ 
 /**
  *  The following method is for synchronous optimization and is purely virtual
  */
