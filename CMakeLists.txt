@@ -10,9 +10,8 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-# find_package(BOINC REQUIRED)
-# include_directories(${BOINC_INCLUDE_DIRS})
-# set(LIBS ${LIBS} ${BOINC_LIBRARIES})
+find_package(BOINC)
+find_package(MYSQL)
 
 include_directories(undvc_common)
 
@@ -21,9 +20,8 @@ add_subdirectory(evolutionary_algorithms)
 add_subdirectory(deterministic_algorithms)
 add_subdirectory(examples)
 
-find_package(BOINC)
-if (BOINC_FOUND)
+if (BOINC_FOUND AND MYSQL_FOUND)
     add_subdirectory(boinc)
-else (BOINC_FOUND)
-    message(STATUS "BOINC libraries not found, not compiling boinc subdirectory.")
-endif (BOINC_FOUND)
+else (BOINC_FOUND AND MYSQL_FOUND)
+    message(STATUS "Either BOINC libraries (found = ${BOINC_FOUND}) or MYSQL libraries (found = ${MYSQL_FOUND}) missing, not compiling boinc subdirectory.")
+endif (BOINC_FOUND AND MYSQL_FOUND)

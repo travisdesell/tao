@@ -115,7 +115,7 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             } else {
                 cout << "Creating new database particle swarm search called '" << search_name << "'." << endl;
                 ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
-                exit(1);
+//                exit(1);
                 ps.iterate(f);
             }
 
@@ -129,7 +129,7 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             } else {
                 cout << "Creating new database differential evolution search called '" << search_name << "'." << endl;
                 DifferentialEvolutionDB de(conn, min_bound, max_bound, arguments);
-                exit(1);
+ //               exit(1);
                 de.iterate(f);
             }
 

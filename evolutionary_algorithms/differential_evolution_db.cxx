@@ -181,6 +181,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
 
     fitnesses.resize(population_size, -numeric_limits<double>::max());
     population.resize(population_size, vector<double>(number_parameters, 0.0));
+    seeds.resize(population_size, 0);
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
@@ -280,7 +281,6 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
                          << ", seed = " << seeds[i];
 
         mysql_query(conn, individual_query.str().c_str());
-//        result = mysql_store_result(conn);
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;

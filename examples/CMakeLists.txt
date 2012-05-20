@@ -7,6 +7,10 @@ target_link_libraries(EconMrsyx undvc_common EvolutionaryAlgorithms Deterministi
 add_executable(StandardBenchmarks standard_benchmarks)
 target_link_libraries(StandardBenchmarks undvc_common EvolutionaryAlgorithms)
 
-include_directories (${MYSQL_INCLUDE_DIR})
-add_executable(StandardBenchmarksDB standard_benchmarks_db)
-target_link_libraries(StandardBenchmarksDB undvc_common EvolutionaryAlgorithms DBEvolutionaryAlgorithms ${MYSQL_LIBRARIES})
+if (MYSQL_FOUND)
+    include_directories (${MYSQL_INCLUDE_DIR})
+    add_executable(StandardBenchmarksDB standard_benchmarks_db)
+    target_link_libraries(StandardBenchmarksDB undvc_common EvolutionaryAlgorithms DBEvolutionaryAlgorithms ${MYSQL_LIBRARIES})
+else (MYSQL_FOUND)
+    message(STATUS "MYSQL not found, not compiling database enabled examples")
+endif (MYSQL_FOUND)

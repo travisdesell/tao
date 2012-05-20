@@ -1,8 +1,6 @@
 add_library(EvolutionaryAlgorithms evolutionary_algorithm particle_swarm differential_evolution recombination)
 target_link_libraries(EvolutionaryAlgorithms undvc_common)
 
-find_package(MySQL)
-
 include_directories(${MYSQL_INCLUDE_DIR})
 
 if (MYSQL_FOUND)

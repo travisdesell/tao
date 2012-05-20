@@ -179,6 +179,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     local_bests.resize(population_size, vector<double>(number_parameters, 0.0));
     particles.resize(population_size, vector<double>(number_parameters, 0.0));
     velocities.resize(population_size, vector<double>(number_parameters, 0.0));
+    seeds.resize(population_size, 0);
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);

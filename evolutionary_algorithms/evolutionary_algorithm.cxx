@@ -20,8 +20,6 @@ EvolutionaryAlgorithm::initialize() {
     Recombination::check_bounds(min_bound, max_bound);
     number_parameters = min_bound.size();
 
-    seeds = vector<uint32_t>(population_size, 0);
-
     current_iteration = 0;
     individuals_created = 0;
     individuals_reported = 0;
@@ -59,6 +57,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<string> &arguments
 
     initialize();
     parse_arguments(arguments);
+    seeds = vector<uint32_t>(population_size, 0);
 }
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,      /* min bound is copied into the search */
@@ -71,6 +70,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 
     initialize();
     parse_arguments(arguments);
+    seeds = vector<uint32_t>(population_size, 0);
 }
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,      /* min bound is copied into the search */
@@ -86,6 +86,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
     this->max_bound = vector<double>(max_bound);
 
     initialize();
+    seeds = vector<uint32_t>(population_size, 0);
 }
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,      /* min bound is copied into the search */
@@ -103,6 +104,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
     this->max_bound = vector<double>(max_bound);
 
     initialize();
+    seeds = vector<uint32_t>(population_size, 0);
 }
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
