@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdlib>
 #include <string>
+#include <map>
 
 #include "boinc_db.h"
 #include "error_numbers.h"
@@ -21,6 +22,10 @@
 #include "parse_xml.hxx"
 
 #define FITNESS_ERROR_BOUND 10e-10
+
+
+map<string, EvolutionaryAlgorithm*> searches;
+
 
 /*
  * Given a set of results, check for a canonical result,
@@ -56,6 +61,23 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
         return 0;
     }
 
+    //Get the cached evolutionary algorithm if possible
+    EvolutionaryAlgorithm *ea = NULL;
+    if (searches.find(search_name) == searches.end()) {
+        log_messages.printf(MSG_DEBUG, "search '%s' not found, looking up in database.\n", search_name.c_str());
+
+        if (search_name.substr(0,3).compare("ps_") == 0) {
+            ea = new ParticleSwarmDB(boinc_db.mysql, search_id);
+        } else if (search_name.substr(0,3).compare("de_") == 0) {
+            ea = new DifferentialEvolutionDB(boinc_db.mysql, search_id);
+        } else {
+            log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed because it was of an unkown search name (needs to start with de_ or ps_): '%s'\n", result.id, result.name, search_name.c_str());
+            exit(1);
+        }
+    } else {
+        ea = searches[search_name];
+    }
+
     if (results.size() == 1) {
         try {
             result_fitness = parse_xml<double>(result.stderr_out, "search_likelihood");
@@ -70,18 +92,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
         /**
          *  Need to check and see if the particle is not in the database
          */
-        bool would_insert = false;
-        if (search_name.substr(0,3).compare("ps_") == 0) {
-            ParticleSwarmDB ps(boinc_db.mysql, search_id);
-            would_insert = ps.would_insert(position, result_fitness);
-        } else if (search_name.substr(0,3).compare("de_") == 0) {
-            DifferentialEvolutionDB de(boinc_db.mysql, search_id);
-            would_insert = de.would_insert(position, result_fitness);
-        } else {
-            log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed because it was of an unkown search name (needs to start with de_ or ps_): '%s'\n", result.id, result.name, search_name.c_str());
-        }
-
-        if (!would_insert) {  //This is a result we aren't going to use, so check to see if we need to use adaptive validation, or just mork it valid otherwise
+        if (!ea->would_insert(position, result_fitness)) {  //This is a result we aren't going to use, so check to see if we need to use adaptive validation, or just mork it valid otherwise
             DB_HOST_APP_VERSION hav;
             int retval = hav_lookup(hav, result.hostid, generalized_app_version_id(result.app_version_id, result.appid));
 
@@ -168,16 +179,9 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                     else results[k].validate_state = VALIDATE_STATE_INVALID;
                 }
 
-                //TODO: cache these searches?
-                if (search_name.substr(0,3).compare("ps_") == 0) {
-                    ParticleSwarmDB ps(boinc_db.mysql, search_id);
-                    ps.insert_individual(position, result_parameters, result_fitness_i);
-                } else if (search_name.substr(0,3).compare("de_") == 0) {
-                    DifferentialEvolutionDB de(boinc_db.mysql, search_id);
-                    de.insert_individual(position, result_parameters, result_fitness_i);
-                } else {
-                    log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([RESULT#%d %s]) failed because it was of an unkown search name (needs to start with de_ or ps_): '%s'\n", result.id, result.name, search_name.c_str());
-                }
+                //TODO: insert seed as well (for nbody)?
+                ea->insert_individual(position, result_parameters, result_fitness_i);
+
                 exit(1);
                 return 0;
             }

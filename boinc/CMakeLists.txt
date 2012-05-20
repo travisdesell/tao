@@ -14,7 +14,7 @@ include_directories(
 )
 
 add_executable(ea_validator ${BOINC_INCLUDE_DIR}/sched/validator ${BOINC_INCLUDE_DIR}/sched/validate_util ${BOINC_INCLUDE_DIR}/lib/md5_file ea_validation_policy)
-target_link_libraries(ea_validator EvolutionaryAlgorithms DBEvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
+target_link_libraries(ea_validator DBEvolutionaryAlgorithms EvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
 
 add_executable(ea_assimilator ${BOINC_INCLUDE_DIR}/sched/assimilator ea_assimilation_policy)
 target_link_libraries(ea_assimilator ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
