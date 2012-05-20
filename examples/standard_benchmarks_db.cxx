@@ -7,11 +7,14 @@
 #include <stdint.h>
 
 #include "particle_swarm.hxx"
+#include "particle_swarm_db.hxx"
 #include "differential_evolution.hxx"
 
 //from undvc_common
 #include "arguments.hxx"
 #include "benchmarks.hxx"
+
+#include "mysql.h"
 
 /**
  *  Define a type for our objective function so we
@@ -76,22 +79,48 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
         }
     }
 
+    MYSQL *conn = mysql_init(NULL);
+
+    if (conn == NULL) {
+        printf("Error initializing mysql %u: %s\n", mysql_errno(conn), mysql_error(conn));
+        exit(1);
+    }
+
+    string db_host, db_name, db_password, db_user;
+    get_argument(arguments, "--db_host", true, db_host);
+    get_argument(arguments, "--db_name", true, db_name);
+    get_argument(arguments, "--db_user", true, db_user);
+    get_argument(arguments, "--db_password", true, db_password);
+
+    if (mysql_real_connect(conn, db_host.c_str(), db_user.c_str(), db_password.c_str(), db_name.c_str(), 0, NULL, 0) == NULL) {
+        printf("Error connecting to database %u: %s\n", mysql_errno(conn), mysql_error(conn));
+        exit(1);
+    }
+
     string search_type;
     get_argument(arguments, "--search_type", true, search_type);
-    if (search_type.compare("ps") == 0) {
-        ParticleSwarm ps(min_bound, max_bound, arguments);
-        ps.iterate(f);
 
-    } else if (search_type.compare("de") == 0) {
-        DifferentialEvolution de(min_bound, max_bound, arguments);
-        de.iterate(f);
+    try {
+        if (search_type.compare("ps") == 0) {
+//            ParticleSwarmDB::create_tables(conn);
+            ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
+            ps.iterate(f);
 
-    } else {
-        fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
-        fprintf(stderr, "Possibilities are:\n");
-        fprintf(stderr, "    de     -       differential evolution\n");
-        fprintf(stderr, "    ps     -       particle swarm optimization\n");
-        exit(0);
+        } else if (search_type.compare("de") == 0) {
+//            DifferentialEvolutionDB::create_tables(conn);
+//            DifferentialEvolutiondB de(conn, min_bound, max_bound, arguments);
+//            de.iterate(f);
+
+        } else {
+            fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
+            fprintf(stderr, "Possibilities are:\n");
+            fprintf(stderr, "    de     -       differential evolution\n");
+            fprintf(stderr, "    ps     -       particle swarm optimization\n");
+            exit(0);
+        }
+    } catch (string err_msg) {
+        cout << "search failed with error message: " << endl;
+        cout << "    " << err_msg << endl;
     }
 
     return 0;
