@@ -21,10 +21,19 @@
 
 #include "parse_xml.hxx"
 
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+
 #define FITNESS_ERROR_BOUND 10e-10
 
 
 map<string, EvolutionaryAlgorithm*> searches;
+
+typedef boost::mt11213b RNGType;
+RNGType rng( time(0) );
+boost::uniform_real<> zero_to_one(0.0, 1.0);
+boost::variate_generator< RNGType, boost::uniform_real<> > random_generator(rng, zero_to_one);
+
 
 
 /*
@@ -103,7 +112,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                 else if (error_rate < 0.1) error_rate = 0.1;
 
                 //use adaptive validation
-                if (drand48() < error_rate) {
+                if (random_generator() < error_rate) {
                     result.validate_state = VALIDATE_STATE_VALID;
                     canonicalid = result.id;
                 }
