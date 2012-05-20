@@ -221,7 +221,6 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
      */
     vector<double> parent(number_parameters, 0);
 
-
     switch (parent_selection) {
         case PARENT_BEST:
             parent.assign(population[global_best_id].begin(), population[global_best_id].end());
@@ -367,7 +366,7 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
     cout << "   directional:                 " << directional << endl;
 
     uint32_t id;
-    vector<double> parameters;
+    vector<double> parameters(number_parameters, 0);
 
     while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
         for (uint32_t i = 0; i < population_size; i++) {

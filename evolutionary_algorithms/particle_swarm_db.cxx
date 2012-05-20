@@ -131,8 +131,6 @@ ParticleSwarmDB::construct_from_database(string query) throw (string) {
 
         construct_from_database(row);
         mysql_free_result(result);
-
-        cout << this << endl;
     } else {
         ostringstream ex_msg;
         ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
@@ -303,8 +301,8 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
 //Create a particle swarm entirely from defined parameters.
 ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                   const string name,
-                                  const vector<double> &min_bound,            /* min bound is copied into the search */
-                                  const vector<double> &max_bound,            /* max bound is copied into the search */
+                                  const vector<double> &min_bound,                 /* min bound is copied into the search */
+                                  const vector<double> &max_bound,                 /* max bound is copied into the search */
                                   const uint32_t population_size,
                                   const double inertia,                            /* intertia */
                                   const double global_best_weight,                 /* global best weight */
@@ -316,6 +314,25 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
     this->name = name;
     insert_to_database();
 }
+
+//Create a particle swarm entirely from defined parameters.
+ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
+                                  const string name,
+                                  const vector<double> &min_bound,                 /* min bound is copied into the search */
+                                  const vector<double> &max_bound,                 /* max bound is copied into the search */
+                                  const uint32_t population_size,
+                                  const double inertia,                            /* intertia */
+                                  const double global_best_weight,                 /* global best weight */
+                                  const double local_best_weight,                  /* local best weight */
+                                  const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                                  const uint32_t maximum_created,                  /* default value is 0 which means no termination */
+                                  const uint32_t maximum_reported                  /* default value is 0 which means no termination */
+                                ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_created, maximum_reported) {
+    this->conn = conn;
+    this->name = name;
+    insert_to_database();
+}
+
 
 ParticleSwarmDB::~ParticleSwarmDB() {
 }

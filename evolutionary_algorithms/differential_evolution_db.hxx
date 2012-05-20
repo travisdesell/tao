@@ -21,42 +21,44 @@ class DifferentialEvolutionDB : public DifferentialEvolution {
         DifferentialEvolutionDB(MYSQL *conn, std::string name) throw (std::string);
         DifferentialEvolutionDB(MYSQL *conn, int id) throw (std::string);
 
-        DifferentialEvolution( MYSQL *conn,
-                               const std::vector<std::string> &arguments) throw (std::string);
+        DifferentialEvolutionDB( MYSQL *conn,
+                                 const std::vector<std::string> &arguments) throw (std::string);
 
-        DifferentialEvolution( MYSQL *conn,
-                               const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
-                               const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
-                               const std::vector<std::string> &arguments) throw (std::string);          /* initialize the DE from command line arguments */
+        DifferentialEvolutionDB( MYSQL *conn,
+                                 const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                 const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                 const std::vector<std::string> &arguments) throw (std::string);          /* initialize the DE from command line arguments */
 
-        DifferentialEvolution( MYSQL *conn,
-                               const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
-                               const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
-                               const uint32_t population_size,
-                               const uint16_t parent_selection,                                         /* How to select the parent */
-                               const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
-                               const uint16_t recombination_selection,                                  /* How to perform recombination */
-                               const double parent_scaling_factor,                                      /* weight for the parent calculation*/
-                               const double differential_scaling_factor,                                /* weight for the differential calculation */
-                               const double crossover_rate,                                             /* crossover rate for recombination */
-                               const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
-                               const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
-                             ) throw (std::string);
+        DifferentialEvolutionDB( MYSQL *conn,
+                                 const std::string name,
+                                 const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                 const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                 const uint32_t population_size,
+                                 const uint16_t parent_selection,                                         /* How to select the parent */
+                                 const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                 const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                 const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                 const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                 const double crossover_rate,                                             /* crossover rate for recombination */
+                                 const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                 const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
+                               ) throw (std::string);
 
-        DifferentialEvolution( MYSQL *conn,
-                               const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
-                               const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
-                               const uint32_t population_size,
-                               const uint16_t parent_selection,                                         /* How to select the parent */
-                               const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
-                               const uint16_t recombination_selection,                                  /* How to perform recombination */
-                               const double parent_scaling_factor,                                      /* weight for the parent calculation*/
-                               const double differential_scaling_factor,                                /* weight for the differential calculation */
-                               const double crossover_rate,                                             /* crossover rate for recombination */
-                               const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
-                               const uint32_t maximum_created,                                          /* default value is 0 which means no termination */
-                               const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
-                             ) throw (std::string);
+        DifferentialEvolutionDB( MYSQL *conn,
+                                 const std::string name,
+                                 const std::vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                 const std::vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                 const uint32_t population_size,
+                                 const uint16_t parent_selection,                                         /* How to select the parent */
+                                 const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                 const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                 const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                 const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                 const double crossover_rate,                                             /* crossover rate for recombination */
+                                 const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                 const uint32_t maximum_created,                                          /* default value is 0 which means no termination */
+                                 const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
+                               ) throw (std::string);
 
         ~DifferentialEvolutionDB();
 

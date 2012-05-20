@@ -39,7 +39,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, int id) throw (str
 }
 
 bool
-DifferentialEvolutionDB::search_exists(MYSQL *conn, std::string search_name) throw (std::string) {
+DifferentialEvolutionDB::search_exists(MYSQL *conn, string search_name) throw (string) {
     ostringstream query;
     query << "SELECT id FROM differential_evolution where name = '" << search_name << "'";
 
@@ -63,15 +63,18 @@ DifferentialEvolutionDB::search_exists(MYSQL *conn, std::string search_name) thr
 
 void
 DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
-    ostringstream swarm_query;
-    swarm_query << "CREATE TABLE `differential_evolution` ("
+    ostringstream de_query;
+    de_query << "CREATE TABLE `differential_evolution` ("
                 << "    `id` int(11) NOT NULL AUTO_INCREMENT,"
                 << "    `name` varchar(254) NOT NULL DEFAULT '',"
-                << "    `inertia` double NOT NULL DEFAULT '1',"
-                << "    `global_best_weight` double NOT NULL DEFAULT '2',"
-                << "    `local_best_weight` double NOT NULL DEFAULT '2',"
-                << "    `initial_velocity_scale` double NOT NULL DEFAULT '2',"
-                << "    `current_particle` int(11) NOT NULL DEFAULT '0',"
+                << "    `parent_selection` int(11) NOT NULL DEFAULT '0', "
+                << "    `number_pairs` int(11) NOT NULL DEFAULT '0', "
+                << "    `recombination_selection` int(11) NOT NULL DEFAULT '0', "
+                << "    `parent_scaling_factor` double NOT NULL default  '1', "
+                << "    `differential_scaling_factor` double NOT NULL default  '1', "
+                << "    `crossover_rate` double NOT NULL default  '0.5', "
+                << "    `directional` tinyint(1) NOT NULL default  '0', "
+                << "    `current_individual` int(11) NOT NULL DEFAULT '0',"
                 << "    `initialized_individuals` int(11) NOT NULL DEFAULT '0',"
                 << "    `current_iteration` int(11) NOT NULL DEFAULT '0',"
                 << "    `maximum_iterations` int(11) NOT NULL DEFAULT '0',"
@@ -86,30 +89,28 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
                 << "UNIQUE KEY `name` (`name`)"
                 << ") ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1";
 
-    cout << "creating differential_evolution table with: " << endl << swarm_query.str() << endl << endl;
+    cout << "creating differential_evolution table with: " << endl << de_query.str() << endl << endl;
 
-    if (mysql_query(conn, swarm_query.str().c_str())) {
+    if (mysql_query(conn, de_query.str().c_str())) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not create particle swarm table with query: '" << swarm_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not create differential evolution table with query: '" << de_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 
-    ostringstream particle_query;
-    particle_query  << "CREATE TABLE `particle` ("
-                    << "    `differential_evolution_id` int(11) NOT NULL,"
-                    << "    `position` int(11) NOT NULL,"
-                    << "    `local_best_fitness` double NOT NULL,"
-                    << "    `parameters` varchar(2048) NOT NULL,"
-                    << "    `velocity` varchar(2048) NOT NULL,"
-                    << "    `local_best` varchar(2048) NOT NULL,"
-                    << "PRIMARY KEY (`differential_evolution_id`,`position`)"
-                    << ") ENGINE=InnoDB DEFAULT CHARSET=latin1";
+    ostringstream individual_query;
+    individual_query  << "CREATE TABLE `de_individual` ("
+                      << "    `differential_evolution_id` int(11) NOT NULL,"
+                      << "    `position` int(11) NOT NULL,"
+                      << "    `fitness` double NOT NULL,"
+                      << "    `parameters` varchar(2048) NOT NULL,"
+                      << "PRIMARY KEY (`differential_evolution_id`,`position`)"
+                      << ") ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
-    cout << "creating particle table with: " << endl << particle_query.str() << endl << endl;
+    cout << "creating de_individual table with: " << endl << individual_query.str() << endl << endl;
 
-    if (mysql_query(conn, particle_query.str().c_str())) {
+    if (mysql_query(conn, individual_query.str().c_str())) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not create particle table with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not create de_individual table with query: '" << individual_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 }
@@ -125,17 +126,15 @@ DifferentialEvolutionDB::construct_from_database(string query) throw (string) {
         
         if (row == NULL) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: could not construct particle swarm '" << name << "' from database, it does not exist. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: could not construct differential evolution '" << name << "' from database, it does not exist. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
 
         construct_from_database(row);
         mysql_free_result(result);
-
-        cout << this << endl;
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not get differential evolution from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 }
@@ -147,78 +146,84 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     name = row[1];
 
     //Inherited from DifferentialEvolution
-    inertia = atof(row[2]);
-    global_best_weight = atof(row[3]);
-    local_best_weight = atof(row[4]);
-    initial_velocity_scale = atof(row[5]);
+    parent_selection = atoi(row[2]);
+    number_pairs = atoi(row[3]);
+    recombination_selection = atoi(row[4]);
+    parent_scaling_factor = atof(row[5]);
+    differential_scaling_factor = atof(row[6]);
+    crossover_rate = atof(row[7]);
+    directional = atoi(row[8]);
 
-    current_particle = atoi(row[6]);
-    initialized_individuals = atoi(row[7]);
+    current_individual = atoi(row[9]);
+    initialized_individuals = atoi(row[10]);
 
     //inherited from EvolutionaryAlgorithm
-    current_iteration = atoi(row[8]);
-    maximum_iterations = atoi(row[9]);
-    individuals_created = atoi(row[10]);
-    maximum_created = atoi(row[11]);
-    individuals_reported = atoi(row[12]);
-    maximum_reported = atoi(row[13]);
+    current_iteration = atoi(row[11]);
+    maximum_iterations = atoi(row[12]);
+    individuals_created = atoi(row[13]);
+    maximum_created = atoi(row[14]);
+    individuals_reported = atoi(row[15]);
+    maximum_reported = atoi(row[16]);
 
-    population_size = atoi(row[14]);
-    string_to_vector<double>(row[15], atof, min_bound);
-    string_to_vector<double>(row[16], atof, max_bound);
+    population_size = atoi(row[17]);
+    string_to_vector<double>(row[18], atof, min_bound);
+    string_to_vector<double>(row[19], atof, max_bound);
     number_parameters = min_bound.size();
 
-    //Get the particle information from the database
+    //Get the individual information from the database
     ostringstream oss;
-    oss << "SELECT * FROM particle WHERE differential_evolution_id = " << this->id << " ORDER BY position";
+    oss << "SELECT * FROM de_individual WHERE differential_evolution_id = " << this->id << " ORDER BY position";
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
     cout << oss.str() << endl;
 
-    local_best_fitnesses.resize(population_size, -numeric_limits<double>::max());
-    local_bests.resize(population_size, vector<double>(number_parameters, 0.0));
-    particles.resize(population_size, vector<double>(number_parameters, 0.0));
-    velocities.resize(population_size, vector<double>(number_parameters, 0.0));
+    fitnesses.resize(population_size, -numeric_limits<double>::max());
+    population.resize(population_size, vector<double>(number_parameters, 0.0));
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
         if (num_results != population_size) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: got " << num_results << " results when looking up particles for search " << name << ", with a population size: " << population_size << ". Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: got " << num_results << " results when looking up individuals for search " << name << ", with a population size: " << population_size << ". Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }   
 
-        MYSQL_ROW particle_row;
+        MYSQL_ROW individual_row;
 
-        while ((particle_row = mysql_fetch_row(result))) {
-            int particle_id = atoi(particle_row[1]);
-            local_best_fitnesses[particle_id] = atof(particle_row[2]);
+        while ((individual_row = mysql_fetch_row(result))) {
+            int individual_id = atoi(individual_row[1]);
+            fitnesses[individual_id] = atof(individual_row[2]);
 
-            string_to_vector<double>(particle_row[3], atof, particles[particle_id]);
-            string_to_vector<double>(particle_row[4], atof, velocities[particle_id]);
-            string_to_vector<double>(particle_row[5], atof, local_bests[particle_id]);
+            string_to_vector<double>(individual_row[3], atof, population[individual_id]);
+
+//            cout   << "    [DEIndividual" << endl
+//                   << "        position = " << individual_id << endl
+//                   << "        fitness = " << fitnesses[individual_id] << endl
+//                   << "        parameters = '" << vector_to_string<double>(population[individual_id]) << "'" << endl
+//                   << "    ]" << endl;
+
          }   
         mysql_free_result(result);
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: looking up particles with query: '" << oss.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: looking up individuals with query: '" << oss.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 
     //calculate global_best and global_best_fitness
     global_best_fitness = -numeric_limits<double>::max();
-    for (uint32_t i = 0; i < local_bests.size(); i++) {
-        if (global_best_fitness < local_best_fitnesses[i]) {
-            global_best.assign(local_bests[i].begin(), local_bests[i].end());
-            global_best_fitness = local_best_fitnesses[i];
+    for (uint32_t i = 0; i < population.size(); i++) {
+        if (global_best_fitness < fitnesses[i]) {
+            global_best_id = i;
+            global_best_fitness = fitnesses[i];
         }
     }
 }
 
 
 /**
- *  Insert a created particle swarm to a database.
+ *  Insert a created differential evolution to a database.
  */
 void
 DifferentialEvolutionDB::insert_to_database() throw (string) {
@@ -227,11 +232,14 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
     query << "INSERT INTO differential_evolution"
           << " SET "
           << "  name = '" << name << "'"
-          << ", inertia = " << inertia
-          << ", global_best_weight = " << global_best_weight
-          << ", local_best_weight = " << local_best_weight
-          << ", initial_velocity_scale = " << initial_velocity_scale
-          << ", current_particle = " << current_particle
+          << ", parent_selection = " << parent_selection
+          << ", number_pairs = " << number_pairs
+          << ", recombination_selection = " << recombination_selection
+          << ", parent_scaling_factor = " << parent_scaling_factor
+          << ", differential_scaling_factor = " << differential_scaling_factor
+          << ", crossover_rate = " << crossover_rate
+          << ", directional = " << directional
+          << ", current_individual = " << current_individual
           << ", initialized_individuals = " << initialized_individuals
           << ", current_iteration = " << current_iteration  
           << ", maximum_iterations = " << maximum_iterations
@@ -250,28 +258,26 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
         id = mysql_insert_id(conn);
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get particle swarm id from insert query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not get differential evolution id from insert query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
     mysql_free_result(result);
 
     for (uint32_t i = 0; i < population_size; i++) {
-        ostringstream particle_query;
-        particle_query << "INSERT INTO particle"
-                       << " SET "
-                       << "  differential_evolution_id = " << id
-                       << ", position = " << i
-                       << ", local_best_fitness = " << local_best_fitnesses[i]
-                       << ", parameters = '" << vector_to_string<double>(particles[i]) << "'"
-                       << ", velocity = '" << vector_to_string<double>(velocities[i]) << "'"
-                       << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'";
+        ostringstream individual_query;
+        individual_query << "INSERT INTO de_individual"
+                         << " SET "
+                         << "  differential_evolution_id = " << id
+                         << ", position = " << i
+                         << ", fitness = " << fitnesses[i]
+                         << ", parameters = '" << vector_to_string<double>(population[i]) << "'";
 
-        mysql_query(conn, particle_query.str().c_str());
+        mysql_query(conn, individual_query.str().c_str());
 //        result = mysql_store_result(conn);
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: creating particle with insert query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: creating de_individual with insert query: '" << individual_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
         mysql_free_result(result);
@@ -281,7 +287,7 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
 /**
  *  The following constructors create new DifferentialEvolutions and insert them into the database.
  */
-//Create a particle swarm entirely from arguments
+//Create a differential evolution entirely from arguments
 DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, const vector<string> &arguments) throw (string) : DifferentialEvolution(arguments) {
     this->conn = conn;
     get_argument(arguments, "--search_name", true, name);
@@ -289,7 +295,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, const vector<strin
 }
 
 
-//Create a particle swarm from arguments and a given min and max bound
+//Create a differential evolution from arguments and a given min and max bound
 DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                   const vector<double> &min_bound,            /* min bound is copied into the search */
                                   const vector<double> &max_bound,            /* max bound is copied into the search */
@@ -300,18 +306,41 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
     insert_to_database();
 }
 
-//Create a particle swarm entirely from defined parameters.
+//Create a differential evolution entirely from defined parameters.
 DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
-                                  const string name,
-                                  const vector<double> &min_bound,            /* min bound is copied into the search */
-                                  const vector<double> &max_bound,            /* max bound is copied into the search */
-                                  const uint32_t population_size,
-                                  const double inertia,                            /* intertia */
-                                  const double global_best_weight,                 /* global best weight */
-                                  const double local_best_weight,                  /* local best weight */
-                                  const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
-                                  const uint32_t maximum_iterations                /* default value is 0 which means no termination */
-                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_iterations) {
+                                                  const string name,
+                                                  const vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                                  const vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                                  const uint32_t population_size,
+                                                  const uint16_t parent_selection,                                         /* How to select the parent */
+                                                  const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                                  const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                                  const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                                  const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                                  const double crossover_rate,                                             /* crossover rate for recombination */
+                                                  const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                                  const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
+                                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_iterations) {
+    this->conn = conn;
+    this->name = name;
+    insert_to_database();
+}
+
+DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
+                                                 const string name,
+                                                 const vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                                 const vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                                 const uint32_t population_size,
+                                                 const uint16_t parent_selection,                                         /* How to select the parent */
+                                                 const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                                 const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                                 const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                                 const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                                 const double crossover_rate,                                             /* crossover rate for recombination */
+                                                 const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                                 const uint32_t maximum_created,                                          /* default value is 0 which means no termination */
+                                                 const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
+                                               ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_created, maximum_reported) {
     this->conn = conn;
     this->name = name;
     insert_to_database();
@@ -330,53 +359,44 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
     bool modified = DifferentialEvolution::insert_individual(id, parameters, fitness);
 
     if (modified) {
-//        MYSQL_RES *result;
-        ostringstream particle_query;
-        particle_query << "UPDATE particle"
-                       << " SET "
-                       << "  local_best_fitness = " << local_best_fitnesses[id]
-                       << ", parameters = '" << vector_to_string<double>(particles[id]) << "'"
-                       << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
-                       << ", local_best = '" << vector_to_string<double>(local_bests[id]) << "'"
-                       << " WHERE "
-                       << "     differential_evolution_id = " << this->id
-                       << " AND position = " << id;
+        ostringstream individual_query;
+        individual_query << "UPDATE de_individual"
+                         << " SET "
+                         << "  fitness = " << fitnesses[id]
+                         << ", parameters = '" << vector_to_string<double>(population[id]) << "'"
+                         << " WHERE "
+                         << "     differential_evolution_id = " << this->id
+                         << " AND position = " << id;
 
-        mysql_query(conn, particle_query.str().c_str());
-//        result = mysql_store_result(conn);
+        mysql_query(conn, individual_query.str().c_str());
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: updating particle with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: updating individual with query: '" << individual_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
-//        mysql_free_result(result);
 
-        ostringstream swarm_query;
-        swarm_query << " UPDATE differential_evolution"
-                    << " SET "
-                    << "  current_particle = " << current_particle
-                    << ", initialized_individuals = " << initialized_individuals
-                    << ", current_iteration = " << current_iteration
-                    << ", maximum_iterations = " << maximum_iterations
-                    << ", individuals_created = " << individuals_created
-                    << ", maximum_created = " << maximum_created
-                    << ", individuals_reported = " << individuals_reported
-                    << ", maximum_reported = " << maximum_reported
-                    << " WHERE "
-                    << "    id = " << this->id << endl;
+        ostringstream de_query;
+        de_query << " UPDATE differential_evolution"
+                 << " SET "
+                 << "  current_individual = " << current_individual
+                 << ", initialized_individuals = " << initialized_individuals
+                 << ", current_iteration = " << current_iteration
+                 << ", maximum_iterations = " << maximum_iterations
+                 << ", individuals_created = " << individuals_created
+                 << ", maximum_created = " << maximum_created
+                 << ", individuals_reported = " << individuals_reported
+                 << ", maximum_reported = " << maximum_reported
+                 << " WHERE "
+                 << "    id = " << this->id << endl;
 
-//        cout << swarm_query.str() << endl;
-
-        mysql_query(conn, swarm_query.str().c_str());
-//        result = mysql_store_result(conn);
+        mysql_query(conn, de_query.str().c_str());
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: updating differential_evolution with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: updating differential_evolution with query: '" << individual_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
-//        mysql_free_result(result);
     }
 
     return modified;
@@ -387,11 +407,14 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
     stream  << "[DifferentialEvolutionDB " << endl
             << "    id = " << id << endl
             << "    name = '" << name << "'" << endl
-            << "    inertia = " << inertia << endl
-            << "    global_best_weight = " << global_best_weight << endl
-            << "    local_best_weight = " << local_best_weight << endl
-            << "    initial_velocity_scale = " << initial_velocity_scale << endl
-            << "    current_particle = " << current_particle << endl
+            << "    parent_selection = " << parent_selection
+            << "    number_pairs = " << number_pairs
+            << "    recombination_selection = " << recombination_selection
+            << "    parent_scaling_factor = " << parent_scaling_factor
+            << "    differential_scaling_factor = " << differential_scaling_factor
+            << "    crossover_rate = " << crossover_rate
+            << "    directional = " << directional
+            << "    current_individual = " << current_individual << endl
             << "    initialized_individuals = " << initialized_individuals << endl
             << "    current_iteration = " << current_iteration << endl
             << "    maximum_iterations = " << maximum_iterations << endl
@@ -405,13 +428,11 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
             << "]" << endl;
 
     for (uint32_t i = 0; i < population_size; i++) {
-        stream << "    [Particle" << endl
+        stream << "    [DEIndividual" << endl
                << "        differential_evolution_id = " << id << endl
                << "        position = " << i << endl
-               << "        local_best_fitness = " << local_best_fitnesses[i] << endl
-               << "        parameters = '" << vector_to_string<double>(particles[i]) << "'" << endl
-               << "        velocity = '" << vector_to_string<double>(velocities[i]) << "'" << endl
-               << "        local_best = '" << vector_to_string<double>(local_bests[i]) << "'" << endl
+               << "        fitness = " << fitnesses[i] << endl
+               << "        parameters = '" << vector_to_string<double>(population[i]) << "'" << endl
                << "    ]" << endl;
     }
 }
