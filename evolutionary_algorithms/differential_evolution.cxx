@@ -54,13 +54,13 @@ DifferentialEvolution::parse_arguments(const vector<string> &arguments) {
         } else if (parent_selection_name.compare("current-to-random") == 0) {
             parent_selection = PARENT_CURRENT_TO_RANDOM;
         } else {
-            fprintf(stderr, "Improperly specified parent selection type: '%s'\n", parent_selection_name.c_str());
-            fprintf(stderr, "Possibilities are:\n");
-            fprintf(stderr, "   best\n");
-            fprintf(stderr, "   random\n");
-            fprintf(stderr, "   current-to-best\n");
-            fprintf(stderr, "   current-to-random\n");
-            exit(0);
+            cerr << "Improperly specified parent selection type: '" << parent_selection_name.c_str() << "'" << endl;
+            cerr << "Possibilities are:" << endl;
+            cerr << "   best" << endl;
+            cerr << "   random" << endl;
+            cerr << "   current-to-best" << endl;
+            cerr << "   current-to-random" << endl;
+            exit(1);
         }   
     } else {
         cerr << "Argument '--parent_selection <S>' not found, using default of 'best'." << endl;
@@ -77,13 +77,13 @@ DifferentialEvolution::parse_arguments(const vector<string> &arguments) {
         } else if (recombination_selection_name.compare("none") == 0) {
             recombination_selection = RECOMBINATION_NONE;
         } else {
-            fprintf(stderr, "Improperly specified recombination type: '%s'\n", parent_selection_name.c_str());
-            fprintf(stderr, "Possibilities are:\n");
-            fprintf(stderr, "   binary\n");
-            fprintf(stderr, "   exponential\n");
-            fprintf(stderr, "   sum\n");
-            fprintf(stderr, "   none\n");
-            exit(0);
+            cerr << "Improperly specified recombination type: '%s'" << parent_selection_name.c_str() << "'" << endl;
+            cerr << "Possibilities are:" << endl;
+            cerr << "   binary" << endl;
+            cerr << "   exponential" << endl;
+            cerr << "   sum" << endl;
+            cerr << "   none" << endl;
+            exit(1);
         }   
     } else {
         cerr << "Argument '--recombination_selection <S>' not found, using default of 'binary'." << endl;
