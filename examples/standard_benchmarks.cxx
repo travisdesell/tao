@@ -23,7 +23,7 @@
  */
 typedef double (*objective_function)(const vector<double> &);
 
-int main(uint32_t argc /* number of command line arguments */, char **argv /* command line argumens */ ) {
+int main(int argc /* number of command line arguments */, char **argv /* command line argumens */ ) {
     vector<string> arguments(argv, argv + argc);
 
     //assign the objective function variable to the objective function we're going to use
@@ -38,14 +38,14 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     else if (objective_function_name.compare("rastrigin") == 0)     f = rastrigin;
     else if (objective_function_name.compare("rosenbrock") == 0)    f = rosenbrock;
     else {
-        fprintf(stderr, "Improperly specified objective function: '%s'\n", objective_function_name.c_str());
-        fprintf(stderr, "Possibilities are:\n");
-        fprintf(stderr, "    sphere\n");
-        fprintf(stderr, "    ackley\n");
-        fprintf(stderr, "    griewank\n");
-        fprintf(stderr, "    rastrigin\n");
-        fprintf(stderr, "    rosenbrock\n");
-        exit(0);
+        cerr << "Improperly specified objective function: '" << objective_function_name.c_str() << "'" << endl;
+        cerr << "Possibilities are:" << endl;
+        cerr << "    sphere" << endl;
+        cerr << "    ackley" << endl;
+        cerr << "    griewank" << endl;
+        cerr << "    rastrigin" << endl;
+        cerr << "    rosenbrock" << endl;
+        exit(1);
     }
 
     /**
@@ -87,11 +87,11 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
         de.iterate(f);
 
     } else {
-        fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
-        fprintf(stderr, "Possibilities are:\n");
-        fprintf(stderr, "    de     -       differential evolution\n");
-        fprintf(stderr, "    ps     -       particle swarm optimization\n");
-        exit(0);
+        cerr << "Improperly specified search type: '" << search_type.c_str() <<"'" << endl;
+        cerr << "Possibilities are:" << endl;
+        cerr << "    de     -       differential evolution" << endl;
+        cerr << "    ps     -       particle swarm optimization" << endl;
+        exit(1);
     }
 
     return 0;
