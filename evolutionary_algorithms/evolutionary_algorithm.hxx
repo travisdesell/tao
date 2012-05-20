@@ -72,6 +72,7 @@ class EvolutionaryAlgorithm {
          *  The following method is for synchronous optimization and is purely virtual
          */
         virtual void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string) = 0;
+        virtual void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t seed)) throw (std::string) = 0;
 };
 
 #endif

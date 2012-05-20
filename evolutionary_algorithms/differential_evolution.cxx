@@ -389,3 +389,33 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
         current_iteration++;
     }
 }
+
+void
+DifferentialEvolution::iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (string) {
+    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
+
+    cout << "Initialized differential evolution. " << endl;
+    cout << "   maximum_iterations:          " << maximum_iterations << endl;
+    cout << "   current_iteration:           " << current_iteration << endl;
+    cout << "   number_pairs:                " << number_pairs << endl;
+    cout << "   parent_selection:            " << parent_selection << endl;
+    cout << "   recombination_selection:     " << recombination_selection << endl;
+    cout << "   parent_scaling_factor:       " << parent_scaling_factor << endl;
+    cout << "   differential_scaling_factor: " << differential_scaling_factor << endl;
+    cout << "   crossover_rate:              " << crossover_rate << endl;
+    cout << "   directional:                 " << directional << endl;
+
+    uint32_t id;
+    uint32_t seed;
+    vector<double> parameters(number_parameters, 0);
+
+    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
+        for (uint32_t i = 0; i < population_size; i++) {
+            new_individual(id, parameters, seed);
+            double fitness = objective_function(parameters, seed);
+            insert_individual(id, parameters, fitness, seed);
+        }
+
+        current_iteration++;
+    }
+}

@@ -75,6 +75,7 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
          *  The following method is for synchronous optimization 
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
+        void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (std::string);      //this objective function requires a seed
 };
 
 #endif

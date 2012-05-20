@@ -242,3 +242,30 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) thr
     }
 }
 
+void
+ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, const uint32_t)) throw (string) {
+    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
+
+    cout << "Initialized partilce swarm." << endl;
+    cout << "   maximum_iterations: " << maximum_iterations << endl;
+    cout << "   current_iteration:  " << current_iteration << endl;
+    cout << "   inertia:            " << inertia << endl;
+    cout << "   global_best_weight: " << global_best_weight << endl;
+    cout << "   local_best_weight:  " << local_best_weight << endl;
+
+    uint32_t id;
+    uint32_t seed;
+    vector<double> parameters(number_parameters, 0);
+
+    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
+        for (uint32_t i = 0; i < population_size; i++) {
+            new_individual(id, parameters, seed);
+
+            double fitness = objective_function(parameters, seed);
+            insert_individual(id, parameters, fitness, seed);
+        }
+
+        current_iteration++;
+    }
+}
+

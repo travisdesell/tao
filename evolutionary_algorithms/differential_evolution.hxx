@@ -94,6 +94,7 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
          *  The following method is for synchronous optimization and is purely virtual
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
+        void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (std::string);    //this objective function also requires a seed
 };
 
 
