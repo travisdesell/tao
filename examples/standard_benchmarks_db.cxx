@@ -100,11 +100,12 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     string search_type;
     get_argument(arguments, "--search_type", true, search_type);
 
+    string search_name;
+    get_argument(arguments, "--search_name", true, search_name);
+
     try {
         if (search_type.compare("ps") == 0) {
 //            ParticleSwarmDB::create_tables(conn);
-            string search_name;
-            get_argument(arguments, "--search_name", true, search_name);
 
             if (ParticleSwarmDB::search_exists(conn, search_name)) {
                 cout << "Restarting database particle swarm search called '" << search_name << "'." << endl;
@@ -117,9 +118,17 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             }
 
         } else if (search_type.compare("de") == 0) {
-//            DifferentialEvolutionDB::create_tables(conn);
-//            DifferentialEvolutiondB de(conn, min_bound, max_bound, arguments);
-//            de.iterate(f);
+            DifferentialEvolutionDB::create_tables(conn);
+
+            if (DifferentialEvolutionDB::search_exists(conn, search_name)) {
+                cout << "Restarting database differential evolution search called '" << search_name << "'." << endl;
+                DifferentialEvolutiondB de(conn, search_name);
+                de.iterate(f);
+            } else {
+                cout << "Creating new database differential evolution search called '" << search_name << "'." << endl;
+                DifferentialEvolutiondB de(conn, min_bound, max_bound, arguments);
+                de.iterate(f);
+            }
 
         } else {
             fprintf(stderr, "Improperly specified search type: '%s'\n", search_type.c_str());
