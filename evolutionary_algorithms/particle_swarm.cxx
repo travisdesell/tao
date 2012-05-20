@@ -105,6 +105,15 @@ ParticleSwarm::ParticleSwarm( const vector<double> &min_bound,                  
 ParticleSwarm::~ParticleSwarm() {
 }
 
+
+void
+ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
+    ParticleSwarm::new_individual(id, parameters);
+
+    seeds[id] = drand48() * numeric_limits<uint32_t>::max();
+    seed = seeds[id];
+}
+
 void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
     id = current_particle;

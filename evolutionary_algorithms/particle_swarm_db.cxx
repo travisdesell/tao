@@ -102,6 +102,7 @@ ParticleSwarmDB::create_tables(MYSQL *conn) throw (string) {
                     << "    `parameters` varchar(2048) NOT NULL,"
                     << "    `velocity` varchar(2048) NOT NULL,"
                     << "    `local_best` varchar(2048) NOT NULL,"
+                    << "    `seed` int(32) UNSIGNED,"
                     << "PRIMARY KEY (`particle_swarm_id`,`position`)"
                     << ") ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
@@ -200,6 +201,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
             string_to_vector<double>(particle_row[3], atof, particles[particle_id]);
             string_to_vector<double>(particle_row[4], atof, velocities[particle_id]);
             string_to_vector<double>(particle_row[5], atof, local_bests[particle_id]);
+            seeds[particle_id] = atoi(particle_row[6]);
          }   
         mysql_free_result(result);
     } else {
@@ -266,7 +268,8 @@ ParticleSwarmDB::insert_to_database() throw (string) {
                        << ", local_best_fitness = " << local_best_fitnesses[i]
                        << ", parameters = '" << vector_to_string<double>(particles[i]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[i]) << "'"
-                       << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'";
+                       << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'"
+                       << ", seed = " << seeds[i];
 
         mysql_query(conn, particle_query.str().c_str());
 //        result = mysql_store_result(conn);
@@ -342,6 +345,11 @@ ParticleSwarmDB::~ParticleSwarmDB() {
 }
 
 void
+ParticleSwarmDB::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
+    ParticleSwarm::new_individual(id, parameters, seed);
+}
+
+void
 ParticleSwarmDB::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
     ParticleSwarm::new_individual(id, parameters);
 }
@@ -359,7 +367,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
                        << ", parameters = '" << vector_to_string<double>(particles[id]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[id]) << "'"
-                       << ", seed = " << seed 
+                       << ", seed = " << seeds[id]
                        << " WHERE "
                        << "     particle_swarm_id = " << this->id
                        << " AND position = " << id;
@@ -434,6 +442,7 @@ ParticleSwarmDB::print_to(ostream& stream) {
                << "        parameters = '" << vector_to_string<double>(particles[i]) << "'" << endl
                << "        velocity = '" << vector_to_string<double>(velocities[i]) << "'" << endl
                << "        local_best = '" << vector_to_string<double>(local_bests[i]) << "'" << endl
+               << "        seed = " << seeds[i] << endl
                << "    ]" << endl;
     }
 }

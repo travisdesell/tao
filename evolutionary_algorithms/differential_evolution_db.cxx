@@ -103,6 +103,7 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
                       << "    `position` int(11) NOT NULL,"
                       << "    `fitness` double NOT NULL,"
                       << "    `parameters` varchar(2048) NOT NULL,"
+                      << "    `seed` int(32) UNSIGNED,"
                       << "PRIMARY KEY (`differential_evolution_id`,`position`)"
                       << ") ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
@@ -200,6 +201,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
             }
 
             string_to_vector<double>(individual_row[3], atof, population[individual_id]);
+            seeds[individual_id] = atoi(individual_row[4]);
 
 //            cout   << "    [DEIndividual" << endl
 //                   << "        position = " << individual_id << endl
@@ -274,7 +276,8 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
                          << "  differential_evolution_id = " << id
                          << ", position = " << i
                          << ", fitness = " << fitnesses[i]
-                         << ", parameters = '" << vector_to_string<double>(population[i]) << "'";
+                         << ", parameters = '" << vector_to_string<double>(population[i]) << "'"
+                         << ", seed = " << seeds[i];
 
         mysql_query(conn, individual_query.str().c_str());
 //        result = mysql_store_result(conn);
@@ -354,9 +357,15 @@ DifferentialEvolutionDB::~DifferentialEvolutionDB() {
 }
 
 void
+DifferentialEvolutionDB::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
+    DifferentialEvolution::new_individual(id, parameters, seed);
+}
+
+void
 DifferentialEvolutionDB::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
     DifferentialEvolution::new_individual(id, parameters);
 }
+
 
 bool
 DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &parameters, double fitness, uint32_t seed) throw (string) {
@@ -368,7 +377,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
                          << " SET "
                          << "  fitness = " << fitnesses[id]
                          << ", parameters = '" << vector_to_string<double>(population[id]) << "'"
-                         << ", seed = " << seed
+                         << ", seed = " << seeds[id]
                          << " WHERE "
                          << "     differential_evolution_id = " << this->id
                          << " AND position = " << id;
@@ -438,6 +447,7 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
                << "        position = " << i << endl
                << "        fitness = " << fitnesses[i] << endl
                << "        parameters = '" << vector_to_string<double>(population[i]) << "'" << endl
+               << "        seed = '" << seeds[i] << endl
                << "    ]" << endl;
     }
 }

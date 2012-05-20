@@ -73,6 +73,7 @@ class DifferentialEvolutionDB : public DifferentialEvolution {
          *  The following methods are used for asynchronous optimization
          */
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
+        virtual void new_individual(uint32_t &id, std::vector<double> &parameters, uint32_t &seed) throw (std::string);
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness, uint32_t seed = 0) throw (std::string);         /* Returns true if the individual was inserted. */
 
         void print_to(std::ostream& stream);

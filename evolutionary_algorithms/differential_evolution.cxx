@@ -200,9 +200,14 @@ DifferentialEvolution::DifferentialEvolution( const std::vector<double> &min_bou
 DifferentialEvolution::~DifferentialEvolution() {
 }
 
-/**
- *  The following methods are used for asynchronous optimization and are purely virtual
- */
+void
+DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &parameters, uint32_t &seed) throw (string) {
+    DifferentialEvolution::new_individual(id, parameters);
+
+    seeds[id] = drand48() * numeric_limits<uint32_t>::max();
+    seed = seeds[id];
+}
+
 void
 DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &parameters) throw (string) {
     id = current_individual;

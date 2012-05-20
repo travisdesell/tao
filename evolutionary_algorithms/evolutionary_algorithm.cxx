@@ -20,6 +20,8 @@ EvolutionaryAlgorithm::initialize() {
     Recombination::check_bounds(min_bound, max_bound);
     number_parameters = min_bound.size();
 
+    seeds = vector<uint32_t>(population_size, 0);
+
     current_iteration = 0;
     individuals_created = 0;
     individuals_reported = 0;
