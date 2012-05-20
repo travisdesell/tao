@@ -86,7 +86,7 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
          *  The following methods are used for asynchronous optimization and are purely virtual
          */
         void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
-        void insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);
+        bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);     /* Returns true if the individual is inserted. */
 
         /**
          *  The following method is for synchronous optimization and is purely virtual

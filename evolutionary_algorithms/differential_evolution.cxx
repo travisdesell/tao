@@ -323,8 +323,9 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 }
 
 
-void
+bool
 DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (string) {
+    bool modified = false;
     if (fitnesses[id] < fitness) {
         if (fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;
 
@@ -341,8 +342,10 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             cout.precision(15);
             cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
         }
+        modified = true;
     }
     individuals_reported++;
+    return true;
 }
 
 /**

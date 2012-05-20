@@ -67,7 +67,7 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
          *  The following methods are used for asynchronous optimization
          */
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
-        virtual void insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);
+        virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string); /* Returns true if the individual is inserted. */
 
         /**
          *  The following method is for synchronous optimization 

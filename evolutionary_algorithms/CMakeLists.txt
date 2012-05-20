@@ -1,5 +1,5 @@
 add_library(EvolutionaryAlgorithms evolutionary_algorithm particle_swarm differential_evolution recombination)
-target_link_libraries(EvolutionaryAlgorithms DeterministicAlgorithms undvc_common)
+target_link_libraries(EvolutionaryAlgorithms undvc_common)
 
 find_package(MySQL REQUIRED)
 
@@ -20,5 +20,5 @@ include_directories(
 #find_library(boinc_sched HINTS ${BOINC_INCLUDE_DIR}/sched)
 
 add_library(DBEvolutionaryAlgorithms particle_swarm_db)
-target_link_libraries(DBEvolutionaryAlgorithms ${MYSQL_LIBRARIES})
+target_link_libraries(DBEvolutionaryAlgorithms undvc_common ${MYSQL_LIBRARIES})
 #target_link_libraries(DBEvolutionaryAlgorithms boinc boinc_lib boinc_api boinc_sched ${MYSQL_LIBRARIES})

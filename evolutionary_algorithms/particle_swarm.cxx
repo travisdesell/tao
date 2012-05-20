@@ -167,11 +167,10 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
     individuals_created++;
 }
 
-void
+bool
 ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, double fitness) throw (string) {
+    bool modified = false;
 //    cout <<  current_iteration << ":" << i << " - NEW  : " << fitness << " [ " << vector_to_string(particles[i]) << " ]" << endl;
-
-    if (local_best_fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;
 
     /**
      *  TODO: do we want to also revert the particles current position to parameters, and it's velocity
@@ -179,12 +178,15 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
      */
 
     if (fitness > local_best_fitnesses[id]) {
+        if (local_best_fitnesses[id] == -numeric_limits<double>::max()) initialized_individuals++;
+
         local_best_fitnesses[id] = fitness;
 //        for (uint32_t i = 0; i < velocities.size(); i++) velocities[id] = parameters[i] - local_bests[i];   //Rewind the velocity
         local_bests[id].assign(parameters.begin(), parameters.end());
 
 //        cout.precision(15);
 //        cout <<  current_iteration << ":" << id << " - LOCAL: " << fitness << " " << vector_to_string(parameters) << endl;
+        modified = true;
     }
 
     if (fitness > global_best_fitness) {
@@ -196,6 +198,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
     }
 
     individuals_reported++;
+    return modified;
 }
 
 void

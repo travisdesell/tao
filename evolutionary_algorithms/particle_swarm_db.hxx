@@ -15,6 +15,8 @@ class ParticleSwarmDB : public ParticleSwarm {
         int id;
         std::string name;
 
+        MYSQL *conn;
+
     public:
         ParticleSwarmDB(MYSQL *conn, std::string name) throw (std::string);
         ParticleSwarmDB(MYSQL *conn, int id) throw (std::string);
@@ -42,15 +44,21 @@ class ParticleSwarmDB : public ParticleSwarm {
 
         ~ParticleSwarmDB();
 
-        void construct_from_database(MYSQL *conn, std::string query) throw (std::string);
-        void construct_from_database(MYSQL *conn, MYSQL_ROW row) throw (std::string);
-        void insert_to_database(MYSQL *conn) throw (std::string);           /* Insert a particle swarm into the database */
+        static void create_tables(MYSQL *conn) throw (std::string);
+
+        void construct_from_database(std::string query) throw (std::string);
+        void construct_from_database(MYSQL_ROW row) throw (std::string);
+        void insert_to_database() throw (std::string);           /* Insert a particle swarm into the database */
 
         /**
          *  The following methods are used for asynchronous optimization
          */
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
-        virtual void insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);
+        virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness) throw (std::string);         /* Returns true if the individual was inserted. */
+
+        void print_to(std::ostream& stream);
+        friend std::ostream& operator<< (std::ostream& stream, ParticleSwarmDB &ps);
 };
+
 
 #endif
