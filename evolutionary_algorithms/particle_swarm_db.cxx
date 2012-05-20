@@ -22,41 +22,43 @@ ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, string name) throw (string) {
     this->conn = conn;
 
     ostringstream oss;
-    oss << "SELECT * FROM particle_swarm WHERE id = " << id;
-    string query = oss.str();
-    cout << query << endl;
+    oss << "SELECT * FROM particle_swarm WHERE name = '" << name << "'";
+    cout << oss.str() << endl;
 
-    construct_from_database(query);
+    construct_from_database(oss.str());
 }
 
 ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, int id) throw (string) {
     this->conn = conn;
 
     ostringstream oss;
-    oss << "SELECT * FROM particle_swarm WHERE name = '" << name << "'";
-    string query = oss.str();
-    cout << query << endl;
+    oss << "SELECT * FROM particle_swarm WHERE id = " << id;
+    cout << oss.str() << endl;
 
-    construct_from_database(query);
+    construct_from_database(oss.str());
 }
 
-void 
-ParticleSwarmDB::construct_from_database(string query) throw (string) {
-    mysql_query(conn, query.c_str());
+bool
+ParticleSwarmDB::search_exists(MYSQL *conn, std::string search_name) throw (std::string) {
+    ostringstream query;
+    query << "SELECT id FROM particle_swarm where name = '" << search_name << "'";
 
-    MYSQL_RES *result = mysql_store_result(conn);
-
-    if (result) {
-        MYSQL_ROW row = mysql_fetch_row(result);
-        construct_from_database(row);
-        mysql_free_result(result);
-
-        cout << this << endl;
-    } else {
+    if (mysql_query(conn, query.str().c_str())) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could query database: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
+
+    MYSQL_RES *result = mysql_store_result(conn);
+    if (result != NULL) {
+        if (mysql_num_rows(result) > 0) return true;
+    } else {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: could not get result from database from query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }
+
+    return false;
 }
 
 void
@@ -88,7 +90,7 @@ ParticleSwarmDB::create_tables(MYSQL *conn) throw (string) {
 
     if (mysql_query(conn, swarm_query.str().c_str())) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not create particle swarm table with query: '" << swarm_query.str() << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not create particle swarm table with query: '" << swarm_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 
@@ -107,10 +109,37 @@ ParticleSwarmDB::create_tables(MYSQL *conn) throw (string) {
 
     if (mysql_query(conn, particle_query.str().c_str())) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not create particle table with query: '" << particle_query.str() << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not create particle table with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 }
+
+void 
+ParticleSwarmDB::construct_from_database(string query) throw (string) {
+    mysql_query(conn, query.c_str());
+
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    if (result != NULL) {
+        MYSQL_ROW row = mysql_fetch_row(result);
+        
+        if (row == NULL) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: could not construct particle swarm '" << name << "' from database, it does not exist. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }
+
+        construct_from_database(row);
+        mysql_free_result(result);
+
+        cout << this << endl;
+    } else {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }
+}
+
 
 void 
 ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
@@ -126,47 +155,6 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     current_particle = atoi(row[6]);
     initialized_individuals = atoi(row[7]);
 
-    //Get the particle information from the database
-    ostringstream oss;
-    oss << "SELECT * FROM particle WHERE particle_swarm_id = " << this->id << " SORT BY id";
-    mysql_query(conn, oss.str().c_str());
-    MYSQL_RES *result = mysql_store_result(conn);
-
-    local_best_fitnesses.resize(population_size, -numeric_limits<double>::max());
-    local_bests.resize(population_size, vector<double>(number_parameters, 0.0));
-    particles.resize(population_size, vector<double>(number_parameters, 0.0));
-    velocities.resize(population_size, vector<double>(number_parameters, 0.0));
-
-    if (result) {
-        uint32_t num_results = mysql_num_rows(result);
-        if (num_results != population_size) {
-            ostringstream ex_msg;
-            ex_msg << "ERROR: got " << num_results << " results when looking up particles for search " << name << ", with a population size: " << population_size << ". Thrown on " << __FILE__ << ":" << __LINE__;
-            throw ex_msg.str();
-        }   
-
-        MYSQL_ROW particle_row;
-
-        while ((particle_row = mysql_fetch_row(result))) {
-            int particle_id = atoi(particle_row[0]);
-            local_best_fitnesses[particle_id] = atof(particle_row[1]);
-
-            string_to_vector<double>(particle_row[2], atof, particles[particle_id]);
-            string_to_vector<double>(particle_row[3], atof, velocities[particle_id]);
-            string_to_vector<double>(particle_row[4], atof, local_bests[particle_id]);
-        }   
-        mysql_free_result(result);
-    }   
-
-    //calculate global_best and global_best_fitness
-    global_best_fitness = -numeric_limits<double>::max();
-    for (uint32_t i = 0; i < local_bests.size(); i++) {
-        if (global_best_fitness < local_best_fitnesses[i]) {
-            global_best.assign(local_bests[i].begin(), local_bests[i].end());
-            global_best_fitness = local_best_fitnesses[i];
-        }
-    }
-
     //inherited from EvolutionaryAlgorithm
     current_iteration = atoi(row[8]);
     maximum_iterations = atoi(row[9]);
@@ -179,6 +167,53 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     string_to_vector<double>(row[15], atof, min_bound);
     string_to_vector<double>(row[16], atof, max_bound);
     number_parameters = min_bound.size();
+
+    //Get the particle information from the database
+    ostringstream oss;
+    oss << "SELECT * FROM particle WHERE particle_swarm_id = " << this->id << " ORDER BY position";
+    mysql_query(conn, oss.str().c_str());
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    cout << oss.str() << endl;
+
+    local_best_fitnesses.resize(population_size, -numeric_limits<double>::max());
+    local_bests.resize(population_size, vector<double>(number_parameters, 0.0));
+    particles.resize(population_size, vector<double>(number_parameters, 0.0));
+    velocities.resize(population_size, vector<double>(number_parameters, 0.0));
+
+    if (result != NULL) {
+        uint32_t num_results = mysql_num_rows(result);
+        if (num_results != population_size) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: got " << num_results << " results when looking up particles for search " << name << ", with a population size: " << population_size << ". Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }   
+
+        MYSQL_ROW particle_row;
+
+        while ((particle_row = mysql_fetch_row(result))) {
+            int particle_id = atoi(particle_row[1]);
+            local_best_fitnesses[particle_id] = atof(particle_row[2]);
+
+            string_to_vector<double>(particle_row[3], atof, particles[particle_id]);
+            string_to_vector<double>(particle_row[4], atof, velocities[particle_id]);
+            string_to_vector<double>(particle_row[5], atof, local_bests[particle_id]);
+         }   
+        mysql_free_result(result);
+    } else {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: looking up particles with query: '" << oss.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }
+
+    //calculate global_best and global_best_fitness
+    global_best_fitness = -numeric_limits<double>::max();
+    for (uint32_t i = 0; i < local_bests.size(); i++) {
+        if (global_best_fitness < local_best_fitnesses[i]) {
+            global_best.assign(local_bests[i].begin(), local_bests[i].end());
+            global_best_fitness = local_best_fitnesses[i];
+        }
+    }
 }
 
 
@@ -215,7 +250,7 @@ ParticleSwarmDB::insert_to_database() throw (string) {
         id = mysql_insert_id(conn);
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get particle swarm id from insert query: '" << query.str() << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not get particle swarm id from insert query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
     mysql_free_result(result);
@@ -232,11 +267,11 @@ ParticleSwarmDB::insert_to_database() throw (string) {
                        << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'";
 
         mysql_query(conn, particle_query.str().c_str());
-        result = mysql_store_result(conn);
+//        result = mysql_store_result(conn);
 
-        if (result) {
+        if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: creating particle with insert query: '" << particle_query.str() << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: creating particle with insert query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
         mysql_free_result(result);
@@ -295,7 +330,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
     bool modified = ParticleSwarm::insert_individual(id, parameters, fitness);
 
     if (modified) {
-        MYSQL_RES *result;
+//        MYSQL_RES *result;
         ostringstream particle_query;
         particle_query << "UPDATE particle"
                        << " SET "
@@ -308,14 +343,40 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
                        << " AND position = " << id;
 
         mysql_query(conn, particle_query.str().c_str());
-        result = mysql_store_result(conn);
+//        result = mysql_store_result(conn);
 
-        if (result) {
+        if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: updating particle with query: '" << particle_query.str() << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: updating particle with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
-        mysql_free_result(result);
+//        mysql_free_result(result);
+
+        ostringstream swarm_query;
+        swarm_query << " UPDATE particle_swarm"
+                    << " SET "
+                    << "  current_particle = " << current_particle
+                    << ", initialized_individuals = " << initialized_individuals
+                    << ", current_iteration = " << current_iteration
+                    << ", maximum_iterations = " << maximum_iterations
+                    << ", individuals_created = " << individuals_created
+                    << ", maximum_created = " << maximum_created
+                    << ", individuals_reported = " << individuals_reported
+                    << ", maximum_reported = " << maximum_reported
+                    << " WHERE "
+                    << "    id = " << this->id << endl;
+
+//        cout << swarm_query.str() << endl;
+
+        mysql_query(conn, swarm_query.str().c_str());
+//        result = mysql_store_result(conn);
+
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: updating particle_swarm with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }
+//        mysql_free_result(result);
     }
 
     return modified;

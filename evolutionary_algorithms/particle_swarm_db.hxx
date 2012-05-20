@@ -44,6 +44,7 @@ class ParticleSwarmDB : public ParticleSwarm {
 
         ~ParticleSwarmDB();
 
+        static bool search_exists(MYSQL *conn, std::string search_name) throw (std::string);
         static void create_tables(MYSQL *conn) throw (std::string);
 
         void construct_from_database(std::string query) throw (std::string);

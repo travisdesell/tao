@@ -103,8 +103,18 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
     try {
         if (search_type.compare("ps") == 0) {
 //            ParticleSwarmDB::create_tables(conn);
-            ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
-            ps.iterate(f);
+            string search_name;
+            get_argument(arguments, "--search_name", true, search_name);
+
+            if (ParticleSwarmDB::search_exists(conn, search_name)) {
+                cout << "Restarting database particle swarm search called '" << search_name << "'." << endl;
+                ParticleSwarmDB ps(conn, search_name);
+                ps.iterate(f);
+            } else {
+                cout << "Creating new database particle swarm search called '" << search_name << "'." << endl;
+                ParticleSwarmDB ps(conn, min_bound, max_bound, arguments);
+                ps.iterate(f);
+            }
 
         } else if (search_type.compare("de") == 0) {
 //            DifferentialEvolutionDB::create_tables(conn);
