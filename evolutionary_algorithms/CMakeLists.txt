@@ -19,6 +19,6 @@ include_directories(
 #find_library(boinc_api HINTS ${BOINC_INCLUDE_DIR}/api)
 #find_library(boinc_sched HINTS ${BOINC_INCLUDE_DIR}/sched)
 
-add_library(DBEvolutionaryAlgorithms particle_swarm_db)
+add_library(DBEvolutionaryAlgorithms particle_swarm_db differential_evolution_db)
 target_link_libraries(DBEvolutionaryAlgorithms undvc_common ${MYSQL_LIBRARIES})
 #target_link_libraries(DBEvolutionaryAlgorithms boinc boinc_lib boinc_api boinc_sched ${MYSQL_LIBRARIES})
