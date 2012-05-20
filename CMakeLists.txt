@@ -11,7 +11,7 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 find_package(BOINC)
-find_package(MYSQL)
+find_package(MySQL)
 
 include_directories(undvc_common)
 
