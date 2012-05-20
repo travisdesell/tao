@@ -9,6 +9,7 @@
 #include "particle_swarm.hxx"
 #include "particle_swarm_db.hxx"
 #include "differential_evolution.hxx"
+#include "differential_evolution_db.hxx"
 
 //from undvc_common
 #include "arguments.hxx"
@@ -118,15 +119,17 @@ int main(uint32_t argc /* number of command line arguments */, char **argv /* co
             }
 
         } else if (search_type.compare("de") == 0) {
-            DifferentialEvolutionDB::create_tables(conn);
+//            DifferentialEvolutionDB::create_tables(conn);
 
             if (DifferentialEvolutionDB::search_exists(conn, search_name)) {
                 cout << "Restarting database differential evolution search called '" << search_name << "'." << endl;
-                DifferentialEvolutiondB de(conn, search_name);
+                DifferentialEvolutionDB de(conn, search_name);
+                cout << de << endl;
                 de.iterate(f);
             } else {
                 cout << "Creating new database differential evolution search called '" << search_name << "'." << endl;
-                DifferentialEvolutiondB de(conn, min_bound, max_bound, arguments);
+                DifferentialEvolutionDB de(conn, min_bound, max_bound, arguments);
+                cout << de << endl;
                 de.iterate(f);
             }
 

@@ -42,6 +42,20 @@ class ParticleSwarmDB : public ParticleSwarm {
                          const uint32_t maximum_iterations                  /* default value is 0 which means no termination */
                        ) throw (std::string);
 
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::string name,
+                         const std::vector<double> &min_bound,              /* min bound is copied into the search */
+                         const std::vector<double> &max_bound,              /* max bound is copied into the search */
+                         const uint32_t population_size,
+                         const double inertia,                              /* intertia */
+                         const double global_best_weight,                   /* global best weight */
+                         const double local_best_weight,                    /* local best weight */
+                         const double initial_velocity_scale,               /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                         const uint32_t maximum_created,                    /* default value is 0 which means no termination */
+                         const uint32_t maximum_reported                    /* default value is 0 which means no termination */
+                       ) throw (std::string);
+
+
         ~ParticleSwarmDB();
 
         static bool search_exists(MYSQL *conn, std::string search_name) throw (std::string);

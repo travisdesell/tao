@@ -213,7 +213,7 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) thr
     cout << "   local_best_weight:  " << local_best_weight << endl;
 
     uint32_t id;
-    vector<double> parameters;
+    vector<double> parameters(number_parameters, 0);
 
     while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
         for (uint32_t i = 0; i < population_size; i++) {
