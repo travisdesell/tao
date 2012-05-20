@@ -195,6 +195,10 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
             int individual_id = atoi(individual_row[1]);
             fitnesses[individual_id] = atof(individual_row[2]);
 
+            if (fitnesses[individual_id] < -1.79768e+308) {
+                fitnesses[individual_id] = -numeric_limits<double>::max();
+            }
+
             string_to_vector<double>(individual_row[3], atof, population[individual_id]);
 
 //            cout   << "    [DEIndividual" << endl
