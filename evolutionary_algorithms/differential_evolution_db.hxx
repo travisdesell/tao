@@ -17,6 +17,7 @@ class DifferentialEvolutionDB : public DifferentialEvolution {
 
         MYSQL *conn;
 
+        void check_name(std::string name) throw (std::string);
     public:
         DifferentialEvolutionDB(MYSQL *conn, std::string name) throw (std::string);
         DifferentialEvolutionDB(MYSQL *conn, int id) throw (std::string);

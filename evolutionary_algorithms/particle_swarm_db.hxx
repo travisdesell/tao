@@ -17,6 +17,8 @@ class ParticleSwarmDB : public ParticleSwarm {
 
         MYSQL *conn;
 
+        void check_name(std::string name) throw (std::string);
+
     public:
         ParticleSwarmDB(MYSQL *conn, std::string name) throw (std::string);
         ParticleSwarmDB(MYSQL *conn, int id) throw (std::string);

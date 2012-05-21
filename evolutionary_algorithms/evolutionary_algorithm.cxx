@@ -10,7 +10,15 @@
 //from undvc_common
 #include "arguments.hxx"
 
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+
+
 using namespace std;
+
+using boost::variate_generator;
+using boost::mt19937;
+using boost::uniform_real;
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
 }
@@ -27,6 +35,8 @@ EvolutionaryAlgorithm::initialize() {
     maximum_iterations = 0;
     maximum_created = 0;
     maximum_reported = 0;
+
+    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
 }
 
 void
@@ -108,4 +118,5 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 }
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
+    delete random_number_generator;
 }

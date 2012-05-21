@@ -15,10 +15,21 @@
 
 using namespace std;
 
+void
+ParticleSwarmDB::check_name(string name) throw (string) {
+    if (!name.substr(0,3).compare("ps_") == 0) {
+        ostringstream err_msg;
+        err_msg << "Improper name for ParticleSwarmDB '" << name << "' must start with 'ps_'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw err_msg.str();
+    }   
+}
+
+
 /**
  *  The following construct a ParticleSwarm from a database entry
  */
 ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, string name) throw (string) {
+    check_name(name);
     this->conn = conn;
 
     ostringstream oss;
@@ -180,6 +191,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     particles.resize(population_size, vector<double>(number_parameters, 0.0));
     velocities.resize(population_size, vector<double>(number_parameters, 0.0));
     seeds.resize(population_size, 0);
+    EvolutionaryAlgorithm::initialize();    //to initialize the random number generator
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
@@ -303,6 +315,7 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, arguments) {
     this->conn = conn;
     get_argument(arguments, "--search_name", true, name);
+    check_name(name);
     insert_to_database();
 }
 
@@ -320,6 +333,7 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_iterations) {
     this->conn = conn;
     this->name = name;
+    check_name(name);
     insert_to_database();
 }
 
@@ -338,6 +352,7 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_created, maximum_reported) {
     this->conn = conn;
     this->name = name;
+    check_name(name);
     insert_to_database();
 }
 

@@ -110,7 +110,7 @@ void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
     ParticleSwarm::new_individual(id, parameters);
 
-    seeds[id] = drand48() * numeric_limits<uint32_t>::max();
+    seeds[id] = (*random_number_generator)() * numeric_limits<uint32_t>::max();
     seed = seeds[id];
 }
 
@@ -122,8 +122,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 
     //We haven't initialied all the particles so generate a random one
     if (initialized_individuals < particles.size()) {
-        Recombination::random_parameters(min_bound, max_bound, particles[id]);
-        Recombination::random_parameters(min_bound, max_bound, velocities[id]);
+        Recombination::random_parameters(min_bound, max_bound, particles[id], random_number_generator);
+        Recombination::random_parameters(min_bound, max_bound, velocities[id], random_number_generator);
 
         //Set each velocity to the randomly generated position minus where the particle is at now (ie., each velocity
         //the difference between where the particle is now and some other random position in the search area)
@@ -136,8 +136,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
         return;
     }
 
-    double r1 = drand48();  //TODO: use a better random number generator
-    double r2 = drand48();  //TODO: use a better random number generator
+    double r1 = (*random_number_generator)();  //TODO: use a better random number generator
+    double r2 = (*random_number_generator)();  //TODO: use a better random number generator
 //    cout << "r1: " << r1 << endl;
 //    cout << "r2: " << r2 << endl;
 

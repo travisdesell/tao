@@ -76,7 +76,7 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             max_bound[i] = 5.12;
         } else if (objective_function_name.compare("rosenbrock") == 0) {
             min_bound[i] = -5;
-            min_bound[i] = 10;
+            max_bound[i] = 10;
         }
     }
 

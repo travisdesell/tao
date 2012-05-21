@@ -15,10 +15,20 @@
 
 using namespace std;
 
+void
+DifferentialEvolutionDB::check_name(string name) throw (string) {
+    if (!name.substr(0,3).compare("de_") == 0) {
+        ostringstream err_msg;
+        err_msg << "Improper name for DifferentialEvolutionDB '" << name << "' must start with 'de_'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw err_msg.str();
+    }
+}
+
 /**
  *  The following construct a DifferentialEvolution from a database entry
  */
 DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, string name) throw (string) {
+    check_name(name);
     this->conn = conn;
 
     ostringstream oss;
@@ -183,6 +193,8 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     population.resize(population_size, vector<double>(number_parameters, 0.0));
     seeds.resize(population_size, 0);
 
+    EvolutionaryAlgorithm::initialize();    //to initialize the random number generator
+
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
         if (num_results != population_size) {
@@ -298,6 +310,7 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
 DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, const vector<string> &arguments) throw (string) : DifferentialEvolution(arguments) {
     this->conn = conn;
     get_argument(arguments, "--search_name", true, name);
+    check_name(name);
     insert_to_database();
 }
 
@@ -310,6 +323,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                 ) throw (string) : DifferentialEvolution(min_bound, max_bound, arguments) {
     this->conn = conn;
     get_argument(arguments, "--search_name", true, name);
+    check_name(name);
     insert_to_database();
 }
 
@@ -330,6 +344,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                                 ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_iterations) {
     this->conn = conn;
     this->name = name;
+    check_name(name);
     insert_to_database();
 }
 
@@ -350,6 +365,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_created, maximum_reported) {
     this->conn = conn;
     this->name = name;
+    check_name(name);
     insert_to_database();
 }
 

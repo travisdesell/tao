@@ -29,12 +29,11 @@
 
 map<string, EvolutionaryAlgorithm*> searches;
 
-typedef boost::mt11213b RNGType;
-RNGType rng( time(0) );
-boost::uniform_real<> zero_to_one(0.0, 1.0);
-boost::variate_generator< RNGType, boost::uniform_real<> > random_generator(rng, zero_to_one);
+using boost::variate_generator;
+using boost::mt11213b;
+using boost::uniform_real;
 
-
+variate_generator< mt11213b, uniform_real<> > random_number_generator(mt11213b( time(0) ), uniform_real<>(0.0, 1.0));
 
 /*
  * Given a set of results, check for a canonical result,
@@ -112,7 +111,7 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                 else if (error_rate < 0.1) error_rate = 0.1;
 
                 //use adaptive validation
-                if (random_generator() < error_rate) {
+                if (random_number_generator() < error_rate) {
                     result.validate_state = VALIDATE_STATE_VALID;
                     canonicalid = result.id;
                 }

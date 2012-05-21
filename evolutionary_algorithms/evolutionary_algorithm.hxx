@@ -7,6 +7,9 @@
 
 #include <stdint.h>
 
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+
 class EvolutionaryAlgorithm {
     protected:
         //For iterative EAs
@@ -25,6 +28,9 @@ class EvolutionaryAlgorithm {
 
         uint32_t population_size;
         std::vector<uint32_t> seeds;
+
+        //For random number generation
+        boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
 
         EvolutionaryAlgorithm();
 

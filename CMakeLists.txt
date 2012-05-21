@@ -12,7 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 find_package(BOINC)
 find_package(MySQL)
-find_package(Boost)
+find_package(Boost REQUIRED)
 
 include_directories(undvc_common)
 

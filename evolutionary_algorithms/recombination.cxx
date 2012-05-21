@@ -6,6 +6,13 @@
 
 #include "recombination.hxx"
 
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+
+using boost::variate_generator;
+using boost::mt19937;
+using boost::uniform_real;
+
 /**
  *  Functions dealing with bounds.
  */
@@ -39,20 +46,20 @@ Recombination::check_bounds(const std::vector<double> &min_bound, const std::vec
  */
 
 void
-Recombination::random_parameters(const std::vector<double> &min_bound, const std::vector<double> &max_bound, std::vector<double> &dest) {
+Recombination::random_parameters(const std::vector<double> &min_bound, const std::vector<double> &max_bound, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     if (dest.size() != min_bound.size()) dest.resize(min_bound.size());
 
     for (uint32_t i = 0; i < min_bound.size(); i++) {
-        dest[i] = min_bound[i] + (drand48() * (max_bound[i] - min_bound[i]));   //TODO: not use drand48
+        dest[i] = min_bound[i] + ((*rng)() * (max_bound[i] - min_bound[i]));
     }
 }
 
 void
-Recombination::binary_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest) {
-    uint32_t selected = (uint32_t)(drand48() * src1.size());
+Recombination::binary_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+    uint32_t selected = (uint32_t)((*rng)() * src1.size());
 
     for (uint32_t i = 0; i < src1.size(); i++) {
-        if (i == selected || drand48() < crossover_rate) {
+        if (i == selected || (*rng)() < crossover_rate) {
             dest[i] = src2[i];
         } else {
             dest[i] = src1[i];
@@ -61,12 +68,12 @@ Recombination::binary_recombination(const std::vector<double> &src1, const std::
 }
 
 void
-Recombination::exponential_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest) {
-    uint32_t selected = (uint32_t)(drand48() * src1.size());
+Recombination::exponential_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+    uint32_t selected = (uint32_t)((*rng)() * src1.size());
 
     uint32_t i;
     for (i = 0; i < src1.size(); i++) {
-        if (i == selected || drand48() < crossover_rate) break;
+        if (i == selected || (*rng)() < crossover_rate) break;
         dest[i] = src1[i];
     }
 
