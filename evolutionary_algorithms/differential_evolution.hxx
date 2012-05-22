@@ -21,7 +21,6 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         std::vector<double> fitnesses;
         std::vector< std::vector<double> > population;
 
-        uint32_t current_individual;
         uint32_t initialized_individuals;
 
         double global_best_fitness;

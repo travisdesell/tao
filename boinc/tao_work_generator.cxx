@@ -32,6 +32,9 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+#include <sstream>
+#include <vector>
+#include <map>
 
 #include "boinc_db.h"
 #include "error_numbers.h"
@@ -45,61 +48,83 @@
 #include "sched_msgs.h"
 #include "str_util.h"
 
-#define CUSHION 10
-    // maintain at least this many unsent results
+#include "stdint.h"
+
+#include "vector_io.hxx"
+
+#include "evolutionary_algorithm.hxx"
+#include "particle_swarm_db.hxx"
+#include "differential_evolution_db.hxx"
+
+#include "workunit_information.hxx"
+
+#define CUSHION 500 // maintain at least this many unsent results
 #define REPLICATION_FACTOR  1
 
-const char* app_name = "example_app";
-const char* in_template_file = "example_app_in.xml";
-const char* out_template_file = "example_app_out.xml";
+using std::ostringstream;
+using std::vector;
 
-char* in_template;
+const char* app_name = "example_app";
+
 DB_APP app;
 int start_time;
 int seqno;
 
+bool requires_seeding = false;
+
+map<string, char*> in_templates;
+
 // create one new job
 //
-int make_job() {
+int make_job(string workunit_xml_filename,
+             string result_xml_filename,
+             vector<string> input_filenames,
+             string command_line_options,
+             string extra_xml) {
+
     DB_WORKUNIT wu;
     char name[256], path[MAXPATHLEN];
-    const char* infiles[1];
-    int retval;
 
     // make a unique name (for the job and its input file)
-    //
     sprintf(name, "%s_%d_%d", app_name, start_time, seqno++);
 
-    // Create the input file.
-    // Put it at the right place in the download dir hierarchy
-    //
-    retval = config.download_path(name, path);
-    if (retval) return retval;
-    FILE* f = fopen(path, "w");
-    if (!f) return ERR_FOPEN;
-    fprintf(f, "This is the input file for job %s", name);
-    fclose(f);
-
     // Fill in the job parameters
-    //
     wu.clear();
     wu.appid = app.id;
     strcpy(wu.name, name);
-    wu.rsc_fpops_est = 1e12;
-    wu.rsc_fpops_bound = 1e14;
-    wu.rsc_memory_bound = 1e8;
-    wu.rsc_disk_bound = 1e8;
-    wu.delay_bound = 86400;
+//  These should be filled in by the extra xml in the workunit_information
+//    wu.rsc_fpops_est = 1e12;
+//    wu.rsc_fpops_bound = 1e14;
+//    wu.rsc_memory_bound = 1e8;
+//    wu.rsc_disk_bound = 1e8;
+//    wu.delay_bound = 86400;
     wu.min_quorum = REPLICATION_FACTOR;
     wu.target_nresults = REPLICATION_FACTOR;
     wu.max_error_results = REPLICATION_FACTOR*4;
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
-    infiles[0] = name;
+
+    const char* infiles[input_filenames.size()];
+    for (uint32_t i = 0; i < input_filenames.size(); i++) {
+        infiles[i] = input_filenames[i].c_str();
+    }
+
+    char *in_template;
+    if (in_templates.find(workunit_xml_filename) == in_templates.end()) {
+        // Buffer the input template
+        char buf[256];
+        sprintf(buf, "templates/%s", workunit_xml_filename.c_str());
+        if (read_file_malloc(config.project_path(buf), in_template)) {
+            log_messages.printf(MSG_CRITICAL, "can't read input template %s\n", buf);
+            exit(1);
+        }
+        in_templates[workunit_xml_filename] = in_template;
+    } else {
+        in_template = in_templates[workunit_xml_filename];  //use the buffered template
+    }
 
     // Register the job with BOINC
-    //
-    sprintf(path, "templates/%s", out_template_file);
+    sprintf(path, "templates/%s", result_xml_filename.c_str());
     return create_work(
         wu,
         in_template,
@@ -107,8 +132,93 @@ int make_job() {
         config.project_path(path),
         infiles,
         1,
-        config
+        config,
+        command_line_options.c_str(),
+        extra_xml.c_str()
     );
+}
+
+/**
+ *  Get searches from databse
+ *  Determine which searches are not finished
+ *
+ *  For each unfinished search:
+ *      Get workunit information for search
+ *      generate equal portion of workunits
+ */
+int make_jobs(uint32_t number_jobs) {
+    int retval;
+
+    vector<EvolutionaryAlgorithmDB*> unfinished_searches;
+    ParticleSwarmDB::add_unfinished_searches(boinc_db.mysql, unfinished_searches);
+    DifferentialEvolutionDB::add_unfinished_searches(boinc_db.mysql, unfinished_searches);
+
+    uint32_t portion = (number_jobs / unfinished_searches.size()) + 1;
+
+    log_messages.printf(MSG_DEBUG, "Generating %u total jobs for %lu unfinished searches.\n", number_jobs, unfinished_searches.size());
+
+    /**
+     *  For each unfinished search generate equal portion of workunits
+     */
+    for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
+        log_messages.printf(MSG_DEBUG, "    Generating %u jobs for unfinished search '%s'.\n", portion, unfinished_searches[i]->get_name().c_str());
+        /**
+         *  Get the standard workunit information for this search
+         */
+        WorkunitInformation workunit_information(boinc_db.mysql, unfinished_searches[i]->get_id());
+
+        for (uint32_t j = 0; j < portion; j++) {
+            uint32_t id;
+            uint32_t seed;
+
+            vector<double> parameters;
+            try {
+                if (requires_seeding) unfinished_searches[i]->new_individual(id, parameters, seed);
+                else unfinished_searches[i]->new_individual(id, parameters);
+            } catch (string err_msg) {
+                log_messages.printf(MSG_CRITICAL, "ERROR: creating new individual for search '%s' threw error message: '%s'.\n", unfinished_searches[i]->get_name().c_str(), err_msg.c_str());
+                exit(1);
+            }
+
+            ostringstream new_command_line;
+            new_command_line << workunit_information.command_line_options;
+            if (requires_seeding) new_command_line << " --seed " << seed;
+            new_command_line << " -np " << parameters.size() << " -p";
+            for (uint32_t k = 0; k < parameters.size(); k++) new_command_line << " " << parameters[k];
+
+            ostringstream new_extra_xml;
+            new_extra_xml << workunit_information.extra_xml << endl;
+            new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
+            new_extra_xml << "<position>" << id << "</position>" << endl;
+            new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
+            if (requires_seeding) new_extra_xml << "<seed>" << seed << "</seed>" << endl;
+
+            /**
+             *  Generate the job with the updated workunit information
+             */
+            retval = make_job(workunit_information.workunit_xml_filename,
+                              workunit_information.result_xml_filename,
+                              workunit_information.input_filenames,
+                              new_command_line.str(),
+                              new_extra_xml.str()
+                             );
+
+            if (retval) return retval;
+        }
+
+        try {
+            unfinished_searches[i]->update_current_individual();
+        } catch (string err_msg) {
+            log_messages.printf(MSG_CRITICAL, "ERROR: updating current individual for search '%s' threw error message: '%s'.\n", unfinished_searches[i]->get_name().c_str(), err_msg.c_str());
+            exit(1);
+        }
+    }
+
+    for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
+        delete unfinished_searches[i];
+    }
+
+    return 0;
 }
 
 void main_loop() {
@@ -119,31 +229,26 @@ void main_loop() {
         int n;
         retval = count_unsent_results(n, 0);
         if (retval) {
-            log_messages.printf(MSG_CRITICAL,
-                "count_unsent_jobs() failed: %s\n", boincerror(retval)
-            );
+            log_messages.printf(MSG_CRITICAL,"count_unsent_jobs() failed: %s\n", boincerror(retval));
             exit(retval);
         }
+
         if (n > CUSHION) {
-            sleep(10);
+            sleep(30);
         } else {
-            int njobs = (CUSHION-n)/REPLICATION_FACTOR;
-            log_messages.printf(MSG_DEBUG,
-                "Making %d jobs\n", njobs
-            );
-            for (int i=0; i<njobs; i++) {
-                retval = make_job();
-                if (retval) {
-                    log_messages.printf(MSG_CRITICAL,
-                        "can't make job: %s\n", boincerror(retval)
-                    );
-                    exit(retval);
-                }
+            int njobs = (CUSHION - n)/REPLICATION_FACTOR;
+            log_messages.printf(MSG_DEBUG, "Making %d jobs\n", njobs);
+
+            retval = make_jobs(njobs);
+            if (retval) {
+                log_messages.printf(MSG_CRITICAL, "failed making jobs with error: %s\n", boincerror(retval));
+                exit(retval);
             }
+
             // Now sleep for a few seconds to let the transitioner
             // create instances for the jobs we just created.
             // Otherwise we could end up creating an excess of jobs.
-            sleep(5);
+            sleep(30);
         }
     }
 }
@@ -161,11 +266,10 @@ void usage(char *name) {
         "Usage: %s [OPTION]...\n\n"
         "Options:\n"
         "  [ --app X                Application name (default: example_app)\n"
-        "  [ --in_template_file     Input template (default: example_app_in)\n"
-        "  [ --out_template_file    Output template (default: example_app_out)\n"
         "  [ -d X ]                 Sets debug level to X.\n"
         "  [ -h | --help ]          Shows this help text.\n"
-        "  [ -v | --version ]       Shows version information.\n",
+        "  [ -v | --version ]       Shows version information.\n"
+        "  [ -c | --create-table ]  Create the database table 'tao_workunit_information' used to store workunit information.\n",
         name
     );
 }
@@ -173,6 +277,7 @@ void usage(char *name) {
 int main(int argc, char** argv) {
     int i, retval;
     char buf[256];
+    bool create_table = false;
 
     for (i=1; i<argc; i++) {
         if (is_arg(argv[i], "d")) {
@@ -186,16 +291,16 @@ int main(int argc, char** argv) {
             if (dl == 4) g_print_queries = true;
         } else if (!strcmp(argv[i], "--app")) {
             app_name = argv[++i];
-        } else if (!strcmp(argv[i], "--in_template_file")) {
-            in_template_file = argv[++i];
-        } else if (!strcmp(argv[i], "--out_template_file")) {
-            out_template_file = argv[++i];
         } else if (is_arg(argv[i], "h") || is_arg(argv[i], "help")) {
             usage(argv[0]);
             exit(0);
         } else if (is_arg(argv[i], "v") || is_arg(argv[i], "version")) {
             printf("%s\n", SVN_VERSION);
             exit(0);
+        } else if (is_arg(argv[i], "c") || is_arg(argv[i], "create_table")) {
+            create_table = true;
+        } else if (is_arg(argv[i], "s") || is_arg(argv[i], "requires_seeding")) {
+            requires_seeding = true;
         } else {
             log_messages.printf(MSG_CRITICAL, "unknown command line argument: %s\n\n", argv[i]);
             usage(argv[0]);
@@ -225,10 +330,10 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    sprintf(buf, "templates/%s", in_template_file);
-    if (read_file_malloc(config.project_path(buf), in_template)) {
-        log_messages.printf(MSG_CRITICAL, "can't read input template %s\n", buf);
-        exit(1);
+    if (create_table) {
+        WorkunitInformation::create_table(boinc_db.mysql);
+        log_messages.printf(MSG_CRITICAL, "'tao_workunit_information' database table created successfully.\n");
+        exit(0);
     }
 
     start_time = time(0);

@@ -29,7 +29,7 @@ ParticleSwarm::initialize() {
     global_best = vector<double>(number_parameters, 0);
 
     initialized_individuals = 0;
-    current_particle = 0;
+    current_individual = 0;
 }
 
 void
@@ -116,9 +116,9 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters, uint32_t
 
 void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
-    id = current_particle;
-    current_particle++;
-    if (current_particle >= population_size) current_particle = 0;
+    id = current_individual;
+    current_individual++;
+    if (current_individual >= population_size) current_individual = 0;
 
     //We haven't initialied all the particles so generate a random one
     if (initialized_individuals < particles.size()) {

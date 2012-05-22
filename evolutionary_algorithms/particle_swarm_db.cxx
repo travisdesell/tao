@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <limits>
 
+#include "evolutionary_algorithm_db.hxx"
 #include "particle_swarm_db.hxx"
 #include "vector_io.hxx"
 #include "arguments.hxx"
@@ -82,7 +83,7 @@ ParticleSwarmDB::create_tables(MYSQL *conn) throw (string) {
                 << "    `global_best_weight` double NOT NULL DEFAULT '2',"
                 << "    `local_best_weight` double NOT NULL DEFAULT '2',"
                 << "    `initial_velocity_scale` double NOT NULL DEFAULT '2',"
-                << "    `current_particle` int(11) NOT NULL DEFAULT '0',"
+                << "    `current_individual` int(11) NOT NULL DEFAULT '0',"
                 << "    `initialized_individuals` int(11) NOT NULL DEFAULT '0',"
                 << "    `current_iteration` int(11) NOT NULL DEFAULT '0',"
                 << "    `maximum_iterations` int(11) NOT NULL DEFAULT '0',"
@@ -162,7 +163,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     local_best_weight = atof(row[4]);
     initial_velocity_scale = atof(row[5]);
 
-    current_particle = atoi(row[6]);
+    current_individual = atoi(row[6]);
     initialized_individuals = atoi(row[7]);
 
     //inherited from EvolutionaryAlgorithm
@@ -174,8 +175,8 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     maximum_reported = atoi(row[13]);
 
     population_size = atoi(row[14]);
-    string_to_vector<double>(row[15], atof, min_bound);
-    string_to_vector<double>(row[16], atof, max_bound);
+    string_to_vector<double>(row[15], min_bound);
+    string_to_vector<double>(row[16], max_bound);
     number_parameters = min_bound.size();
 
     //Get the particle information from the database
@@ -211,9 +212,9 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
                 local_best_fitnesses[particle_id] = -numeric_limits<double>::max();
             }   
 
-            string_to_vector<double>(particle_row[3], atof, particles[particle_id]);
-            string_to_vector<double>(particle_row[4], atof, velocities[particle_id]);
-            string_to_vector<double>(particle_row[5], atof, local_bests[particle_id]);
+            string_to_vector<double>(particle_row[3], particles[particle_id]);
+            string_to_vector<double>(particle_row[4], velocities[particle_id]);
+            string_to_vector<double>(particle_row[5], local_bests[particle_id]);
             seeds[particle_id] = atoi(particle_row[6]);
          }   
         mysql_free_result(result);
@@ -248,7 +249,7 @@ ParticleSwarmDB::insert_to_database() throw (string) {
           << ", global_best_weight = " << global_best_weight
           << ", local_best_weight = " << local_best_weight
           << ", initial_velocity_scale = " << initial_velocity_scale
-          << ", current_particle = " << current_particle
+          << ", current_individual = " << current_individual
           << ", initialized_individuals = " << initialized_individuals
           << ", current_iteration = " << current_iteration  
           << ", maximum_iterations = " << maximum_iterations
@@ -358,6 +359,7 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
 
 
 ParticleSwarmDB::~ParticleSwarmDB() {
+    conn = NULL;
 }
 
 void
@@ -401,7 +403,6 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         ostringstream swarm_query;
         swarm_query << " UPDATE particle_swarm"
                     << " SET "
-                    << "  current_particle = " << current_particle
                     << ", initialized_individuals = " << initialized_individuals
                     << ", current_iteration = " << current_iteration
                     << ", maximum_iterations = " << maximum_iterations
@@ -429,6 +430,61 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
 }
 
 void
+ParticleSwarmDB::update_current_individual() throw (string) {
+    ostringstream query;
+    query << " UPDATE particle_swarm"
+        << " SET "
+        << "  current_individual = " << current_individual
+        << ", current_iteration = " << current_iteration
+        << ", individuals_created = " << individuals_created
+        << " WHERE "
+        << "    id = " << id << endl;
+
+    mysql_query(conn, query.str().c_str());
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: updating 'particle_swarm' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+}
+
+void
+ParticleSwarmDB::add_unfinished_searches(MYSQL *conn, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
+    ostringstream query;
+    query << "SELECT id FROM particle_swarm";
+
+    mysql_query(conn, query.str().c_str());
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: getting unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+
+    MYSQL_ROW individual_row;
+
+    while ((individual_row = mysql_fetch_row(result))) {
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: getting row for unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }   
+
+        ParticleSwarmDB *search = new ParticleSwarmDB(conn, atoi(individual_row[0]));
+
+        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
+                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
+            unfinished_searches.push_back(search);
+        } else {
+            delete search;
+        }   
+    }   
+    mysql_free_result(result);
+}
+
+void
 ParticleSwarmDB::print_to(ostream& stream) {
     stream  << "[ParticleSwarmDB " << endl
             << "    id = " << id << endl
@@ -437,7 +493,7 @@ ParticleSwarmDB::print_to(ostream& stream) {
             << "    global_best_weight = " << global_best_weight << endl
             << "    local_best_weight = " << local_best_weight << endl
             << "    initial_velocity_scale = " << initial_velocity_scale << endl
-            << "    current_particle = " << current_particle << endl
+            << "    current_individual = " << current_individual << endl
             << "    initialized_individuals = " << initialized_individuals << endl
             << "    current_iteration = " << current_iteration << endl
             << "    maximum_iterations = " << maximum_iterations << endl

@@ -21,7 +21,7 @@ class WorkunitInformation {
 
         WorkunitInformation(MYSQL *conn,
                             const int search_id
-                           );
+                           ) throw (string);
 
         WorkunitInformation(MYSQL *conn,
                             const int search_id,
@@ -30,7 +30,9 @@ class WorkunitInformation {
                             const vector<string> &input_filenames,
                             const string command_line_options,
                             const string extra_xml
-                           );
+                           ) throw (string);
+
+        static void create_table(MYSQL *conn) throw (string);
 };
 
 

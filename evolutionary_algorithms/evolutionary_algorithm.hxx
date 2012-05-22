@@ -26,6 +26,8 @@ class EvolutionaryAlgorithm {
         std::vector<double> min_bound;
         std::vector<double> max_bound;
 
+        uint32_t current_individual;
+
         uint32_t population_size;
         std::vector<uint32_t> seeds;
 
@@ -38,6 +40,10 @@ class EvolutionaryAlgorithm {
         void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
+        uint32_t get_current_individual()   { return current_individual; }
+        uint32_t get_current_iteration()    { return current_iteration; }
+        uint32_t get_individuals_created()  { return individuals_created; }
+
         /**
          *  Create/delete an EvolutionaryAlgorithm
          */

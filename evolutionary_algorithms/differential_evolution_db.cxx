@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <limits>
 
+#include "evolutionary_algorithm_db.hxx"
 #include "differential_evolution_db.hxx"
 #include "vector_io.hxx"
 #include "arguments.hxx"
@@ -177,8 +178,8 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     maximum_reported = atoi(row[16]);
 
     population_size = atoi(row[17]);
-    string_to_vector<double>(row[18], atof, min_bound);
-    string_to_vector<double>(row[19], atof, max_bound);
+    string_to_vector<double>(row[18], min_bound);
+    string_to_vector<double>(row[19], max_bound);
     number_parameters = min_bound.size();
 
     //Get the individual information from the database
@@ -213,7 +214,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
                 fitnesses[individual_id] = -numeric_limits<double>::max();
             }
 
-            string_to_vector<double>(individual_row[3], atof, population[individual_id]);
+            string_to_vector<double>(individual_row[3], population[individual_id]);
             seeds[individual_id] = atoi(individual_row[4]);
 
 //            cout   << "    [DEIndividual" << endl
@@ -370,6 +371,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
 }
 
 DifferentialEvolutionDB::~DifferentialEvolutionDB() {
+    conn = NULL;
 }
 
 void
@@ -409,7 +411,6 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         ostringstream de_query;
         de_query << " UPDATE differential_evolution"
                  << " SET "
-                 << "  current_individual = " << current_individual
                  << ", initialized_individuals = " << initialized_individuals
                  << ", current_iteration = " << current_iteration
                  << ", maximum_iterations = " << maximum_iterations
@@ -430,6 +431,61 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
     }
 
     return modified;
+}
+
+void
+DifferentialEvolutionDB::update_current_individual() throw (string) {
+    ostringstream query;
+    query << " UPDATE particle_swarm"
+        << " SET "
+        << "  current_individual = " << current_individual
+        << ", current_iteration = " << current_iteration
+        << ", individuals_created = " << individuals_created
+        << " WHERE "
+        << "    id = " << id << endl;
+
+    mysql_query(conn, query.str().c_str());
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: updating 'particle_swarm' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+}
+
+void
+DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
+    ostringstream query;
+    query << "SELECT id FROM differential_evoluton";
+
+    mysql_query(conn, query.str().c_str());
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: getting unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+
+    MYSQL_ROW individual_row;
+
+    while ((individual_row = mysql_fetch_row(result))) {
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: getting row for unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }   
+
+        DifferentialEvolutionDB *search = new DifferentialEvolutionDB(conn, atoi(individual_row[0]));
+
+        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
+                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
+            unfinished_searches.push_back(search);
+        } else {
+            delete search;
+        }   
+    }   
+    mysql_free_result(result);
 }
 
 void

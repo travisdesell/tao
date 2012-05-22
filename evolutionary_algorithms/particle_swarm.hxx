@@ -14,7 +14,6 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         double initial_velocity_scale;
 
         uint32_t initialized_individuals;
-        uint32_t current_particle;
 
         std::vector< std::vector<double> > particles;
         std::vector< std::vector<double> > velocities;
