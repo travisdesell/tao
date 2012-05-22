@@ -13,8 +13,11 @@ include_directories(
 	${MYSQL_INCLUDE_DIR}
 )
 
-add_executable(ea_validator ${BOINC_INCLUDE_DIR}/sched/validator ${BOINC_INCLUDE_DIR}/sched/validate_util ${BOINC_INCLUDE_DIR}/lib/md5_file ea_validation_policy)
-target_link_libraries(ea_validator DBEvolutionaryAlgorithms EvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
+add_executable(tao_validator ${BOINC_INCLUDE_DIR}/sched/validator ${BOINC_INCLUDE_DIR}/sched/validate_util ${BOINC_INCLUDE_DIR}/lib/md5_file tao_validation_policy)
+target_link_libraries(tao_validator DBEvolutionaryAlgorithms EvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
 
-add_executable(ea_assimilator ${BOINC_INCLUDE_DIR}/sched/assimilator ea_assimilation_policy)
-target_link_libraries(ea_assimilator ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
+add_executable(tao_assimilator ${BOINC_INCLUDE_DIR}/sched/assimilator tao_assimilation_policy)
+target_link_libraries(tao_assimilator ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
+
+add_executable(tao_work_generator tao_work_generator workunit_information)
+target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
