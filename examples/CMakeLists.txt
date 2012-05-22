@@ -2,9 +2,6 @@ include_directories (${PROJECT_SOURCE_DIR}/evolutionary_algorithms)
 include_directories (${PROJECT_SOURCE_DIR}/deterministic_algorithms)
 include_directories (${Boost_INCLUDE_DIR})
 
-add_executable(EconMrsyx econ_mrsyx)
-target_link_libraries(EconMrsyx undvc_common EvolutionaryAlgorithms DeterministicAlgorithms)
-
 add_executable(StandardBenchmarks standard_benchmarks)
 target_link_libraries(StandardBenchmarks undvc_common EvolutionaryAlgorithms)
 
