@@ -216,7 +216,17 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
             string_to_vector<double>(particle_row[4], velocities[particle_id]);
             string_to_vector<double>(particle_row[5], local_bests[particle_id]);
             seeds[particle_id] = atoi(particle_row[6]);
-         }   
+
+//            cout   << "    [Particle" << endl
+//                   << "        particle_swarm_id = " << id << endl
+//                   << "        position = " << particle_id << endl
+//                   << "        local_best_fitness = " << local_best_fitnesses[particle_id] << endl
+//                   << "        parameters = '" << vector_to_string<double>(particles[particle_id]) << "'" << endl
+//                   << "        velocity = '" << vector_to_string<double>(velocities[particle_id]) << "'" << endl
+//                   << "        local_best = '" << vector_to_string<double>(local_bests[particle_id]) << "'" << endl
+//                   << "        seed = " << seeds[particle_id] << endl
+//                   << "    ]" << endl;
+          }   
         mysql_free_result(result);
     } else {
         ostringstream ex_msg;
@@ -403,6 +413,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         ostringstream swarm_query;
         swarm_query << " UPDATE particle_swarm"
                     << " SET "
+                    << "  current_individual = " << current_individual          //probably shouldnt have this here
                     << ", initialized_individuals = " << initialized_individuals
                     << ", current_iteration = " << current_iteration
                     << ", maximum_iterations = " << maximum_iterations

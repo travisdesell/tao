@@ -411,6 +411,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         ostringstream de_query;
         de_query << " UPDATE differential_evolution"
                  << " SET "
+                 << "  current_individual = " << current_individual             //probably should not have this here
                  << ", initialized_individuals = " << initialized_individuals
                  << ", current_iteration = " << current_iteration
                  << ", maximum_iterations = " << maximum_iterations
