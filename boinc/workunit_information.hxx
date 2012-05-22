@@ -13,11 +13,11 @@ class WorkunitInformation {
         int search_id;
 
     public:
-        string workunit_xml_filename;
-        string result_xml_filename;
-        vector<string> input_filenames;
-        string command_line_options;
-        string extra_xml;
+        const string workunit_xml_filename;
+        const string result_xml_filename;
+        const vector<string> input_filenames;
+        const command_line_options;
+        const extra_xml;
 
         WorkunitInformation(MYSQL *conn,
                             const int search_id
