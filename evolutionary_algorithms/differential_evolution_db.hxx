@@ -6,14 +6,15 @@
 #include <string>
 #include <vector>
 
+#include "evolutionary_algorithm_db.hxx"
 #include "differential_evolution.hxx"
 
 #include "mysql.h"
 
-class DifferentialEvolutionDB : public DifferentialEvolution {
+class DifferentialEvolutionDB : public DifferentialEvolution, public EvolutionaryAlgorithmDB {
     protected:
-        int id;
-        std::string name;
+//        int id;
+//        std::string name;
 
         MYSQL *conn;
 
@@ -76,6 +77,9 @@ class DifferentialEvolutionDB : public DifferentialEvolution {
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string);
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters, uint32_t &seed) throw (std::string);
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness, uint32_t seed = 0) throw (std::string);         /* Returns true if the individual was inserted. */
+
+        virtual void update_current_individual() throw (std::string);
+        static void add_unfinished_searches(MYSQL *conn, std::vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (std::string);
 
         void print_to(std::ostream& stream);
         friend std::ostream& operator<< (std::ostream& stream, DifferentialEvolutionDB &ps);

@@ -19,5 +19,14 @@ target_link_libraries(tao_validator DBEvolutionaryAlgorithms EvolutionaryAlgorit
 add_executable(tao_assimilator ${BOINC_INCLUDE_DIR}/sched/assimilator tao_assimilation_policy)
 target_link_libraries(tao_assimilator ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
 
+#find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
+
+include_directories(
+    ${BOINC_INCLUDE_DIR}/tools/
+)
+
 add_executable(tao_work_generator tao_work_generator workunit_information)
-target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES})
+#target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(tao_work_generator DBEvolutionaryAlgorithms EvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+
