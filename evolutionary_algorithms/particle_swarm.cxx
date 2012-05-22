@@ -218,8 +218,6 @@ ParticleSwarm::would_insert(uint32_t id, double fitness) {
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized partilce swarm." << endl;
     cout << "   maximum_iterations: " << maximum_iterations << endl;
     cout << "   current_iteration:  " << current_iteration << endl;
@@ -244,8 +242,6 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) thr
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, const uint32_t)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized particle swarm." << endl;
     cout << "   maximum_iterations: " << maximum_iterations << endl;
     cout << "   current_iteration:  " << current_iteration << endl;

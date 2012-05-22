@@ -363,8 +363,6 @@ DifferentialEvolution::would_insert(uint32_t id, double fitness) {
  */
 void
 DifferentialEvolution::iterate(double (*objective_function)(const std::vector<double> &)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized differential evolution. " << endl;
     cout << "   maximum_iterations:          " << maximum_iterations << endl;
     cout << "   current_iteration:           " << current_iteration << endl;
@@ -392,8 +390,6 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
 
 void
 DifferentialEvolution::iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized differential evolution. " << endl;
     cout << "   maximum_iterations:          " << maximum_iterations << endl;
     cout << "   current_iteration:           " << current_iteration << endl;
