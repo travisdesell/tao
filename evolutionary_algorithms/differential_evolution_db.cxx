@@ -184,7 +184,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
 
     //Get the individual information from the database
     ostringstream oss;
-    oss << "SELECT * FROM de_individual WHERE differential_evolution_id = " << this->id << " ORDER BY position";
+    oss << "SELECT position, fitness, parameters, seed FROM de_individual WHERE differential_evolution_id = " << this->id << " ORDER BY position";
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
@@ -207,15 +207,15 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
         MYSQL_ROW individual_row;
 
         while ((individual_row = mysql_fetch_row(result))) {
-            int individual_id = atoi(individual_row[1]);
-            fitnesses[individual_id] = atof(individual_row[2]);
+            int individual_id = atoi(individual_row[0]);
+            fitnesses[individual_id] = atof(individual_row[1]);
 
             if (fitnesses[individual_id] < -1.79768e+308) {
                 fitnesses[individual_id] = -numeric_limits<double>::max();
             }
 
-            string_to_vector<double>(individual_row[3], population[individual_id]);
-            seeds[individual_id] = atoi(individual_row[4]);
+            string_to_vector<double>(individual_row[2], population[individual_id]);
+            seeds[individual_id] = atoi(individual_row[3]);
 
 //            cout   << "    [DEIndividual" << endl
 //                   << "        position = " << individual_id << endl

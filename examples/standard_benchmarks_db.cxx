@@ -98,6 +98,11 @@ int main(int argc /* number of command line arguments */, char **argv /* command
         exit(1);
     }
 
+    if (argument_exists(arguments, "--create_tables")) {
+        ParticleSwarmDB::create_tables(conn);
+        DifferentialEvolutionDB::create_tables(conn);
+    }
+
     string search_type;
     get_argument(arguments, "--search_type", true, search_type);
 
@@ -106,7 +111,6 @@ int main(int argc /* number of command line arguments */, char **argv /* command
 
     try {
         if (search_type.compare("ps") == 0) {
-//            ParticleSwarmDB::create_tables(conn);
 
             if (ParticleSwarmDB::search_exists(conn, search_name)) {
                 cout << "Restarting database particle swarm search called '" << search_name << "'." << endl;
@@ -120,7 +124,6 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             }
 
         } else if (search_type.compare("de") == 0) {
-//            DifferentialEvolutionDB::create_tables(conn);
 
             if (DifferentialEvolutionDB::search_exists(conn, search_name)) {
                 cout << "Restarting database differential evolution search called '" << search_name << "'." << endl;

@@ -181,7 +181,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
 
     //Get the particle information from the database
     ostringstream oss;
-    oss << "SELECT * FROM particle WHERE particle_swarm_id = " << this->id << " ORDER BY position";
+    oss << "SELECT position, local_best_fitness, parameters, velocity, local_best, seed FROM particle WHERE particle_swarm_id = " << this->id << " ORDER BY position";
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
@@ -205,17 +205,17 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
         MYSQL_ROW particle_row;
 
         while ((particle_row = mysql_fetch_row(result))) {
-            int particle_id = atoi(particle_row[1]);
-            local_best_fitnesses[particle_id] = atof(particle_row[2]);
+            int particle_id = atoi(particle_row[0]);
+            local_best_fitnesses[particle_id] = atof(particle_row[1]);
 
             if (local_best_fitnesses[particle_id] < -1.79768e+308) {
                 local_best_fitnesses[particle_id] = -numeric_limits<double>::max();
             }   
 
-            string_to_vector<double>(particle_row[3], particles[particle_id]);
-            string_to_vector<double>(particle_row[4], velocities[particle_id]);
-            string_to_vector<double>(particle_row[5], local_bests[particle_id]);
-            seeds[particle_id] = atoi(particle_row[6]);
+            string_to_vector<double>(particle_row[2], particles[particle_id]);
+            string_to_vector<double>(particle_row[3], velocities[particle_id]);
+            string_to_vector<double>(particle_row[4], local_bests[particle_id]);
+            seeds[particle_id] = atoi(particle_row[5]);
 
 //            cout   << "    [Particle" << endl
 //                   << "        particle_swarm_id = " << id << endl
