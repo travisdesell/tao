@@ -50,11 +50,11 @@
 
 #include "stdint.h"
 
-#include "vector_io.hxx"
+#include "undvc_common/vector_io.hxx"
 
-#include "evolutionary_algorithm.hxx"
-#include "particle_swarm_db.hxx"
-#include "differential_evolution_db.hxx"
+#include "evolutionary_algorithms/evolutionary_algorithm.hxx"
+#include "evolutionary_algorithms/particle_swarm_db.hxx"
+#include "evolutionary_algorithms/differential_evolution_db.hxx"
 
 #include "workunit_information.hxx"
 
@@ -181,13 +181,13 @@ int make_jobs(uint32_t number_jobs) {
             }
 
             ostringstream new_command_line;
-            new_command_line << workunit_information.command_line_options;
+            new_command_line << workunit_information.get_command_line_options();
             if (requires_seeding) new_command_line << " --seed " << seed;
             new_command_line << " -np " << parameters.size() << " -p";
             for (uint32_t k = 0; k < parameters.size(); k++) new_command_line << " " << parameters[k];
 
             ostringstream new_extra_xml;
-            new_extra_xml << workunit_information.extra_xml << endl;
+            new_extra_xml << workunit_information.get_extra_xml() << endl;
             new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
             new_extra_xml << "<position>" << id << "</position>" << endl;
             new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
@@ -196,9 +196,9 @@ int make_jobs(uint32_t number_jobs) {
             /**
              *  Generate the job with the updated workunit information
              */
-            retval = make_job(workunit_information.workunit_xml_filename,
-                              workunit_information.result_xml_filename,
-                              workunit_information.input_filenames,
+            retval = make_job(workunit_information.get_workunit_xml_filename(),
+                              workunit_information.get_result_xml_filename(),
+                              workunit_information.get_input_filenames(),
                               new_command_line.str(),
                               new_extra_xml.str()
                              );

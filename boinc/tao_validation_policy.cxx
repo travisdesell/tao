@@ -16,8 +16,8 @@
 #include "validate_util.h"
 #include "validate_util2.h"
 
-#include "particle_swarm_db.hxx"
-#include "differential_evolution_db.hxx"
+#include "evolutionary_algorithms/particle_swarm_db.hxx"
+#include "evolutionary_algorithms/differential_evolution_db.hxx"
 
 #include "parse_xml.hxx"
 

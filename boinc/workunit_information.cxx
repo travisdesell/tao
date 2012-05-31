@@ -2,7 +2,9 @@
 #include <vector>
 #include <sstream>
 
-#include "vector_io.hxx"            //from undvc_common
+#include "stdlib.h"
+
+#include "undvc_common/vector_io.hxx"
 
 #include "mysql.h"
 #include "workunit_information.hxx"
@@ -16,6 +18,7 @@ void
 WorkunitInformation::create_table(MYSQL *conn) throw (string) {
     string query = "CREATE TABLE `tao_workunit_information` ("
                    "  `search_id` int (11) NOT NULL,"
+                   "  `app_id` int (11) NOT NULL DEFAULT '0',"
                    "  `workunit_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `result_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `input_filenames` varchar(1024) NOT NULL DEFAULT '',"
@@ -39,7 +42,7 @@ WorkunitInformation::create_table(MYSQL *conn) throw (string) {
 WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (string) {
     this->search_id = search_id;
 
-    string query = "SELECT * FROM tao_workunit_information";
+    string query = "SELECT search_id, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information";
 
     mysql_query(conn, query.c_str());
 
@@ -53,11 +56,13 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (stri
             throw ex_msg.str();
         }
 
-        workunit_xml_filename = row[1];
-        result_xml_filename = row[2];
-        string_to_vector<string>(row[3], input_filenames);
-        command_line_options = row[4];
-        extra_xml = row[5];
+        search_id = atoi(row[0]);
+        app_id = atoi(row[1]);
+        workunit_xml_filename = row[2];
+        result_xml_filename = row[3];
+        string_to_vector<string>(row[4], input_filenames);
+        command_line_options = row[5];
+        extra_xml = row[6];
 
     } else {
         ostringstream ex_msg;
@@ -75,6 +80,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (stri
 
 WorkunitInformation::WorkunitInformation(MYSQL *conn,
                                          const int search_id,
+                                         const int app_id,
                                          const string workunit_xml_filename,
                                          const string result_xml_filename,
                                          const vector<string> &input_filenames,
@@ -87,6 +93,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn,
     query << "INSERT INTO tao_workunit_information"
           << " SET "
           << "  search_id = " << search_id
+          << ", app_id = " << app_id
           << ", workunit_xml_filename = '" << workunit_xml_filename << "'"
           << ", result_xml_filename = '" << result_xml_filename << "'"
           << ", input_filenames = '" << vector_to_string<string>(input_filenames) << "'"
