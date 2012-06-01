@@ -3,9 +3,11 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 using std::string;
 using std::vector;
+using std::ostream;
 
 class WorkunitInformation {
     protected:
@@ -40,6 +42,9 @@ class WorkunitInformation {
                            ) throw (string);
 
         static void create_table(MYSQL *conn) throw (string);
+
+        void print_to(ostream& stream);
+        friend std::ostream& operator<< (std::ostream& stream, WorkunitInformation &wu_info);
 };
 
 

@@ -28,6 +28,17 @@ class ParticleSwarmDB : public ParticleSwarm, public EvolutionaryAlgorithmDB {
                          const std::vector<std::string> &arguments) throw (std::string);
 
         ParticleSwarmDB( MYSQL *conn,
+                         const int32_t app_id,
+                         const std::vector<std::string> &arguments) throw (std::string);
+
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::vector<double> &min_bound,              /* min bound is copied into the search */
+                         const std::vector<double> &max_bound,              /* max bound is copied into the search */
+                         const std::vector<std::string> &arguments
+                       ) throw (std::string);
+
+        ParticleSwarmDB( MYSQL *conn,
+                         const int32_t app_id,
                          const std::vector<double> &min_bound,              /* min bound is copied into the search */
                          const std::vector<double> &max_bound,              /* max bound is copied into the search */
                          const std::vector<std::string> &arguments
@@ -46,6 +57,33 @@ class ParticleSwarmDB : public ParticleSwarm, public EvolutionaryAlgorithmDB {
                        ) throw (std::string);
 
         ParticleSwarmDB( MYSQL *conn,
+                         const int32_t app_id,
+                         const std::string name,
+                         const std::vector<double> &min_bound,              /* min bound is copied into the search */
+                         const std::vector<double> &max_bound,              /* max bound is copied into the search */
+                         const uint32_t population_size,
+                         const double inertia,                              /* intertia */
+                         const double global_best_weight,                   /* global best weight */
+                         const double local_best_weight,                    /* local best weight */
+                         const double initial_velocity_scale,               /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                         const uint32_t maximum_iterations                  /* default value is 0 which means no termination */
+                       ) throw (std::string);
+
+        ParticleSwarmDB( MYSQL *conn,
+                         const std::string name,
+                         const std::vector<double> &min_bound,              /* min bound is copied into the search */
+                         const std::vector<double> &max_bound,              /* max bound is copied into the search */
+                         const uint32_t population_size,
+                         const double inertia,                              /* intertia */
+                         const double global_best_weight,                   /* global best weight */
+                         const double local_best_weight,                    /* local best weight */
+                         const double initial_velocity_scale,               /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                         const uint32_t maximum_created,                    /* default value is 0 which means no termination */
+                         const uint32_t maximum_reported                    /* default value is 0 which means no termination */
+                       ) throw (std::string);
+
+        ParticleSwarmDB( MYSQL *conn,
+                         const int32_t app_id,
                          const std::string name,
                          const std::vector<double> &min_bound,              /* min bound is copied into the search */
                          const std::vector<double> &max_bound,              /* max bound is copied into the search */
@@ -76,7 +114,7 @@ class ParticleSwarmDB : public ParticleSwarm, public EvolutionaryAlgorithmDB {
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness, uint32_t seed = 0) throw (std::string);         /* Returns true if the individual was inserted. */
 
         virtual void update_current_individual() throw (std::string);
-        static void add_unfinished_searches(MYSQL *conn, std::vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (std::string);
+        static void add_unfinished_searches(MYSQL *conn, int32_t app_id, std::vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (std::string);
 
         void print_to(std::ostream& stream);
         friend std::ostream& operator<< (std::ostream& stream, ParticleSwarmDB &ps);

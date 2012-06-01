@@ -35,23 +35,23 @@ ParticleSwarm::initialize() {
 void
 ParticleSwarm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--inertia", false, inertia)) {
-        cerr << "Argument '--inertia <F>' not found, using default of 0.95." << endl;
-        inertia = 0.95;
+        cerr << "Argument '--inertia <F>' not found, using default of 0.75." << endl;
+        inertia = 0.75;
     }
 
     if (!get_argument(arguments, "--global_best_weight", false, global_best_weight)) {
-        cerr << "Argument '--global_best_weight <F>' not found, using default of 2.0." << endl;
-        global_best_weight = 2.0;
+        cerr << "Argument '--global_best_weight <F>' not found, using default of 1.5." << endl;
+        global_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--local_best_weight", false, local_best_weight)) {
-        cerr << "Argument '--local_best_weight <F>' not found, using default of 2.0." << endl;
-        local_best_weight = 2.0;
+        cerr << "Argument '--local_best_weight <F>' not found, using default of 1.5." << endl;
+        local_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--initial_velocity_scale", false, initial_velocity_scale)) {
-        cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.10." << endl;
-        initial_velocity_scale = 0.10;
+        cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.25." << endl;
+        initial_velocity_scale = 0.25;
     }
 }
 

@@ -37,6 +37,7 @@ class EvolutionaryAlgorithm {
         EvolutionaryAlgorithm();
 
         void initialize();
+        void initialize_rng();
         void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
@@ -70,7 +71,7 @@ class EvolutionaryAlgorithm {
 
 
 
-        ~EvolutionaryAlgorithm();
+        virtual ~EvolutionaryAlgorithm();
 
         /**
          *  The following methods are used for asynchronous optimization and are purely virtual

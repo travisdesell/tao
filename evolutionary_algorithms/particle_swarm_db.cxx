@@ -94,6 +94,7 @@ ParticleSwarmDB::create_tables(MYSQL *conn) throw (string) {
                 << "    `population_size` int(11) NOT NULL DEFAULT '0',"
                 << "    `min_bound` varchar(2048) NOT NULL,"
                 << "    `max_bound` varchar(2048) NOT NULL,"
+                << "    `app_id`    int(11) NOT NULL DEFAULT '-1',"
                 << "PRIMARY KEY (`id`),"
                 << "UNIQUE KEY `name` (`name`)"
                 << ") ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1";
@@ -131,14 +132,22 @@ void
 ParticleSwarmDB::construct_from_database(string query) throw (string) {
     mysql_query(conn, query.c_str());
 
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }
+
     MYSQL_RES *result = mysql_store_result(conn);
 
-    if (result != NULL) {
+    if (mysql_errno(conn) == 0) {
         MYSQL_ROW row = mysql_fetch_row(result);
         
-        if (row == NULL) {
+        if (mysql_errno(conn) != 0 || row == NULL) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: could not construct particle swarm '" << name << "' from database, it does not exist. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: could not get particle swarm from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+
+            cout << "throwing error message: " << ex_msg.str() << endl;
             throw ex_msg.str();
         }
 
@@ -174,9 +183,15 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     individuals_reported = atoi(row[12]);
     maximum_reported = atoi(row[13]);
 
+//    cout << "maximum_reported: " << maximum_reported << " " << row[13] << endl;
+//    cout << "individuals_reported: " << individuals_created << " " << row[12] << endl;
+//    cout << "maximum_created: " << maximum_created << " " << row[11] << endl;
+//    cout << "individuals_created: " << individuals_created << " " << row[10] << endl;
+
     population_size = atoi(row[14]);
     string_to_vector<double>(row[15], min_bound);
     string_to_vector<double>(row[16], max_bound);
+    app_id = atoi(row[17]);
     number_parameters = min_bound.size();
 
     //Get the particle information from the database
@@ -192,7 +207,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     particles.resize(population_size, vector<double>(number_parameters, 0.0));
     velocities.resize(population_size, vector<double>(number_parameters, 0.0));
     seeds.resize(population_size, 0);
-    EvolutionaryAlgorithm::initialize();    //to initialize the random number generator
+    EvolutionaryAlgorithm::initialize_rng();    //to initialize the random number generator
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
@@ -269,7 +284,8 @@ ParticleSwarmDB::insert_to_database() throw (string) {
           << ", maximum_reported = " << maximum_reported 
           << ", population_size = " << population_size
           << ", min_bound = '" << vector_to_string<double>(min_bound) << "'"
-          << ", max_bound = '" << vector_to_string<double>(max_bound) << "'";
+          << ", max_bound = '" << vector_to_string<double>(max_bound) << "'"
+          << ", app_id = " << app_id;
 
     mysql_query(conn, query.str().c_str());
 
@@ -313,6 +329,15 @@ ParticleSwarmDB::insert_to_database() throw (string) {
 //Create a particle swarm entirely from arguments
 ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, const vector<string> &arguments) throw (string) : ParticleSwarm(arguments) {
     this->conn = conn;
+    this->app_id = -1;
+    get_argument(arguments, "--search_name", true, name);
+    insert_to_database();
+}
+
+//Create a particle swarm entirely from arguments
+ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, const int32_t app_id, const vector<string> &arguments) throw (string) : ParticleSwarm(arguments) {
+    this->conn = conn;
+    this->app_id = app_id;
     get_argument(arguments, "--search_name", true, name);
     insert_to_database();
 }
@@ -325,10 +350,26 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                   const vector<string> &arguments
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, arguments) {
     this->conn = conn;
+    this->app_id = -1;
     get_argument(arguments, "--search_name", true, name);
     check_name(name);
     insert_to_database();
 }
+
+//Create a particle swarm from arguments and a given min and max bound
+ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
+                                  const int32_t app_id,
+                                  const vector<double> &min_bound,            /* min bound is copied into the search */
+                                  const vector<double> &max_bound,            /* max bound is copied into the search */
+                                  const vector<string> &arguments
+                                ) throw (string) : ParticleSwarm(min_bound, max_bound, arguments) {
+    this->conn = conn;
+    this->app_id = app_id;
+    get_argument(arguments, "--search_name", true, name);
+    check_name(name);
+    insert_to_database();
+}
+
 
 //Create a particle swarm entirely from defined parameters.
 ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
@@ -343,10 +384,32 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                   const uint32_t maximum_iterations                /* default value is 0 which means no termination */
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_iterations) {
     this->conn = conn;
+    this->app_id = -1;
     this->name = name;
     check_name(name);
     insert_to_database();
 }
+
+//Create a particle swarm entirely from defined parameters.
+ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
+                                  const int32_t app_id,
+                                  const string name,
+                                  const vector<double> &min_bound,                 /* min bound is copied into the search */
+                                  const vector<double> &max_bound,                 /* max bound is copied into the search */
+                                  const uint32_t population_size,
+                                  const double inertia,                            /* intertia */
+                                  const double global_best_weight,                 /* global best weight */
+                                  const double local_best_weight,                  /* local best weight */
+                                  const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                                  const uint32_t maximum_iterations                /* default value is 0 which means no termination */
+                                ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_iterations) {
+    this->conn = conn;
+    this->app_id = app_id;
+    this->name = name;
+    check_name(name);
+    insert_to_database();
+}
+
 
 //Create a particle swarm entirely from defined parameters.
 ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
@@ -362,6 +425,28 @@ ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
                                   const uint32_t maximum_reported                  /* default value is 0 which means no termination */
                                 ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_created, maximum_reported) {
     this->conn = conn;
+    this->app_id = -1;
+    this->name = name;
+    check_name(name);
+    insert_to_database();
+}
+
+//Create a particle swarm entirely from defined parameters.
+ParticleSwarmDB::ParticleSwarmDB( MYSQL *conn,
+                                  const int32_t app_id,
+                                  const string name,
+                                  const vector<double> &min_bound,                 /* min bound is copied into the search */
+                                  const vector<double> &max_bound,                 /* max bound is copied into the search */
+                                  const uint32_t population_size,
+                                  const double inertia,                            /* intertia */
+                                  const double global_best_weight,                 /* global best weight */
+                                  const double local_best_weight,                  /* local best weight */
+                                  const double initial_velocity_scale,             /* A scale for the initial velocities of particles so it doesn't immediately go to the bounds */
+                                  const uint32_t maximum_created,                  /* default value is 0 which means no termination */
+                                  const uint32_t maximum_reported                  /* default value is 0 which means no termination */
+                                ) throw (string) : ParticleSwarm(min_bound, max_bound, population_size, inertia, global_best_weight, local_best_weight, initial_velocity_scale, maximum_created, maximum_reported) {
+    this->conn = conn;
+    this->app_id = app_id;
     this->name = name;
     check_name(name);
     insert_to_database();
@@ -461,9 +546,9 @@ ParticleSwarmDB::update_current_individual() throw (string) {
 }
 
 void
-ParticleSwarmDB::add_unfinished_searches(MYSQL *conn, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
+ParticleSwarmDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
     ostringstream query;
-    query << "SELECT id FROM particle_swarm";
+    query << "SELECT id FROM particle_swarm WHERE app_id = " << app_id;
 
     mysql_query(conn, query.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
@@ -515,6 +600,7 @@ ParticleSwarmDB::print_to(ostream& stream) {
             << "    population_size = " << population_size << endl
             << "    min_bound = '" << vector_to_string<double>(min_bound) << "'" << endl
             << "    max_bound = '" << vector_to_string<double>(max_bound) << "'" << endl
+            << "    app_id = " << app_id << endl
             << "]" << endl;
 
     for (uint32_t i = 0; i < population_size; i++) {

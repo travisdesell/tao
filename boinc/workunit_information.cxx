@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 #include "stdlib.h"
 
@@ -107,4 +108,22 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn,
         ex_msg << "ERROR: could not insert workunit information using query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
+}
+
+void
+WorkunitInformation::print_to(ostream& stream) {
+    stream << "[WorkunitInformation " << endl
+           << "    search_id = " << search_id << endl
+           << "    app_id = " << app_id << endl
+           << "    workunit_xml_filename = '" << workunit_xml_filename << "'" << endl
+           << "    result_xml_filename = '" << result_xml_filename << "'" << endl
+           << "    input_filenames = '" << vector_to_string(input_filenames) << "'" << endl
+           << "    command_line_options = '" << command_line_options << "'" << endl
+           << "    extra_xml = '" << extra_xml << "'" << endl
+           << "]" << endl;
+}
+
+ostream& operator<< (ostream& stream, WorkunitInformation &wu_info) {
+    wu_info.print_to(stream);
+    return stream;
 }

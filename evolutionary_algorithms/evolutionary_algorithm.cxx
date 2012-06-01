@@ -24,6 +24,12 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
 }
 
 void
+EvolutionaryAlgorithm::initialize_rng() {
+    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+}
+
+
+void
 EvolutionaryAlgorithm::initialize() {
     Recombination::check_bounds(min_bound, max_bound);
     number_parameters = min_bound.size();
@@ -42,8 +48,8 @@ EvolutionaryAlgorithm::initialize() {
 void
 EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--population_size", false, population_size)) {
-        cerr << "Argument '--population_size' not specified, using default of 50." << endl;
-        population_size = 50;
+        cerr << "Argument '--population_size' not specified, using default of 200." << endl;
+        population_size = 200;
     }
 
     if (!get_argument(arguments, "--maximum_iterations", false, maximum_iterations)) {

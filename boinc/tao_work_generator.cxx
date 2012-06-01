@@ -50,6 +50,7 @@
 
 #include "stdint.h"
 
+#include "undvc_common/parse_xml.hxx"
 #include "undvc_common/vector_io.hxx"
 
 #include "evolutionary_algorithms/evolutionary_algorithm.hxx"
@@ -76,7 +77,8 @@ map<string, char*> in_templates;
 
 // create one new job
 //
-int make_job(string workunit_xml_filename,
+int make_job(string search_name,
+             string workunit_xml_filename,
              string result_xml_filename,
              vector<string> input_filenames,
              string command_line_options,
@@ -86,7 +88,7 @@ int make_job(string workunit_xml_filename,
     char name[256], path[MAXPATHLEN];
 
     // make a unique name (for the job and its input file)
-    sprintf(name, "%s_%d_%d", app_name, start_time, seqno++);
+    sprintf(name, "%s_%d_%d", search_name.c_str(), start_time, seqno++);
 
     // Fill in the job parameters
     wu.clear();
@@ -104,9 +106,19 @@ int make_job(string workunit_xml_filename,
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
 
+    try {
+        wu.rsc_fpops_est    = parse_xml<double>(extra_xml, "rsc_fpops_est");
+        wu.rsc_fpops_bound  = parse_xml<double>(extra_xml, "rsc_fpops_bound");
+        wu.rsc_disk_bound   = parse_xml<double>(extra_xml, "rsc_disk_bound");
+    } catch (string err_msg) {
+        log_messages.printf(MSG_CRITICAL, "ERROR: parsing extra xml for workunit field: '%s'\n", err_msg.c_str());
+        exit(1);
+    }
+
     const char* infiles[input_filenames.size()];
     for (uint32_t i = 0; i < input_filenames.size(); i++) {
         infiles[i] = input_filenames[i].c_str();
+        cout << "input file[" << i << "]: " << infiles[i] << endl;
     }
 
     char *in_template;
@@ -123,6 +135,9 @@ int make_job(string workunit_xml_filename,
         in_template = in_templates[workunit_xml_filename];  //use the buffered template
     }
 
+    cout << "extra_xml: " << extra_xml << endl;
+    cout << "command_line_options: " << command_line_options << endl;
+
     // Register the job with BOINC
     sprintf(path, "templates/%s", result_xml_filename.c_str());
     return create_work(
@@ -131,7 +146,7 @@ int make_job(string workunit_xml_filename,
         path,
         config.project_path(path),
         infiles,
-        1,
+        input_filenames.size(),
         config,
         command_line_options.c_str(),
         extra_xml.c_str()
@@ -150,10 +165,15 @@ int make_jobs(uint32_t number_jobs) {
     int retval;
 
     vector<EvolutionaryAlgorithmDB*> unfinished_searches;
-    ParticleSwarmDB::add_unfinished_searches(boinc_db.mysql, unfinished_searches);
-    DifferentialEvolutionDB::add_unfinished_searches(boinc_db.mysql, unfinished_searches);
+    try {
+        ParticleSwarmDB::add_unfinished_searches(boinc_db.mysql, app.id, unfinished_searches);
+        DifferentialEvolutionDB::add_unfinished_searches(boinc_db.mysql, app.id, unfinished_searches);
+    } catch (string err_msg) {
+        log_messages.printf(MSG_CRITICAL, "Error thrown getting unfinished searches:\n    '%s'\n", err_msg.c_str());
+        exit(1);
+    }
 
-    uint32_t portion = (number_jobs / unfinished_searches.size()) + 1;
+    uint32_t portion = (number_jobs / unfinished_searches.size());
 
     log_messages.printf(MSG_DEBUG, "Generating %u total jobs for %lu unfinished searches.\n", number_jobs, unfinished_searches.size());
 
@@ -167,7 +187,10 @@ int make_jobs(uint32_t number_jobs) {
          */
         WorkunitInformation workunit_information(boinc_db.mysql, unfinished_searches[i]->get_id());
 
+        cout << "info: " << workunit_information << endl;
+
         for (uint32_t j = 0; j < portion; j++) {
+            log_messages.printf(MSG_DEBUG, "        JOB %u\n", j);
             uint32_t id;
             uint32_t seed;
 
@@ -184,10 +207,12 @@ int make_jobs(uint32_t number_jobs) {
             new_command_line << workunit_information.get_command_line_options();
             if (requires_seeding) new_command_line << " --seed " << seed;
             new_command_line << " -np " << parameters.size() << " -p";
+            new_command_line.precision(15);
             for (uint32_t k = 0; k < parameters.size(); k++) new_command_line << " " << parameters[k];
 
             ostringstream new_extra_xml;
             new_extra_xml << workunit_information.get_extra_xml() << endl;
+            new_extra_xml << "<search_name>" << unfinished_searches[i]->get_name() << "</search_name>" << endl;
             new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
             new_extra_xml << "<position>" << id << "</position>" << endl;
             new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
@@ -196,7 +221,8 @@ int make_jobs(uint32_t number_jobs) {
             /**
              *  Generate the job with the updated workunit information
              */
-            retval = make_job(workunit_information.get_workunit_xml_filename(),
+            retval = make_job(unfinished_searches[i]->get_name(),
+                              workunit_information.get_workunit_xml_filename(),
                               workunit_information.get_result_xml_filename(),
                               workunit_information.get_input_filenames(),
                               new_command_line.str(),
@@ -214,10 +240,14 @@ int make_jobs(uint32_t number_jobs) {
         }
     }
 
-    for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
-        delete unfinished_searches[i];
+    EvolutionaryAlgorithmDB *eadb;
+    while (unfinished_searches.size() > 0) {
+        eadb = unfinished_searches.back();
+        unfinished_searches.pop_back();
+        delete eadb;
     }
 
+    exit(1);
     return 0;
 }
 
