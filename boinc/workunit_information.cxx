@@ -18,14 +18,14 @@ using std::ostringstream;
 void
 WorkunitInformation::create_table(MYSQL *conn) throw (string) {
     string query = "CREATE TABLE `tao_workunit_information` ("
-                   "  `search_id` int (11) NOT NULL,"
+                   "  `search_name` varchar(256) NOT NULL,"
                    "  `app_id` int (11) NOT NULL DEFAULT '0',"
                    "  `workunit_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `result_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `input_filenames` varchar(1024) NOT NULL DEFAULT '',"
                    "  `command_line_options` varchar(512) NOT NULL DEFAULT '',"
                    "  `extra_xml` varchar(512) NOT NULL DEFAULT '',"
-                   "  PRIMARY KEY (`search_id`)"
+                   "  PRIMARY KEY (`search_name`)"
                    ") Engine=InnoDB DEFAULT CHARSET=latin1";
 
     mysql_query(conn, query.c_str());
@@ -40,10 +40,10 @@ WorkunitInformation::create_table(MYSQL *conn) throw (string) {
 /**
  *  Get workunit information about a search from a database.
  */
-WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (string) {
-    this->search_id = search_id;
+WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) throw (string) {
+    this->search_name = search_name;
 
-    string query = "SELECT search_id, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information";
+    string query = "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information";
 
     mysql_query(conn, query.c_str());
 
@@ -57,7 +57,6 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (stri
             throw ex_msg.str();
         }
 
-        search_id = atoi(row[0]);
         app_id = atoi(row[1]);
         workunit_xml_filename = row[2];
         result_xml_filename = row[3];
@@ -80,7 +79,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, int search_id) throw (stri
  */
 
 WorkunitInformation::WorkunitInformation(MYSQL *conn,
-                                         const int search_id,
+                                         const string search_name, 
                                          const int app_id,
                                          const string workunit_xml_filename,
                                          const string result_xml_filename,
@@ -88,12 +87,12 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn,
                                          const string command_line_options,
                                          const string extra_xml
                                         ) throw (string) {
-    this->search_id = search_id;
+    this->search_name = search_name;
 
     ostringstream query;
     query << "INSERT INTO tao_workunit_information"
           << " SET "
-          << "  search_id = " << search_id
+          << "  search_name = '" << search_name << "'"
           << ", app_id = " << app_id
           << ", workunit_xml_filename = '" << workunit_xml_filename << "'"
           << ", result_xml_filename = '" << result_xml_filename << "'"
@@ -113,7 +112,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn,
 void
 WorkunitInformation::print_to(ostream& stream) {
     stream << "[WorkunitInformation " << endl
-           << "    search_id = " << search_id << endl
+           << "    search_name = " << search_name << endl
            << "    app_id = " << app_id << endl
            << "    workunit_xml_filename = '" << workunit_xml_filename << "'" << endl
            << "    result_xml_filename = '" << result_xml_filename << "'" << endl

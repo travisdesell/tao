@@ -118,7 +118,7 @@ int make_job(string search_name,
     const char* infiles[input_filenames.size()];
     for (uint32_t i = 0; i < input_filenames.size(); i++) {
         infiles[i] = input_filenames[i].c_str();
-        cout << "input file[" << i << "]: " << infiles[i] << endl;
+//        cout << "input file[" << i << "]: " << infiles[i] << endl;
     }
 
     char *in_template;
@@ -135,8 +135,8 @@ int make_job(string search_name,
         in_template = in_templates[workunit_xml_filename];  //use the buffered template
     }
 
-    cout << "extra_xml: " << extra_xml << endl;
-    cout << "command_line_options: " << command_line_options << endl;
+//    cout << "extra_xml: " << extra_xml << endl;
+//    cout << "command_line_options: " << command_line_options << endl;
 
     // Register the job with BOINC
     sprintf(path, "templates/%s", result_xml_filename.c_str());
@@ -185,12 +185,11 @@ int make_jobs(uint32_t number_jobs) {
         /**
          *  Get the standard workunit information for this search
          */
-        WorkunitInformation workunit_information(boinc_db.mysql, unfinished_searches[i]->get_id());
-
-        cout << "info: " << workunit_information << endl;
+        WorkunitInformation workunit_information(boinc_db.mysql, unfinished_searches[i]->get_name());       //TODO: should cache this since it never changes
+//        cout << "info: " << workunit_information << endl;
 
         for (uint32_t j = 0; j < portion; j++) {
-            log_messages.printf(MSG_DEBUG, "        JOB %u\n", j);
+//            log_messages.printf(MSG_DEBUG, "        JOB %u\n", j);
             uint32_t id;
             uint32_t seed;
 
@@ -247,7 +246,6 @@ int make_jobs(uint32_t number_jobs) {
         delete eadb;
     }
 
-    exit(1);
     return 0;
 }
 

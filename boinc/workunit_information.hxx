@@ -11,7 +11,7 @@ using std::ostream;
 
 class WorkunitInformation {
     protected:
-        int search_id;
+        string search_name;
         int app_id;
 
         string workunit_xml_filename;
@@ -28,11 +28,11 @@ class WorkunitInformation {
         string          get_extra_xml()                 { return extra_xml; }
 
         WorkunitInformation(MYSQL *conn,
-                            const int search_id
+                            const string search_name 
                            ) throw (string);
 
         WorkunitInformation(MYSQL *conn,
-                            const int search_id,
+                            const string search_name,
                             const int app_id,
                             const string workunit_xml_filename,
                             const string result_xml_filename,

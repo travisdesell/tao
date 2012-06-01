@@ -129,37 +129,26 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
 
     //Get the cached evolutionary algorithm if possible
     EvolutionaryAlgorithm *ea = NULL;
-    if (searches.find(search_name) == searches.end()) {
-        log_messages.printf(MSG_DEBUG, "search '%s' not found, looking up in database.\n", search_name.c_str());
+    try {
+        if (searches.find(search_name) == searches.end()) {
+            log_messages.printf(MSG_DEBUG, "search '%s' not found, looking up in database.\n", search_name.c_str());
 
-        if (search_name.substr(0,3).compare("ps_") == 0) {
-            try {
+            if (search_name.substr(0,3).compare("ps_") == 0) {
                 ea = new ParticleSwarmDB(boinc_db.mysql, search_id);
-                cout << "got ea!" << endl;
-
                 searches[search_name] = ea;
-            } catch (string err_msg) {
-                cout << "ERROR GETTING SEARCH!" << endl;
-//                log_messages.printf(MSG_CRITICAL, "could not find search: '%s' from search id '%d', threw error: '%s\n", search_name.c_str(), search_id, err_msg.c_str());
-                ea = NULL;
-            }
-        } else if (search_name.substr(0,3).compare("de_") == 0) {
-            try {
+            } else if (search_name.substr(0,3).compare("de_") == 0) {
                 ea = new DifferentialEvolutionDB(boinc_db.mysql, search_id);
-                cout << "got ea!\n" << endl;
-
                 searches[search_name] = ea;
-            } catch (string err_msg) {
-                cout << "ERROR GETTING SEARCH!" << endl;
-//                log_messages.printf(MSG_CRITICAL, "could not find search: '%s' from search id '%d', threw error: '%s\n", search_name.c_str(), search_id, err_msg.c_str());
+            } else {
+                log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([WORKUNIT#%d %s]) had an unkown search name (either removed from database or needs to start with de_ or ps_): '%s'\n", wu.id, wu.name, search_name.c_str());
                 ea = NULL;
             }
         } else {
-            log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([WORKUNIT#%d %s]) had an unkown search name (either removed from database or needs to start with de_ or ps_): '%s'\n", wu.id, wu.name, search_name.c_str());
-            ea = NULL;
+            ea = searches[search_name];
         }
-    } else {
-        ea = searches[search_name];
+    } catch (string err_msg) {
+        log_messages.printf(MSG_CRITICAL, "could not find search: '%s' from search id '%d', threw error: '%s\n", search_name.c_str(), search_id, err_msg.c_str());
+        ea = NULL;
     }
 
     if (results.size() == 1) {  //This was the first result back for the workunit

@@ -21,6 +21,7 @@ using boost::mt19937;
 using boost::uniform_real;
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
+    random_number_generator = NULL;
 }
 
 void
@@ -124,5 +125,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 }
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
-    delete random_number_generator;
+    if (random_number_generator != NULL) {
+        delete random_number_generator;
+    }
 }

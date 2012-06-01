@@ -35,7 +35,7 @@ ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, string name) throw (string) {
 
     ostringstream oss;
     oss << "SELECT * FROM particle_swarm WHERE name = '" << name << "'";
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -45,7 +45,7 @@ ParticleSwarmDB::ParticleSwarmDB(MYSQL *conn, int id) throw (string) {
 
     ostringstream oss;
     oss << "SELECT * FROM particle_swarm WHERE id = " << id;
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -200,7 +200,7 @@ ParticleSwarmDB::construct_from_database(MYSQL_ROW row) throw (string) {
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     local_best_fitnesses.resize(population_size, -numeric_limits<double>::max());
     local_bests.resize(population_size, vector<double>(number_parameters, 0.0));
@@ -498,14 +498,14 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         ostringstream swarm_query;
         swarm_query << " UPDATE particle_swarm"
                     << " SET "
-                    << "  current_individual = " << current_individual          //probably shouldnt have this here
-                    << ", initialized_individuals = " << initialized_individuals
+//                    << "  current_individual = " << current_individual          //probably shouldnt have this here
+                    << "  initialized_individuals = " << initialized_individuals
                     << ", current_iteration = " << current_iteration
-                    << ", maximum_iterations = " << maximum_iterations
-                    << ", individuals_created = " << individuals_created
-                    << ", maximum_created = " << maximum_created
+//                    << ", maximum_iterations = " << maximum_iterations
+//                    << ", individuals_created = " << individuals_created
+//                    << ", maximum_created = " << maximum_created
                     << ", individuals_reported = " << individuals_reported
-                    << ", maximum_reported = " << maximum_reported
+//                    << ", maximum_reported = " << maximum_reported
                     << " WHERE "
                     << "    id = " << this->id << endl;
 
@@ -543,6 +543,25 @@ ParticleSwarmDB::update_current_individual() throw (string) {
         ex_msg << "ERROR: updating 'particle_swarm' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }   
+    
+    for (uint32_t id = 0; id < population_size; id++) {
+        ostringstream particle_query;
+        particle_query << "UPDATE particle"
+                       << " SET "
+                       << "  parameters = '" << vector_to_string<double>(particles[id]) << "'"
+                       << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
+                       << " WHERE "
+                       << "     particle_swarm_id = " << this->id
+                       << " AND position = " << id;
+
+        mysql_query(conn, particle_query.str().c_str());
+
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: updating particle with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }
+    }
 }
 
 void

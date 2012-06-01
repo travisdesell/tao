@@ -278,7 +278,7 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
           << ", population_size = " << population_size
           << ", min_bound = '" << vector_to_string<double>(min_bound) << "'"
           << ", max_bound = '" << vector_to_string<double>(max_bound) << "'"
-          << ", app_id = '" << app_id;
+          << ", app_id = " << app_id;
 
     mysql_query(conn, query.str().c_str());
 
@@ -495,14 +495,14 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         ostringstream de_query;
         de_query << " UPDATE differential_evolution"
                  << " SET "
-                 << "  current_individual = " << current_individual             //probably should not have this here
-                 << ", initialized_individuals = " << initialized_individuals
+//                 << "  current_individual = " << current_individual             //probably should not have this here TODO: fix this for standard_benchmarks_db
+                 << "  initialized_individuals = " << initialized_individuals
                  << ", current_iteration = " << current_iteration
-                 << ", maximum_iterations = " << maximum_iterations
-                 << ", individuals_created = " << individuals_created
-                 << ", maximum_created = " << maximum_created
+//                 << ", maximum_iterations = " << maximum_iterations
+//                 << ", individuals_created = " << individuals_created
+//                 << ", maximum_created = " << maximum_created
                  << ", individuals_reported = " << individuals_reported
-                 << ", maximum_reported = " << maximum_reported
+//                 << ", maximum_reported = " << maximum_reported
                  << " WHERE "
                  << "    id = " << this->id << endl;
 
