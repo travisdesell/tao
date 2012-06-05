@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cstdlib>
+#include <iostream>
 
 #include "recombination.hxx"
 
@@ -12,6 +13,8 @@
 using boost::variate_generator;
 using boost::mt19937;
 using boost::uniform_real;
+
+using namespace std;
 
 /**
  *  Functions dealing with bounds.
@@ -58,6 +61,8 @@ void
 Recombination::binary_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     uint32_t selected = (uint32_t)((*rng)() * src1.size());
 
+    if (dest.size() != src1.size()) dest.resize(src1.size());
+
     for (uint32_t i = 0; i < src1.size(); i++) {
         if (i == selected || (*rng)() < crossover_rate) {
             dest[i] = src2[i];
@@ -70,6 +75,8 @@ Recombination::binary_recombination(const std::vector<double> &src1, const std::
 void
 Recombination::exponential_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     uint32_t selected = (uint32_t)((*rng)() * src1.size());
+
+    if (dest.size() != src1.size()) dest.resize(src1.size());
 
     uint32_t i;
     for (i = 0; i < src1.size(); i++) {

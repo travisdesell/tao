@@ -26,7 +26,7 @@
 #include "boost/random.hpp"
 #include "boost/generator_iterator.hpp"
 
-#define FITNESS_ERROR_BOUND 10e-10
+#define FITNESS_ERROR_BOUND 10e-8
 
 
 map<string, EvolutionaryAlgorithm*> searches;

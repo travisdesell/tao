@@ -34,7 +34,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, string name) throw
 
     ostringstream oss;
     oss << "SELECT * FROM differential_evolution WHERE name = '" << name << "'";
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -44,7 +44,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, int id) throw (str
 
     ostringstream oss;
     oss << "SELECT * FROM differential_evolution WHERE id = " << id;
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -196,7 +196,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     fitnesses.resize(population_size, -numeric_limits<double>::max());
     population.resize(population_size, vector<double>(number_parameters, 0.0));
