@@ -20,7 +20,7 @@ void parameter_sweep(const std::vector<double> &min_bound, const std::vector<dou
 
     uint64_t iteration = 0;
     uint32_t current;
-    while (parameters < max_bound) {
+    while (parameters[parameters.size() - 1] < max_bound[parameters.size() - 1]) {
         current_fitness = objective_function(parameters);
 
         if (current_fitness >= best_fitness) {
