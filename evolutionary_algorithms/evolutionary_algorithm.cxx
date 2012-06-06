@@ -24,6 +24,7 @@ using boost::uniform_real;
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
     random_number_generator = NULL;
+    log_file = NULL;
 }
 
 void
@@ -51,6 +52,7 @@ EvolutionaryAlgorithm::initialize() {
     maximum_reported = 0;
 
     random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    log_file = NULL;
 }
 
 void
@@ -133,5 +135,9 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
     if (random_number_generator != NULL) delete random_number_generator;
-    if (log_file != NULL) delete log_file;
+    if (log_file != NULL) {
+        cerr << "DELETING LOG FILE!" << endl;
+        delete log_file;
+        cerr << "DELETED LOG FILE!" << endl;
+    }
 }
