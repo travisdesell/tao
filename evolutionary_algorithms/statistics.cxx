@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <numeric>
 
+#include "stdint.h"
+
 #include "statistics.hxx"
 
 using namespace std;
@@ -15,5 +17,9 @@ void calculate_fitness_statistics(const vector<double> &fitness, double &best, d
     median = fitness_copy[fitness_copy.size() / 2];
     worst = fitness_copy[0];
 
-    average = accumulate(fitness_copy.begin(), fitness_copy.end(), 0) / fitness_copy.size();
+    average = 0;
+    for (uint32_t i = 0; i < fitness_copy.size(); i++) {
+        average += fitness_copy[i];
+    }
+    average = average / fitness_copy.size();
 }
