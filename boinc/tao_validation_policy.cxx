@@ -143,6 +143,14 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                 log_messages.printf(MSG_CRITICAL, "ea_validation_policy check_set([WORKUNIT#%d %s]) had an unkown search name (either removed from database or needs to start with de_ or ps_): '%s'\n", wu.id, wu.name, search_name.c_str());
                 ea = NULL;
             }
+
+            if (ea != NULL) {
+                const char *log_file_path = config.project_path("search_progress/%s", search_name.c_str());
+
+                log_messages.printf(MSG_DEBUG, "Opening log file for search '%s': '%s'\n", search_name.c_str(), log_file_path);
+
+                ea->set_log_file( new ofstream(log_file_path, fstream::app) );
+            }
         } else {
             ea = searches[search_name];
         }

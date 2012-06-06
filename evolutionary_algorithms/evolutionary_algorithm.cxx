@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 #include <stdint.h>
 
@@ -22,6 +24,11 @@ using boost::uniform_real;
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
     random_number_generator = NULL;
+}
+
+void
+EvolutionaryAlgorithm::set_log_file(ofstream *log_file) {
+    this->log_file = log_file;
 }
 
 void
@@ -125,7 +132,6 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 }
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
-    if (random_number_generator != NULL) {
-        delete random_number_generator;
-    }
+    if (random_number_generator != NULL) delete random_number_generator;
+    if (log_file != NULL) delete log_file;
 }

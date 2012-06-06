@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <iostream>
+#include <fstream>
 
 #include <stdint.h>
 
@@ -33,6 +35,7 @@ class EvolutionaryAlgorithm {
 
         //For random number generation
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
+        std::ofstream *log_file;
 
         EvolutionaryAlgorithm();
 
@@ -44,6 +47,8 @@ class EvolutionaryAlgorithm {
         uint32_t get_current_individual()   { return current_individual; }
         uint32_t get_current_iteration()    { return current_iteration; }
         uint32_t get_individuals_created()  { return individuals_created; }
+
+        void set_log_file(std::ofstream *log_file);
 
         /**
          *  Create/delete an EvolutionaryAlgorithm
