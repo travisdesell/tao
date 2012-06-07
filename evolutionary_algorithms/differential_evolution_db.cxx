@@ -521,7 +521,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
 void
 DifferentialEvolutionDB::update_current_individual() throw (string) {
     ostringstream query;
-    query << " UPDATE particle_swarm"
+    query << " UPDATE differential_evolution"
         << " SET "
         << "  current_individual = " << current_individual
         << ", current_iteration = " << current_iteration
@@ -533,7 +533,7 @@ DifferentialEvolutionDB::update_current_individual() throw (string) {
 
     if (mysql_errno(conn) != 0) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: updating 'particle_swarm' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: updating 'differential_evolution' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }   
 }
