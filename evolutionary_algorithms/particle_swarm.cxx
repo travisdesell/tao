@@ -6,6 +6,7 @@
 
 #include "particle_swarm.hxx"
 #include "recombination.hxx"
+#include "statistics.hxx"
 
 //From undvc_common
 #include "vector_io.hxx"
@@ -35,23 +36,23 @@ ParticleSwarm::initialize() {
 void
 ParticleSwarm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--inertia", false, inertia)) {
-        cerr << "Argument '--inertia <F>' not found, using default of 0.95." << endl;
-        inertia = 0.95;
+        cerr << "Argument '--inertia <F>' not found, using default of 0.75." << endl;
+        inertia = 0.75;
     }
 
     if (!get_argument(arguments, "--global_best_weight", false, global_best_weight)) {
-        cerr << "Argument '--global_best_weight <F>' not found, using default of 2.0." << endl;
-        global_best_weight = 2.0;
+        cerr << "Argument '--global_best_weight <F>' not found, using default of 1.5." << endl;
+        global_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--local_best_weight", false, local_best_weight)) {
-        cerr << "Argument '--local_best_weight <F>' not found, using default of 2.0." << endl;
-        local_best_weight = 2.0;
+        cerr << "Argument '--local_best_weight <F>' not found, using default of 1.5." << endl;
+        local_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--initial_velocity_scale", false, initial_velocity_scale)) {
-        cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.10." << endl;
-        initial_velocity_scale = 0.10;
+        cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.25." << endl;
+        initial_velocity_scale = 0.25;
     }
 }
 
@@ -195,6 +196,13 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 
 //        cout.precision(15);
 //        cout <<  current_iteration << ":" << id << " - LOCAL: " << fitness << " " << vector_to_string(parameters) << endl;
+
+        if (log_file != NULL) {
+            double best, average, median, worst;
+            calculate_fitness_statistics(local_best_fitnesses, best, average, median, worst);
+            (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
+        }
+
         modified = true;
     }
 
@@ -202,8 +210,10 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         global_best_fitness = fitness;
         global_best.assign(parameters.begin(), parameters.end());
 
-        cout.precision(15);
-        cout <<  current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+        if (log_file == NULL) {
+            cout.precision(15);
+            cout << current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+        }
     }
 
     individuals_reported++;
@@ -218,8 +228,6 @@ ParticleSwarm::would_insert(uint32_t id, double fitness) {
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized partilce swarm." << endl;
     cout << "   maximum_iterations: " << maximum_iterations << endl;
     cout << "   current_iteration:  " << current_iteration << endl;
@@ -244,8 +252,6 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) thr
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, const uint32_t)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized particle swarm." << endl;
     cout << "   maximum_iterations: " << maximum_iterations << endl;
     cout << "   current_iteration:  " << current_iteration << endl;

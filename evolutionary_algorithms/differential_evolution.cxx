@@ -6,6 +6,7 @@
 #include "evolutionary_algorithm.hxx"
 #include "differential_evolution.hxx"
 #include "recombination.hxx"
+#include "statistics.hxx"
 
 //from undvc_common
 #include "vector_io.hxx"
@@ -343,9 +344,19 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             global_best_id = id;
             global_best_fitness = fitness;
 
-            cout.precision(15);
-            cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
+            if (log_file == NULL) {
+                cout.precision(15);
+                cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
+                cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
+            }
         }
+
+    if (log_file != NULL) {
+        double best, average, median, worst;
+        calculate_fitness_statistics(fitnesses, best, average, median, worst);
+        (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
+    } 
+
         modified = true;
     }
     individuals_reported++;
@@ -363,8 +374,6 @@ DifferentialEvolution::would_insert(uint32_t id, double fitness) {
  */
 void
 DifferentialEvolution::iterate(double (*objective_function)(const std::vector<double> &)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized differential evolution. " << endl;
     cout << "   maximum_iterations:          " << maximum_iterations << endl;
     cout << "   current_iteration:           " << current_iteration << endl;
@@ -392,8 +401,6 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
 
 void
 DifferentialEvolution::iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (string) {
-    srand48(time(NULL));    //TODO: probably use a different random number generator, maybe unique per EA
-
     cout << "Initialized differential evolution. " << endl;
     cout << "   maximum_iterations:          " << maximum_iterations << endl;
     cout << "   current_iteration:           " << current_iteration << endl;

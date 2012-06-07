@@ -10,17 +10,21 @@
 
 class EvolutionaryAlgorithmDB {
     protected:
-        int id;
+        uint32_t id;
+        int32_t app_id;
         std::string name;
 
     public:
-        int get_id()            { return id; }
+        uint32_t get_id()        { return id; }
         std::string get_name()  { return name; }
 
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters) throw (std::string) = 0;
         virtual void new_individual(uint32_t &id, std::vector<double> &parameters, uint32_t &seed) throw (std::string) = 0;
 
         virtual void update_current_individual() throw (std::string) = 0;
+
+        virtual ~EvolutionaryAlgorithmDB() {
+        }
 };
 
 #endif

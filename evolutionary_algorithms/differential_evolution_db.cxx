@@ -34,7 +34,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, string name) throw
 
     ostringstream oss;
     oss << "SELECT * FROM differential_evolution WHERE name = '" << name << "'";
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -44,7 +44,7 @@ DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, int id) throw (str
 
     ostringstream oss;
     oss << "SELECT * FROM differential_evolution WHERE id = " << id;
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     construct_from_database(oss.str());
 }
@@ -96,6 +96,7 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
                 << "    `population_size` int(11) NOT NULL DEFAULT '0',"
                 << "    `min_bound` varchar(2048) NOT NULL,"
                 << "    `max_bound` varchar(2048) NOT NULL,"
+                << "    `app_id`    int(11) NOT NULL DEFAULT '-1',"
                 << "PRIMARY KEY (`id`),"
                 << "UNIQUE KEY `name` (`name`)"
                 << ") ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1";
@@ -130,6 +131,12 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
 void 
 DifferentialEvolutionDB::construct_from_database(string query) throw (string) {
     mysql_query(conn, query.c_str());
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: could not get differential evolution from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }
 
     MYSQL_RES *result = mysql_store_result(conn);
 
@@ -180,6 +187,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     population_size = atoi(row[17]);
     string_to_vector<double>(row[18], min_bound);
     string_to_vector<double>(row[19], max_bound);
+    app_id = atoi(row[20]);
     number_parameters = min_bound.size();
 
     //Get the individual information from the database
@@ -188,13 +196,13 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     mysql_query(conn, oss.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
 
-    cout << oss.str() << endl;
+//    cout << oss.str() << endl;
 
     fitnesses.resize(population_size, -numeric_limits<double>::max());
     population.resize(population_size, vector<double>(number_parameters, 0.0));
     seeds.resize(population_size, 0);
 
-    EvolutionaryAlgorithm::initialize();    //to initialize the random number generator
+    EvolutionaryAlgorithm::initialize_rng();    //to initialize the random number generator
 
     if (result != NULL) {
         uint32_t num_results = mysql_num_rows(result);
@@ -269,7 +277,8 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
           << ", maximum_reported = " << maximum_reported 
           << ", population_size = " << population_size
           << ", min_bound = '" << vector_to_string<double>(min_bound) << "'"
-          << ", max_bound = '" << vector_to_string<double>(max_bound) << "'";
+          << ", max_bound = '" << vector_to_string<double>(max_bound) << "'"
+          << ", app_id = " << app_id;
 
     mysql_query(conn, query.str().c_str());
 
@@ -310,6 +319,16 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
 //Create a differential evolution entirely from arguments
 DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, const vector<string> &arguments) throw (string) : DifferentialEvolution(arguments) {
     this->conn = conn;
+    this->app_id = -1;
+    get_argument(arguments, "--search_name", true, name);
+    check_name(name);
+    insert_to_database();
+}
+
+//Create a differential evolution entirely from arguments
+DifferentialEvolutionDB::DifferentialEvolutionDB(MYSQL *conn, const int32_t app_id, const vector<string> &arguments) throw (string) : DifferentialEvolution(arguments) {
+    this->conn = conn;
+    this->app_id = app_id;
     get_argument(arguments, "--search_name", true, name);
     check_name(name);
     insert_to_database();
@@ -323,6 +342,22 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                   const vector<string> &arguments
                                 ) throw (string) : DifferentialEvolution(min_bound, max_bound, arguments) {
     this->conn = conn;
+    this->app_id = -1;
+    get_argument(arguments, "--search_name", true, name);
+    check_name(name);
+    insert_to_database();
+}
+
+
+//Create a differential evolution from arguments and a given min and max bound
+DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
+                                  const int32_t app_id,
+                                  const vector<double> &min_bound,            /* min bound is copied into the search */
+                                  const vector<double> &max_bound,            /* max bound is copied into the search */
+                                  const vector<string> &arguments
+                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, arguments) {
+    this->conn = conn;
+    this->app_id = app_id;
     get_argument(arguments, "--search_name", true, name);
     check_name(name);
     insert_to_database();
@@ -344,6 +379,31 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                                   const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
                                                 ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_iterations) {
     this->conn = conn;
+    this->app_id = -1;
+    this->name = name;
+    check_name(name);
+    insert_to_database();
+}
+
+
+//Create a differential evolution entirely from defined parameters.
+DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
+                                                  const int32_t app_id,
+                                                  const string name,
+                                                  const vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                                  const vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                                  const uint32_t population_size,
+                                                  const uint16_t parent_selection,                                         /* How to select the parent */
+                                                  const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                                  const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                                  const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                                  const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                                  const double crossover_rate,                                             /* crossover rate for recombination */
+                                                  const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                                  const uint32_t maximum_iterations                                        /* default value is 0 which means no termination */
+                                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_iterations) {
+    this->conn = conn;
+    this->app_id = app_id;
     this->name = name;
     check_name(name);
     insert_to_database();
@@ -365,6 +425,30 @@ DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
                                                  const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
                                                ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_created, maximum_reported) {
     this->conn = conn;
+    this->app_id = -1;
+    this->name = name;
+    check_name(name);
+    insert_to_database();
+}
+
+DifferentialEvolutionDB::DifferentialEvolutionDB( MYSQL *conn,
+                                                 const int32_t app_id,
+                                                 const string name,
+                                                 const vector<double> &min_bound,                                    /* min bound is copied into the search */
+                                                 const vector<double> &max_bound,                                    /* max bound is copied into the search */
+                                                 const uint32_t population_size,
+                                                 const uint16_t parent_selection,                                         /* How to select the parent */
+                                                 const uint16_t number_pairs,                                             /* How many individuals to used to calculate differntials */
+                                                 const uint16_t recombination_selection,                                  /* How to perform recombination */
+                                                 const double parent_scaling_factor,                                      /* weight for the parent calculation*/
+                                                 const double differential_scaling_factor,                                /* weight for the differential calculation */
+                                                 const double crossover_rate,                                             /* crossover rate for recombination */
+                                                 const bool directional,                                                  /* used for directional calculation of differential (this options is not really a recombination) */
+                                                 const uint32_t maximum_created,                                          /* default value is 0 which means no termination */
+                                                 const uint32_t maximum_reported                                          /* default value is 0 which means no termination */
+                                               ) throw (string) : DifferentialEvolution(min_bound, max_bound, population_size, parent_selection, number_pairs, recombination_selection, parent_scaling_factor, differential_scaling_factor, crossover_rate, directional, maximum_created, maximum_reported) {
+    this->conn = conn;
+    this->app_id = app_id;
     this->name = name;
     check_name(name);
     insert_to_database();
@@ -411,14 +495,14 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         ostringstream de_query;
         de_query << " UPDATE differential_evolution"
                  << " SET "
-                 << "  current_individual = " << current_individual             //probably should not have this here
-                 << ", initialized_individuals = " << initialized_individuals
+//                 << "  current_individual = " << current_individual             //probably should not have this here TODO: fix this for standard_benchmarks_db
+                 << "  initialized_individuals = " << initialized_individuals
                  << ", current_iteration = " << current_iteration
-                 << ", maximum_iterations = " << maximum_iterations
-                 << ", individuals_created = " << individuals_created
-                 << ", maximum_created = " << maximum_created
+//                 << ", maximum_iterations = " << maximum_iterations
+//                 << ", individuals_created = " << individuals_created
+//                 << ", maximum_created = " << maximum_created
                  << ", individuals_reported = " << individuals_reported
-                 << ", maximum_reported = " << maximum_reported
+//                 << ", maximum_reported = " << maximum_reported
                  << " WHERE "
                  << "    id = " << this->id << endl;
 
@@ -437,7 +521,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
 void
 DifferentialEvolutionDB::update_current_individual() throw (string) {
     ostringstream query;
-    query << " UPDATE particle_swarm"
+    query << " UPDATE differential_evolution"
         << " SET "
         << "  current_individual = " << current_individual
         << ", current_iteration = " << current_iteration
@@ -449,15 +533,15 @@ DifferentialEvolutionDB::update_current_individual() throw (string) {
 
     if (mysql_errno(conn) != 0) {
         ostringstream ex_msg;
-        ex_msg << "ERROR: updating 'particle_swarm' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: updating 'differential_evolution' with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }   
 }
 
 void
-DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
+DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
     ostringstream query;
-    query << "SELECT id FROM differential_evoluton";
+    query << "SELECT id FROM differential_evolution WHERE app_id = " << app_id;
 
     mysql_query(conn, query.str().c_str());
     MYSQL_RES *result = mysql_store_result(conn);
@@ -512,6 +596,7 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
             << "    population_size = " << population_size << endl
             << "    min_bound = '" << vector_to_string<double>(min_bound) << "'" << endl
             << "    max_bound = '" << vector_to_string<double>(max_bound) << "'" << endl
+            << "    app_id = " << app_id << endl
             << "]" << endl;
 
     for (uint32_t i = 0; i < population_size; i++) {

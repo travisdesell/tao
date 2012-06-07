@@ -60,7 +60,7 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
                      ) throw (std::string);
 
 
-        ~ParticleSwarm();
+        virtual ~ParticleSwarm();
 
         /**
          *  The following methods are used for asynchronous optimization

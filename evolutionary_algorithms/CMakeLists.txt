@@ -2,7 +2,7 @@ include_directories(${Boost_INCLUDE_DIR})
 
 message(STATUS "boost include dir: ${Boost_INCLUDE_DIR}")
 
-add_library(EvolutionaryAlgorithms evolutionary_algorithm particle_swarm differential_evolution recombination)
+add_library(EvolutionaryAlgorithms evolutionary_algorithm particle_swarm differential_evolution recombination statistics)
 target_link_libraries(EvolutionaryAlgorithms undvc_common ${BOOST_LIBRARIES})
 
 if (MYSQL_FOUND)

@@ -78,7 +78,7 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
                              ) throw (std::string);
 
 
-        ~DifferentialEvolution();
+        virtual ~DifferentialEvolution();
 
         void parse_command_line(const std::vector<std::string> &arguments);
         /**
