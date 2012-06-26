@@ -23,9 +23,11 @@ bool operator<(const Individual &lhs, const Individual &rhs) {
 
 Individual& 
 Individual::operator=(const Individual& rhs) { 
-    /** THIS SHOULD NEVER BE CALLED **/
-    cerr << "ERROR (" << __FILE__ << ":" << __LINE__ << "): Cannot use assignment operator on the individual class as it contains constant fields. (c++ is stupid)" << endl;
-    exit(1);
+    position = rhs.position;
+    fitness = rhs.fitness;
+    parameters.assign(rhs.parameters.begin(), rhs.parameters.end());
+    metadata = rhs.metadata;
+
     return *this;
 }
 

@@ -14,10 +14,10 @@ using std::vector;
 
 class Individual {
     public:
-        const int position;
-        const double fitness;
-        const vector<double> parameters;
-        const string metadata;
+        int position;
+        double fitness;
+        vector<double> parameters;
+        string metadata;
 
         Individual(int position, double fitness, const vector<double> &parameters, const string &metadata) : position(position), fitness(fitness), parameters(parameters), metadata(metadata) {}
         virtual ~Individual() {}
