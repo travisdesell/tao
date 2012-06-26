@@ -75,6 +75,8 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
         void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (std::string);      //this objective function requires a seed
+
+        virtual void get_individuals(std::vector<Individual> &individuals);
 };
 
 #endif

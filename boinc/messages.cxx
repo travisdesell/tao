@@ -56,11 +56,12 @@ void print_searches(MYSQL *conn, int app_id) {
     ParticleSwarmDB::add_searches(conn, app_id, searches);
     DifferentialEvolutionDB::add_searches(conn, app_id, searches);
 
+    cout << "Searches for app id " << app_id << " (name, id, status): " << endl;
     EvolutionaryAlgorithmDB *eadb;
     while (searches.size() > 0) {
         eadb = searches.back();
 
-        cout << "\t" << eadb->get_name() << ", " << eadb->get_id() << endl;
+        cout << "\t" << eadb->get_name() << ", " << eadb->get_id() << ", " << ((dynamic_cast<EvolutionaryAlgorithm*>(eadb))->is_running() ? "running" : "finished") << endl;
         searches.pop_back();
         delete eadb;
     }

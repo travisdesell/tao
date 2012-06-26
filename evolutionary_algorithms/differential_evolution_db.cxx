@@ -561,14 +561,7 @@ DifferentialEvolutionDB::add_searches(MYSQL *conn, int32_t app_id, vector<Evolut
             throw ex_msg.str();
         }   
 
-        DifferentialEvolutionDB *search = new DifferentialEvolutionDB(conn, atoi(individual_row[0]));
-
-        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
-                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
-            searches.push_back(search);
-        } else {
-            delete search;
-        }   
+        searches.push_back(new DifferentialEvolutionDB(conn, atoi(individual_row[0])));
     }   
     mysql_free_result(result);
 }
@@ -600,8 +593,7 @@ DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, ve
 
         DifferentialEvolutionDB *search = new DifferentialEvolutionDB(conn, atoi(individual_row[0]));
 
-        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
-                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
+        if (search->is_running()) {
             unfinished_searches.push_back(search);
         } else {
             delete search;

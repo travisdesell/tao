@@ -620,8 +620,7 @@ ParticleSwarmDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, vector<Evo
 
         ParticleSwarmDB *search = new ParticleSwarmDB(conn, atoi(individual_row[0]));
 
-        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
-                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
+        if (search->is_running()) {
             unfinished_searches.push_back(search);
         } else {
             delete search;

@@ -426,3 +426,11 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
         current_iteration++;
     }
 }
+
+void
+DifferentialEvolution::get_individuals(std::vector<Individual> &individuals) {
+    individuals.clear();
+    for (uint32_t i = 0; i < population_size; i++) {
+        individuals.push_back(Individual(i, fitnesses[i], population[i], ""));
+    }
+}

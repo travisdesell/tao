@@ -12,6 +12,8 @@
 #include "boost/random.hpp"
 #include "boost/generator_iterator.hpp"
 
+#include "individual.hxx"
+
 class EvolutionaryAlgorithm {
     protected:
         //For iterative EAs
@@ -47,6 +49,12 @@ class EvolutionaryAlgorithm {
         uint32_t get_current_individual()   { return current_individual; }
         uint32_t get_current_iteration()    { return current_iteration; }
         uint32_t get_individuals_created()  { return individuals_created; }
+
+        bool is_running() {
+            return (maximum_reported == 0 || individuals_reported < maximum_reported) &&
+                   (maximum_created ==  0 || individuals_created  < maximum_created);
+
+        }
 
         void set_log_file(std::ofstream *log_file);
 
@@ -91,6 +99,8 @@ class EvolutionaryAlgorithm {
          */
         virtual void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string) = 0;
         virtual void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t seed)) throw (std::string) = 0;
+
+        virtual void get_individuals(std::vector<Individual> &individuals) = 0;
 };
 
 #endif
