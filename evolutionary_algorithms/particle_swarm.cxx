@@ -12,6 +12,8 @@
 #include "vector_io.hxx"
 #include "arguments.hxx"
 
+#include "individual.hxx"
+
 using namespace std;
 
 
@@ -275,3 +277,10 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, cons
     }
 }
 
+void
+ParticleSwarm::get_individuals(vector<Individual> &individuals) {
+    individuals.clear();
+    for (uint32_t i = 0; i < population_size; i++) {
+        individuals.push_back(Individual(i, local_best_fitnesses[i], local_bests[i], ""));
+    }
+}

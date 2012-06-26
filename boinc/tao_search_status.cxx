@@ -46,6 +46,7 @@
 #include "messages.hxx"
 #include "evolutionary_algorithms/particle_swarm_db.hxx"
 #include "evolutionary_algorithms/differential_evolution_db.hxx"
+#include "evolutionary_algorithms/statistics.hxx"
 
 #include "undvc_common/arguments.hxx"
 #include "undvc_common/vector_io.hxx"
@@ -80,12 +81,12 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-
     DB_APP app;
     char buf[256];
     sprintf(buf, "where name='%s'", app_name.c_str());
     if (app.lookup(buf)) {
         log_messages.printf(MSG_CRITICAL, "can't find app %s\n", app_name.c_str());
+        print_applications(boinc_db.mysql);
         exit(1);
     }
 
@@ -96,68 +97,60 @@ int main(int argc, char **argv) {
 
         bool search_found = get_argument(arguments, "--search_name", false, search_name);
         if (!search_found) {
+
             cout << "Need to specify which search with the '--search_name <name>' command line argument." << endl;
-            cout << "Searches for app id " << app.id << " (name, id): " << endl;
             print_searches(boinc_db.mysql, app.id);
-            exit(1);
-        }
-
-        int search_id;
-        if (search_name.substr(0,3).compare("ps_") == 0) {
-            search_type = "particle_swarm";
-            individual_type = "particle";
-
-            ParticleSwarmDB ps(boinc_db.mysql, search_name);
-            search_id = ps.get_id();
-
-        } else if (search_name.substr(0,3).compare("de_") == 0) {
-            search_type = "differential_evolution";
-            individual_type = "de_individual";
-
-            DifferentialEvolutionDB de(boinc_db.mysql, search_name);
-            search_id = de.get_id();
 
         } else {
-            cerr << "Improperly specified search name: '" << search_name <<"'" << endl;
-            cerr << "Search name must begin with either:" << endl;
-            cerr << "    'de_'     -       for differential evolution" << endl;
-            cerr << "    'ps_'     -       for particle swarm optimization" << endl;
-            exit(1);
+
+            try {
+                vector<Individual> individuals;
+                if (search_name.substr(0,3).compare("ps_") == 0) {
+                    ParticleSwarmDB ps(boinc_db.mysql, search_name);
+                    cout << ps << endl;
+
+                    ps.get_individuals(individuals);
+
+                } else if (search_name.substr(0,3).compare("de_") == 0) {
+                    DifferentialEvolutionDB de(boinc_db.mysql, search_name);
+                    cout << de << endl;
+                    de.get_individuals(individuals);
+
+                } else {
+                    cerr << "An an unkown search type was specified (searches need to start with de_ or ps_): '" << search_name << "'" << endl;
+                }   
+
+                uint32_t print_best_x = 0;
+                get_argument(arguments, "--print_best", false, print_best_x);
+                if (individuals.size() > 0 && print_best_x > 0) {
+                    sort(individuals.begin(), individuals.end());
+
+                    double best, average, median, worst;
+                    calculate_fitness_statistics(individuals, best, average, median, worst);
+
+                    cout << "best fitness: " << best << endl;
+                    cout << "median fitness: " << median << endl;
+                    cout << "average fitness: " << average << endl;
+                    cout << "worst fitness: " << worst << endl;
+                    cout << endl;
+
+                    uint32_t start = individuals.size() - (print_best_x + 1);
+                    if (start < 0) start = 0;
+                    cout << "The best " << individuals.size() - start << " of " << individuals.size() << " individuals are (position, fitness, parameters, metadata):" << endl;
+
+                    for (uint32_t i = individuals.size() - (print_best_x + 1); i < individuals.size(); i++) {
+                        cout << "\t" << individuals[i] << endl;
+                    }
+                } else {
+                    cout << "You can print the best X individuals by using the '--print_best <int>' command line argument." << endl;
+                }
+
+            } catch (string err_msg) {
+                cerr << "Could not find search: '" << search_name << "' threw error: " << err_msg << endl;
+            }   
         }
-
-        ostringstream query, query2;
-        if (argument_exists(arguments, "--delete")) {
-            query << "DELETE FROM " << search_type
-                  << " WHERE name = '" << search_name << "'";
-
-            query2 << "DELETE FROM " << individual_type
-                   << " WHERE " << search_type << "_id = " << search_id;
-        } else {
-            query << "UPDATE " << search_type
-                  << " SET maximum_created = 1"
-                  << " WHERE name = '" << search_name << "'";
-        }
-
-        mysql_query(boinc_db.mysql, query.str().c_str());
-
-        if (mysql_errno(boinc_db.mysql) != 0) {
-            ostringstream ex_msg;
-            ex_msg << "ERROR: updating database with query: '" << query.str() << "'. Error: " << mysql_errno(boinc_db.mysql) << " -- '" << mysql_error(boinc_db.mysql) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
-            throw ex_msg.str();
-        }
-
-        if (argument_exists(arguments, "--delete")) {
-            mysql_query(boinc_db.mysql, query2.str().c_str());
-
-            if (mysql_errno(boinc_db.mysql) != 0) {
-                ostringstream ex_msg;
-                ex_msg << "ERROR: updating database with query: '" << query2.str() << "'. Error: " << mysql_errno(boinc_db.mysql) << " -- '" << mysql_error(boinc_db.mysql) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
-                throw ex_msg.str();
-            }
-        }
-
     } catch (string err_msg) {
-            cerr << "Error putting the search into the database." << endl;
-            cerr << "threw message: '" << err_msg << "'" << endl;
+        cerr << "Error getting the search from the database." << endl;
+        cerr << "threw message: '" << err_msg << "'" << endl;
     }
 }

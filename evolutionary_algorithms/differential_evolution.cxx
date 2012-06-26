@@ -351,11 +351,11 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             }
         }
 
-    if (log_file != NULL) {
-        double best, average, median, worst;
-        calculate_fitness_statistics(fitnesses, best, average, median, worst);
-        (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
-    } 
+        if (log_file != NULL) {
+            double best, average, median, worst;
+            calculate_fitness_statistics(fitnesses, best, average, median, worst);
+            (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
+        } 
 
         modified = true;
     }
@@ -424,5 +424,13 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
         }
 
         current_iteration++;
+    }
+}
+
+void
+DifferentialEvolution::get_individuals(std::vector<Individual> &individuals) {
+    individuals.clear();
+    for (uint32_t i = 0; i < population_size; i++) {
+        individuals.push_back(Individual(i, fitnesses[i], population[i], ""));
     }
 }

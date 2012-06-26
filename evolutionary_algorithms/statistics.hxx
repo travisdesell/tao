@@ -5,6 +5,7 @@
 
 using namespace std;
 
+void calculate_fitness_statistics(const vector<Individual> &fitness, double &best, double &average, double &median, double &worst);
 void calculate_fitness_statistics(const vector<double> &fitness, double &best, double &average, double &median, double &worst);
 
 #endif

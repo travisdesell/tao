@@ -114,6 +114,8 @@ class ParticleSwarmDB : public ParticleSwarm, public EvolutionaryAlgorithmDB {
         virtual bool insert_individual(uint32_t id, const std::vector<double> &parameters, double fitness, uint32_t seed = 0) throw (std::string);         /* Returns true if the individual was inserted. */
 
         virtual void update_current_individual() throw (std::string);
+
+        static void add_searches(MYSQL *conn, int32_t app_id, std::vector<EvolutionaryAlgorithmDB*> &searches) throw (std::string);
         static void add_unfinished_searches(MYSQL *conn, int32_t app_id, std::vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (std::string);
 
         void print_to(std::ostream& stream);

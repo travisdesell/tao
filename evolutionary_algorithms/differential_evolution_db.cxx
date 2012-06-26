@@ -539,6 +539,36 @@ DifferentialEvolutionDB::update_current_individual() throw (string) {
 }
 
 void
+DifferentialEvolutionDB::add_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &searches) throw (string) {
+    ostringstream query;
+    query << "SELECT id FROM differential_evolution WHERE app_id = " << app_id;
+
+    mysql_query(conn, query.str().c_str());
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: getting unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+
+    MYSQL_ROW individual_row;
+
+    while ((individual_row = mysql_fetch_row(result))) {
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: getting row for unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }   
+
+        searches.push_back(new DifferentialEvolutionDB(conn, atoi(individual_row[0])));
+    }   
+    mysql_free_result(result);
+}
+
+
+/** TODO: remove this and add an 'remote_finished_searches'/'remove_finished_searches' method to EvolutionaryAlgorithmBM **/
+void
 DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
     ostringstream query;
     query << "SELECT id FROM differential_evolution WHERE app_id = " << app_id;
@@ -563,8 +593,7 @@ DifferentialEvolutionDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, ve
 
         DifferentialEvolutionDB *search = new DifferentialEvolutionDB(conn, atoi(individual_row[0]));
 
-        if ((search->maximum_reported == 0 || search->individuals_reported < search->maximum_reported) &&
-                (search->maximum_created == 0 || search->individuals_created < search->maximum_created)) {
+        if (search->is_running()) {
             unfinished_searches.push_back(search);
         } else {
             delete search;
@@ -605,7 +634,7 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
                << "        position = " << i << endl
                << "        fitness = " << fitnesses[i] << endl
                << "        parameters = '" << vector_to_string<double>(population[i]) << "'" << endl
-               << "        seed = '" << seeds[i] << endl
+               << "        seed = " << seeds[i] << endl
                << "    ]" << endl;
     }
 }
