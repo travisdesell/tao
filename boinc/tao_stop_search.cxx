@@ -43,6 +43,7 @@
 #include "str_util.h"
 
 //From TAO
+#include "messages.hxx"
 #include "evolutionary_algorithms/particle_swarm_db.hxx"
 #include "evolutionary_algorithms/differential_evolution_db.hxx"
 
@@ -71,7 +72,14 @@ int main(int argc, char **argv) {
     }
 
     string app_name;
-    get_argument(arguments, "--app", true, app_name);
+    bool app_found = get_argument(arguments, "--app", false, app_name);
+    if (!app_found) {
+        //app argument not found, print out apps in the database
+        cout << "Need to specify which application with the '--app <name>' command line argument." << endl;
+        print_applications(boinc_db.mysql);
+        exit(1);
+    }
+
 
     DB_APP app;
     char buf[256];
@@ -86,7 +94,13 @@ int main(int argc, char **argv) {
         string search_type;
         string individual_type;
 
-        get_argument(arguments, "--search_name", true, search_name);
+        bool search_found = get_argument(arguments, "--search_name", false, search_name);
+        if (!search_found) {
+            cout << "Need to specify which search with the '--search_name <name>' command line argument." << endl;
+            cout << "Searches for app id " << app.id << " (name, id): " << endl;
+            print_searches(boinc_db.mysql, app.id);
+            exit(1);
+        }
 
         int search_id;
         if (search_name.substr(0,3).compare("ps_") == 0) {

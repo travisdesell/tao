@@ -30,9 +30,13 @@ add_executable(tao_work_generator tao_work_generator workunit_information)
 #target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
 target_link_libraries(tao_work_generator DBEvolutionaryAlgorithms EvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
 
-add_executable(tao_stop_search tao_stop_search)
+add_executable(tao_stop_search tao_stop_search messages)
 #target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
 target_link_libraries(tao_stop_search DBEvolutionaryAlgorithms EvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+
+add_executable(tao_search_status tao_search_status messages)
+#target_link_libraries(tao_work_generator EvolutionaryAlgorithms DBEvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(tao_search_status DBEvolutionaryAlgorithms EvolutionaryAlgorithms undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 add_library(workunit_information workunit_information)
 target_link_libraries(workunit_information undvc_common ${BOINC_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})

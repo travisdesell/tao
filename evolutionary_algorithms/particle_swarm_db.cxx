@@ -564,6 +564,37 @@ ParticleSwarmDB::update_current_individual() throw (string) {
     }
 }
 
+
+void
+ParticleSwarmDB::add_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &searches) throw (string) {
+    ostringstream query;
+    query << "SELECT id FROM particle_swarm WHERE app_id = " << app_id;
+
+    mysql_query(conn, query.str().c_str());
+    MYSQL_RES *result = mysql_store_result(conn);
+
+    if (mysql_errno(conn) != 0) {
+        ostringstream ex_msg;
+        ex_msg << "ERROR: getting unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        throw ex_msg.str();
+    }   
+
+    MYSQL_ROW individual_row;
+
+    while ((individual_row = mysql_fetch_row(result))) {
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: getting row for unfinished searches with query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }   
+
+        searches.push_back(new ParticleSwarmDB(conn, atoi(individual_row[0])));
+    }   
+    mysql_free_result(result);
+}
+
+
+/** TODO: remove this and add an 'remote_finished_searches'/'remove_finished_searches' method to EvolutionaryAlgorithmBM **/
 void
 ParticleSwarmDB::add_unfinished_searches(MYSQL *conn, int32_t app_id, vector<EvolutionaryAlgorithmDB*> &unfinished_searches) throw (string) {
     ostringstream query;

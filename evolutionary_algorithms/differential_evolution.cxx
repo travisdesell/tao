@@ -351,11 +351,11 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             }
         }
 
-    if (log_file != NULL) {
-        double best, average, median, worst;
-        calculate_fitness_statistics(fitnesses, best, average, median, worst);
-        (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
-    } 
+        if (log_file != NULL) {
+            double best, average, median, worst;
+            calculate_fitness_statistics(fitnesses, best, average, median, worst);
+            (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
+        } 
 
         modified = true;
     }
