@@ -160,4 +160,6 @@ int main(int argc, char **argv) {
             cerr << "Error putting the search into the database." << endl;
             cerr << "threw message: '" << err_msg << "'" << endl;
     }
+
+    cout << "Search successfull stopped." << endl;
 }

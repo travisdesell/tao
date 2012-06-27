@@ -59,6 +59,11 @@
 
 #include "workunit_information.hxx"
 
+#ifdef FPOPS_FROM_PARAMETERS
+#include "fpops_from_parameters.hxx"
+#endif
+
+
 #define CUSHION 500 // maintain at least this many unsent results
 #define REPLICATION_FACTOR  1
 
@@ -211,6 +216,12 @@ int make_jobs(uint32_t number_jobs) {
 
             ostringstream new_extra_xml;
             new_extra_xml << workunit_information.get_extra_xml() << endl;
+#ifdef FPOPS_FROM_PARAMETERS
+            double rsc_fpops_est, rsc_fpops_bound;
+            calculate_fpops(parameters, rsc_fpops_est, rsc_fpops_bound, workunit_information.get_extra_xml());
+            new_extra_xml << "<rsc_fpops_est>"   << rsc_fpops_est   << "</rsc_fpops_est>"   << endl;
+            new_extra_xml << "<rsc_fpops_bound>" << rsc_fpops_bound << "</rsc_fpops_bound>" << endl;
+#endif
             new_extra_xml << "<search_name>" << unfinished_searches[i]->get_name() << "</search_name>" << endl;
             new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
             new_extra_xml << "<position>" << id << "</position>" << endl;
