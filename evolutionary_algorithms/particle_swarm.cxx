@@ -113,7 +113,7 @@ void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
     ParticleSwarm::new_individual(id, parameters);
 
-    seeds[id] = (*random_number_generator)() * numeric_limits<uint32_t>::max();
+    seeds[id] = ((*random_number_generator)() * numeric_limits<uint32_t>::max()) / 10.0;    //uint max is too large for some reason
     seed = seeds[id];
 }
 

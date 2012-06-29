@@ -271,7 +271,7 @@ void main_loop() {
         check_stop_daemons();
 
         int n;
-        retval = count_unsent_results(n, 0);
+        retval = count_unsent_results(n, app.id);
 
         if (retval) {
             log_messages.printf(MSG_CRITICAL,"count_unsent_jobs() failed: %s\n", boincerror(retval));
