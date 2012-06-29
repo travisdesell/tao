@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
             exit(1);
         }
 
-        ostringstream query, query2;
+        ostringstream query, query2, query3;
         if (argument_exists(arguments, "--delete")) {
             query << "DELETE FROM " << search_type
                   << " WHERE name = '" << search_name << "'";
@@ -130,8 +130,8 @@ int main(int argc, char **argv) {
             query2 << "DELETE FROM " << individual_type
                    << " WHERE " << search_type << "_id = " << search_id;
 
-            query3 << "DELETE_FROM tao_workunit_information WHERE "
-                   << "search_name = " << search_name << " AND app_id = " << app.id;
+            query3 << "DELETE FROM tao_workunit_information WHERE "
+                   << "search_name = '" << search_name << "' AND app_id = " << app.id;
         } else {
             query << "UPDATE " << search_type
                   << " SET maximum_created = 1"
@@ -174,5 +174,5 @@ int main(int argc, char **argv) {
             cerr << "threw message: '" << err_msg << "'" << endl;
     }
 
-    cout << "Search successfull stopped." << endl;
+    cout << "Search successfully stopped." << endl;
 }
