@@ -187,6 +187,7 @@ int make_jobs(uint32_t number_jobs) {
      */
     for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
         log_messages.printf(MSG_DEBUG, "    Generating %u jobs for unfinished search '%s'.\n", portion, unfinished_searches[i]->get_name().c_str());
+
         /**
          *  Get the standard workunit information for this search
          */
@@ -227,6 +228,9 @@ int make_jobs(uint32_t number_jobs) {
             new_extra_xml << "<position>" << id << "</position>" << endl;
             new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
             if (requires_seeding) new_extra_xml << "<seed>" << seed << "</seed>" << endl;
+
+//            cerr << "new_extra_xml: " << endl;
+//            cerr << new_extra_xml.str() << endl;
 
             /**
              *  Generate the job with the updated workunit information

@@ -154,6 +154,8 @@ int main(int argc, char **argv) {
                 ex_msg << "ERROR: updating database with query: '" << query2.str() << "'. Error: " << mysql_errno(boinc_db.mysql) << " -- '" << mysql_error(boinc_db.mysql) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
                 throw ex_msg.str();
             }
+
+            cout << "Successfully deleted search with query: '" << query2.str() << "'." << endl;
         }
 
     } catch (string err_msg) {

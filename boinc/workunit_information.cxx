@@ -43,9 +43,11 @@ WorkunitInformation::create_table(MYSQL *conn) throw (string) {
 WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) throw (string) {
     this->search_name = search_name;
 
-    string query = "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information";
+    ostringstream query;
+    query << "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information"
+          << " WHERE search_name = '" << search_name << "'";
 
-    mysql_query(conn, query.c_str());
+    mysql_query(conn, query.str().c_str());
 
     MYSQL_RES *result = mysql_store_result(conn);
     if (mysql_errno(conn) == 0) {
@@ -53,9 +55,12 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 
         if (row == NULL) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: could not row from workunit query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: could not row from workunit query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
+
+//        cerr << "query: " << query.str() << endl;
+//        cerr << "workunit info row: " << row[1] << ", " << row[2] << ", " << row[3] << ", " << row[4] << ", " << row[5] << ", " << row[6] << endl;
 
         app_id = atoi(row[1]);
         workunit_xml_filename = row[2];
@@ -66,7 +71,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get workunit information from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not get workunit information from query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 
