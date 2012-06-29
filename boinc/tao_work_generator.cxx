@@ -1,31 +1,24 @@
-// This file is part of BOINC.
-// http://boinc.berkeley.edu
-// Copyright (C) 2008 University of California
-//
-// BOINC is free software; you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation,
-// either version 3 of the License, or (at your option) any later version.
-//
-// BOINC is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with BOINC.  If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2012, 2009 Travis Desell and the University of North Dakota.
+ *
+ * This file is part of the Toolkit for Asynchronous Optimization (TAO)
+ * and is modified from the original within the BOINC source code (also 
+ * GPL 3).
+ *
+ * TAO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * TAO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with TAO.  If not, see <http://www.gnu.org/licenses/>.
+ * */
 
-// sample_work_generator.cpp: an example BOINC work generator.
-// This work generator has the following properties
-// (you may need to change some or all of these):
-//
-// - Runs as a daemon, and creates an unbounded supply of work.
-//   It attempts to maintain a "cushion" of 100 unsent job instances.
-//   (your app may not work this way; e.g. you might create work in batches)
-// - Creates work for the application "example_app".
-// - Creates a new input file for each job;
-//   the file (and the workunit names) contain a timestamp
-//   and sequence number, so they're unique.
 
 #include <sys/param.h>
 #include <unistd.h>
