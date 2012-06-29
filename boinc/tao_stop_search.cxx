@@ -129,6 +129,9 @@ int main(int argc, char **argv) {
 
             query2 << "DELETE FROM " << individual_type
                    << " WHERE " << search_type << "_id = " << search_id;
+
+            query3 << "DELETE_FROM tao_workunit_information WHERE "
+                   << "search_name = " << search_name << " AND app_id = " << app.id;
         } else {
             query << "UPDATE " << search_type
                   << " SET maximum_created = 1"
@@ -152,7 +155,18 @@ int main(int argc, char **argv) {
                 throw ex_msg.str();
             }
 
-            cout << "Successfully deleted search with query: '" << query2.str() << "'." << endl;
+            mysql_query(boinc_db.mysql, query3.str().c_str());
+
+            if (mysql_errno(boinc_db.mysql) != 0) {
+                ostringstream ex_msg;
+                ex_msg << "ERROR: updating database with query: '" << query3.str() << "'. Error: " << mysql_errno(boinc_db.mysql) << " -- '" << mysql_error(boinc_db.mysql) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+                throw ex_msg.str();
+            }
+
+            cout << "Successfully deleted search with queries: " << endl;
+            cout << "\t" << query.str() << "'." << endl;
+            cout << "\t" << query2.str() << "'." << endl;
+            cout << "\t" << query3.str() << "'." << endl;
         }
 
     } catch (string err_msg) {
