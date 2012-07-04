@@ -1,2 +1,2 @@
-add_library(DeterministicAlgorithms parameter_sweep)
+add_library(DeterministicAlgorithms parameter_sweep synchronous_newton_method gradient hessian newton_method line_search)
 target_link_libraries(DeterministicAlgorithms undvc_common)
