@@ -1,2 +1,8 @@
-add_library(DeterministicAlgorithms parameter_sweep synchronous_newton_method gradient hessian newton_method line_search)
+add_executable(matrix_mul_test matrix)
+set_target_properties(matrix_mul_test PROPERTIES COMPILE_FLAGS -DMATRIX_MUL_TEST)
+
+add_executable(matrix_inverse_test matrix)
+set_target_properties(matrix_inverse_test PROPERTIES COMPILE_FLAGS -DMATRIX_INVERSE_TEST)
+
+add_library(DeterministicAlgorithms parameter_sweep)
 target_link_libraries(DeterministicAlgorithms undvc_common)
