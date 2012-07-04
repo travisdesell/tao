@@ -1,45 +1,13 @@
-/*
- * Copyright 2008, 2009 Travis Desell, Dave Przybylo, Nathan Cole,
- * Boleslaw Szymanski, Heidi Newberg, Carlos Varela, Malik Magdon-Ismail
- * and Rensselaer Polytechnic Institute.
- *
- * This file is part of Milkway@Home.
- *
- * Milkyway@Home is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Milkyway@Home is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Milkyway@Home.  If not, see <http://www.gnu.org/licenses/>.
- * */
+#ifndef TAO_GRADIENT_H
+#define TAO_GRADIENT_H
 
-#ifndef GEM_GRADIENT_H
-#define GEM_GRADIENT_H
+#include <vector>
 
-#include <stdio.h>
+using std::vector;
 
-typedef struct gradient {
-	int iteration;
-	int set_values;
-	int number_parameters;
-	double* step;
-	double* point;
+void get_gradient(double (*objective_function)(const std::vector<double> &), const vector<double> &point, const vector<double> &step, vector <double> &gradient);
 
-	int** set_evaluations;
-	double** evaluations;
-	double* values;
-} GRADIENT;
-
-
-void get_gradient__checkpointed(int number_parameters, double *point, double *step, double *gradient, char *checkpoint_file);
-void get_gradient(int number_parameters, double *point, double *step, double *gradient);
-int gradient_below_threshold(int number_parameters, double* gradient, double threshold);
+bool gradient_below_threshold(const vector<double> &gradient, const vector<double> &threshold);
 
 
 #endif
