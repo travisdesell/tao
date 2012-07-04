@@ -1,31 +1,24 @@
-// This file is part of BOINC.
-// http://boinc.berkeley.edu
-// Copyright (C) 2008 University of California
-//
-// BOINC is free software; you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation,
-// either version 3 of the License, or (at your option) any later version.
-//
-// BOINC is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with BOINC.  If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2012, 2009 Travis Desell and the University of North Dakota.
+ *
+ * This file is part of the Toolkit for Asynchronous Optimization (TAO)
+ * and is modified from the original within the BOINC source code (also 
+ * GPL 3).
+ *
+ * TAO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * TAO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with TAO.  If not, see <http://www.gnu.org/licenses/>.
+ * */
 
-// sample_work_generator.cpp: an example BOINC work generator.
-// This work generator has the following properties
-// (you may need to change some or all of these):
-//
-// - Runs as a daemon, and creates an unbounded supply of work.
-//   It attempts to maintain a "cushion" of 100 unsent job instances.
-//   (your app may not work this way; e.g. you might create work in batches)
-// - Creates work for the application "example_app".
-// - Creates a new input file for each job;
-//   the file (and the workunit names) contain a timestamp
-//   and sequence number, so they're unique.
 
 #include <sys/param.h>
 #include <unistd.h>
@@ -58,6 +51,11 @@
 #include "evolutionary_algorithms/differential_evolution_db.hxx"
 
 #include "workunit_information.hxx"
+
+#ifdef FPOPS_FROM_PARAMETERS
+#include "fpops_from_parameters.hxx"
+#endif
+
 
 #define CUSHION 500 // maintain at least this many unsent results
 #define REPLICATION_FACTOR  1
@@ -182,6 +180,7 @@ int make_jobs(uint32_t number_jobs) {
      */
     for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
         log_messages.printf(MSG_DEBUG, "    Generating %u jobs for unfinished search '%s'.\n", portion, unfinished_searches[i]->get_name().c_str());
+
         /**
          *  Get the standard workunit information for this search
          */
@@ -211,11 +210,20 @@ int make_jobs(uint32_t number_jobs) {
 
             ostringstream new_extra_xml;
             new_extra_xml << workunit_information.get_extra_xml() << endl;
+#ifdef FPOPS_FROM_PARAMETERS
+            double rsc_fpops_est, rsc_fpops_bound;
+            calculate_fpops(parameters, rsc_fpops_est, rsc_fpops_bound, workunit_information.get_extra_xml());
+            new_extra_xml << "<rsc_fpops_est>"   << rsc_fpops_est   << "</rsc_fpops_est>"   << endl;
+            new_extra_xml << "<rsc_fpops_bound>" << rsc_fpops_bound << "</rsc_fpops_bound>" << endl;
+#endif
             new_extra_xml << "<search_name>" << unfinished_searches[i]->get_name() << "</search_name>" << endl;
             new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
             new_extra_xml << "<position>" << id << "</position>" << endl;
             new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
             if (requires_seeding) new_extra_xml << "<seed>" << seed << "</seed>" << endl;
+
+//            cerr << "new_extra_xml: " << endl;
+//            cerr << new_extra_xml.str() << endl;
 
             /**
              *  Generate the job with the updated workunit information
@@ -256,7 +264,7 @@ void main_loop() {
         check_stop_daemons();
 
         int n;
-        retval = count_unsent_results(n, 0);
+        retval = count_unsent_results(n, app.id);
 
         if (retval) {
             log_messages.printf(MSG_CRITICAL,"count_unsent_jobs() failed: %s\n", boincerror(retval));

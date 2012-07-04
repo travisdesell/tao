@@ -1,3 +1,22 @@
+/*
+ * Copyright 2012, 2009 Travis Desell and the University of North Dakota.
+ *
+ * This file is part of the Toolkit for Asynchronous Optimization (TAO).
+ *
+ * TAO is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * TAO is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with TAO.  If not, see <http://www.gnu.org/licenses/>.
+ * */
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -43,9 +62,11 @@ WorkunitInformation::create_table(MYSQL *conn) throw (string) {
 WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) throw (string) {
     this->search_name = search_name;
 
-    string query = "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information";
+    ostringstream query;
+    query << "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information"
+          << " WHERE search_name = '" << search_name << "'";
 
-    mysql_query(conn, query.c_str());
+    mysql_query(conn, query.str().c_str());
 
     MYSQL_RES *result = mysql_store_result(conn);
     if (mysql_errno(conn) == 0) {
@@ -53,9 +74,12 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 
         if (row == NULL) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: could not row from workunit query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: could not row from workunit query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
+
+//        cerr << "query: " << query.str() << endl;
+//        cerr << "workunit info row: " << row[1] << ", " << row[2] << ", " << row[3] << ", " << row[4] << ", " << row[5] << ", " << row[6] << endl;
 
         app_id = atoi(row[1]);
         workunit_xml_filename = row[2];
@@ -66,7 +90,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 
     } else {
         ostringstream ex_msg;
-        ex_msg << "ERROR: could not get workunit information from query: '" << query << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+        ex_msg << "ERROR: could not get workunit information from query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw ex_msg.str();
     }
 
