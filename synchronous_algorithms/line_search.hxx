@@ -19,21 +19,50 @@
  * along with Milkyway@Home.  If not, see <http://www.gnu.org/licenses/>.
  * */
 
-#ifndef FGDO_LINE_SEARCH_H
-#define FGDO_LINE_SEARCH_H
+#ifndef TAO_LINE_SEARCH_H
+#define TAO_LINE_SEARCH_H
 
-extern const char *LS_STR[];
-#define LS_SUCCESS	0
-#define LS_LOOP1_NAN	1
-#define LS_LOOP2_NAN	2
-#define LS_LOOP3_NAN	3
-#define LS_LOOP1_TOL	4
-#define LS_LOOP1_MAX	5
-#define LS_LOOP2_MAX	6
+#include <vector>
+#include <string>
+
+#include "stdint.h"
+
+using std::string;
+using std::vector;
+
+class LineSearch {
+    private:
+        string status;
+
+        /**
+         *  Stopping Conditions
+         */
+        double tol;
+        uint32_t LOOP1_MAX;
+        uint32_t LOOP2_MAX;
+        uint32_t NQUAD;
+
+        bool threshold_specified;
+        vector<double> min_threshold;
+
+        double (*objective_function)(const vector<double> &);
+
+    public:
+        LineSearch(double (*objective_function)(const vector<double> &));
+        LineSearch(double (*objective_function)(const vector<double> &), vector<string> arguments);
+        LineSearch(double (*objective_function)(const vector<double> &), const double tol, const uint32_t LOOP1_MAX, const uint32_t LOOP2_MAX, const uint32_t NQUAD);
+
+        ~LineSearch();
+
+        string get_status();
+
+        double evaluate_step(const vector<double> &point, const double step, const vector<double> &direction, vector<double> &current_point);
+
+        void line_search(const vector<double> &point, double initial_fitness, const vector<double> &direction, vector <double> &new_point, double &new_fitness) throw (string);
+
+//        int randomized_line_search(int number_parameters, double *point, double *step, int ls_evaluations, int ls_iterations, double **new_point, double *fitness);
+};
 
 
-int line_search(double* point, double initial_fitness, double* direction, int number_parameters, double* minimum, double* fitness, int *evaluations_done);
-
-void randomized_line_search(int number_parameters, double *point, double *step, int ls_evaluations, int ls_iterations, double **new_point, double *fitness);
 
 #endif

@@ -14,6 +14,7 @@ find_package(BOINC)
 find_package(MySQL)
 find_package(Boost REQUIRED COMPONENTS system)
 
+include_directories(${PROJECT_SOURCE_DIR})
 include_directories(undvc_common)
 
 add_subdirectory(undvc_common)

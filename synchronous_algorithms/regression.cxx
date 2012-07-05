@@ -23,7 +23,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "regression.h"
+#include "synchronous_algorithms/regression.hxx"
 
 #include "../util/matrix.h"
 #include "../util/io_util.h"

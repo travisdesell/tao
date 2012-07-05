@@ -1,72 +1,108 @@
-/*
- * Copyright 2008, 2009 Travis Desell, Dave Przybylo, Nathan Cole,
- * Boleslaw Szymanski, Heidi Newberg, Carlos Varela, Malik Magdon-Ismail
- * and Rensselaer Polytechnic Institute.
- *
- * This file is part of Milkway@Home.
- *
- * Milkyway@Home is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Milkyway@Home is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Milkyway@Home.  If not, see <http://www.gnu.org/licenses/>.
- * */
+#include <cmath>
+#include <vector>
+#include <string>
+#include <sstream>
 
-#include "math.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include "stdint.h"
 
-#include "line_search.h"
-#include "regression.h"
-#include "../evaluation/evaluator.h"
-#include "../util/io_util.h"
+#include "synchronous_algorithms/gradient.hxx"
+#include "synchronous_algorithms/line_search.hxx"
+#include "synchronous_algorithms/regression.hxx"
 
-const char *LS_STR[] = {"success", "nan fitness in loop 1", "nan fitness in loop 2", "nan fitness in loop 3", "step < tol in loop 1", "eval max reached in loop 1", "eval max reached in loop 2"};
+#include "undvc_common/arguments.hxx"
+#include "undvc_common/vector_io.hxx"
 
-#define LOOP1_MAX    300
-#define LOOP2_MAX    300
-#define NQUAD        4
-/********
-    *    Stopping Conditions
- ********/
-double        tol = 1e-6;
+using std::string;
+using std::ostringstream;
+using std::vector;
+using std::cout;
+using std::endl;
 
-double evaluate_step(double* point, double step, double* direction, int number_parameters, double* current_point) {
-    int i;
-    for (i = 0; i < number_parameters; i++) {
-        current_point[i] = point[i] + (step * direction[i]);
+
+LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vector<string> arguments) {
+    this->objective_function = objective_function;
+
+    if (get_argument(arguments, "--loop1_max", false, tol)) {
+        cerr << "Argument '--loop1_max' not found, using default of 300 maximum iterations for loop 1 of the line search." << endl;
+        LOOP1_MAX = 300;
     }
-    return evaluate(current_point);
+
+    if (get_argument(arguments, "--loop2_max", false, tol)) {
+        cerr << "Argument '--loop2_max' not found, using default of 300 maximum iterations for loop 2 of the line search." << endl;
+        LOOP2_MAX = 300;
+    }
+
+    if (get_argument(arguments, "--nquad", false, tol)) {
+        cerr << "Argument '--nquad <i>' not found, using default of 4 iterations for loop 3 of the line search." << endl;
+
+        NQUAD = 4;
+    }
+
+    if (get_argument(arguments, "--tol", false, tol)) {
+        cerr << "Argument '--tol <d>' not found, using default of 1e-6 for tolerance of dstar in loop 3 of the line search." << endl;
+        tol = 1e-6;
+    }
+
+    bool threshold_specified = get_argument_vector(arguments, "--min_threshold", false, min_threshold);
+
+    if (!threshold_specified) {
+        cerr << "Argument '--min_threshold <d1, d2 .. dn>' not found. line search will not quit if the input direction is very small." << endl;
+    }
 }
 
-int line_search(double* point, double initial_fitness, double* direction, int number_parameters, double* minimum, double* fitness, int *evaluations_done) {
-    int i, jump, eval_count;
-    double f1, f2, f3, fs;
+LineSearch::LineSearch(double (*objective_function)(const vector<double> &), const double tol, const uint32_t LOOP1_MAX, const uint32_t LOOP2_MAX, const uint32_t NQUAD) {
+    this->objective_function = objective_function;
+    this->tol = tol;
+    this->LOOP1_MAX = LOOP1_MAX;
+    this->LOOP2_MAX = LOOP2_MAX;
+    this->NQUAD = NQUAD;
+}
+
+LineSearch::~LineSearch() {
+}
+
+string LineSearch::get_status() {
+    return status;
+}
+
+double LineSearch::evaluate_step(const vector<double> &point, const double step, const vector<double> &direction, vector<double> &current_point) {
+    for (uint32_t i = 0; i < point.size(); i++) {
+        current_point[i] = point[i] + (step * direction[i]);
+    }
+    return objective_function(current_point);
+}
+
+void LineSearch::line_search(const vector<double> &point, double initial_fitness, const vector<double> &direction, vector <double> &new_point, double &new_fitness) throw (string) {
+    if (threshold_specified && gradient_below_threshold(direction, min_threshold)) {
+        cerr << "\tDirection dropped below threshold:" << endl;
+        cerr << "\tdirection:  " << vector_to_string(direction) << endl;
+        cerr << "\tthreshold: " << vector_to_string(min_threshold) << endl;
+
+        status = "direction dropped below threshold";
+        throw status;
+    }
+
+    uint32_t evaluations_done;
     double d1, d2, d3, dstar;
-    double step, a, b, c, top, bottom;
-    double* current_point;
+    double a, b, c, top, bottom;
 
-    current_point = (double*)malloc(sizeof(double) * number_parameters);
+    status = "init";
 
-    printf("\tline search starting at fitness: %.15lf\n", initial_fitness);
-    fwrite_double_array(stdout, "\tinitial point: ", number_parameters, point);
+    vector<double> current_point(point);
+
+    cout << "\tline search starting at fitness: " << initial_fitness << endl;
+    cout << "\tinitial_point: " << vector_to_string(current_point) << endl;
+
     /********
         *    Find f1 < f2
      ********/
-    step = 1.0;
-    f1 = initial_fitness;
+    double step = 1.0;
+    double f1 = initial_fitness;
     // f2 = evaluate( point + (direction * step) );
-    f2 = evaluate_step(point, step, direction, number_parameters, current_point);
-    (*evaluations_done) = 1;
-    printf("\t\tloop 1, evaluations: %d, step: %.15lf, fitness: %.15lf\n", (*evaluations_done), step, f2);
+    double f2 = evaluate_step(point, step, direction, current_point);
+    evaluations_done = 1;
+
+    cout << "\t\tloop 1, evaluations: " << evaluations_done << ", step: " << step << ", fitness: " << f2 << endl;
 
     if (f1 > f2) {
         double temp;
@@ -85,12 +121,14 @@ int line_search(double* point, double initial_fitness, double* direction, int nu
     /********
         *    Find f1 < f2 > f3
      ********/
-    jump = 2.0;
+    double jump = 2.0;
     // f3 = evaluate( point + (d3 * step * direction) );
-    f3 = evaluate_step(point, d3 * step, direction, number_parameters, current_point);
-    (*evaluations_done)++;
-    printf("\t\tloop 2, evaluations: %d, step: %.15lf, fitness: %.15lf\n", (*evaluations_done), d3 * step, f3);
-    eval_count = 0;
+    double f3 = evaluate_step(point, d3 * step, direction, current_point);
+    evaluations_done++;
+
+    cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
+
+    uint32_t eval_count = 0;
     while (f3 >= f2 && !isnan(f1 - f2 - f3) && eval_count < LOOP2_MAX) {
         d1 = d2;
         f1 = f2;
@@ -99,25 +137,37 @@ int line_search(double* point, double initial_fitness, double* direction, int nu
         d3 = jump * d3;
 
         // f3 = evaluate( point + (d3 * step * direction) );
-        f3 = evaluate_step(point, d3 * step, direction, number_parameters, current_point);
-        (*evaluations_done)++;
+        f3 = evaluate_step(point, d3 * step, direction, current_point);
+        evaluations_done++;
         eval_count++;
-        printf("\t\tloop 2, evaluations: %d, step: %.15lf, fitness: %.15lf\n", (*evaluations_done), d3 * step, f3);
+
+        cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
     }
-    if (isnan(f1 - f2 - f3)) return LS_LOOP2_NAN;
-    if (eval_count == LOOP2_MAX) return LS_LOOP2_MAX;
+
+    if (isnan(f1)) { status = "f1 was NAN in loop 2"; throw status; }
+    if (isnan(f2)) { status = "f2 was NAN in loop 2"; throw status; }
+    if (isnan(f3)) { status = "f3 was NAN in loop 2"; throw status; }
+
+    if (eval_count >= LOOP2_MAX) {
+        ostringstream ex_msg;
+        ex_msg << "loop 2 reached maximum evaluation count: " << eval_count;
+        status = ex_msg.str();
+        throw status;
+    }
+
 
     /********
         *    Find minimum
      ********/
-    printf("\t\td1    %.15lf, f1: %.15lf\n", d1, f1);
-    printf("\t\td2    %.15lf, f2: %.15lf\n", d2, f2);
-    printf("\t\td3    %.15lf, f3: %.15lf\n", d3, f3);
+    cout << "\t\tNeed d1 < d2 < d3" << endl;
+    cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
+    cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
+    cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
 
     if (d1 < d2 && d2 < d3) {
         //Do nothing, this is the order we want things in.
     } else if (d1 > d2 && d2 > d3) {
-        printf("swapping d1, d3 (and f1, f3), so d1, d2, d3 are in the correct order\n");
+        cout << "\t\tswapping d1, d3 (and f1, f3), so d1, d2, d3 are in the correct order." << endl;
         //Swap d1, d3 (and f1, f3) so they are in order
         double temp;
         temp = d3;
@@ -128,12 +178,16 @@ int line_search(double* point, double initial_fitness, double* direction, int nu
         f3 = f1;
         f1 = temp;
     } else {
-        fprintf(stderr, "ERROR: before 3rd phase of line search, d1, d2 and d3 were not in order");
-        exit(0);
+        cerr <<  "ERROR: before 3rd phase of line search, d1, d2 and d3 were not in order." << endl; //This should never happen
+        exit(1);
     }
+    cout << "\t\tShould be d1 < d2 < d3:" << endl;
+    cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
+    cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
+    cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
 
-    fs = 0.0;
-    for (i = 0; i < NQUAD; i++) {
+    double fs = 0.0;
+    for (uint32_t i = 0; i < NQUAD; i++) {
         //    a = (d1*d1)*(f2-f3) + (d2*d2)*(f3-f1) + (d3*d3)*(f1-f2);
         //    b = d1*(f2-f3) + d2*(f3-f1) + d3*(f1-f2);
         //    dstar = 0.5 * (a/b);
@@ -149,11 +203,12 @@ int line_search(double* point, double initial_fitness, double* direction, int nu
         else if (dstar > d2 - tol && dstar <= d2) dstar = d2 - tol;
 
         // fs = evaluate(point + (dstar * step * direction));
-        fs = evaluate_step(point, dstar * step, direction, number_parameters, current_point);
-        (*evaluations_done)++;
+        fs = evaluate_step(point, dstar * step, direction, current_point);
+        evaluations_done++;
 
-        printf("\t\tloop 3, evaluations: %d, step: %.15lf, fitness: %.15lf, dstar: %.15lf\n", (*evaluations_done), (dstar * step), fs, dstar);
-        if (isnan(fs)) return LS_LOOP3_NAN;
+        cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << fs << ", dstar: " << dstar << endl;
+
+        if (isnan(fs)) { status = "fs was NAN in loop 3"; throw status; }
 
         if (dstar > d2 ) {
             if (fs < f2) {
@@ -176,33 +231,25 @@ int line_search(double* point, double initial_fitness, double* direction, int nu
                 f2 = fs;
             }
         }
-        //Now prints out "f2" instead of "fs"; f2 is updated midpoint, fs was test midpoint. -newbym2 
-        printf("\t\tloop 3, evaluations: %d, step: %.15lf, fitness: %.15lf (f2 instead of fs)\n", (*evaluations_done), (dstar * step), f2);
-        printf("\t\td1    %.15lf, f1: %.15lf\n", d1, f1);
-        printf("\t\td2    %.15lf, f2: %.15lf\n", d2, f2);
-        printf("\t\td3    %.15lf, f3: %.15lf\n", d3, f3);
-        printf("\t\tdstar %.15lf, fs: %.15lf\n", dstar, fs);
+
+        cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << f2 << "(f2 instead of fs -- should be minimum)" << endl;
+        cout << "\t\t\td1:    " << d1    << ", f1: " << f1 << endl;
+        cout << "\t\t\td2:    " << d2    << ", f2: " << f2 << endl;
+        cout << "\t\t\td3:    " << d3    << ", f3: " << f3 << endl;
+        cout << "\t\t\tdstar: " << dstar << ", fs: " << fs << endl;
     }
 
-//    printf("\t\td1    %.15lf, f1: %.15lf\n", d1, f1);
-//    printf("\t\td2    %.15lf, f2: %.15lf\n", d2, f2);
-//    printf("\t\td3    %.15lf, f3: %.15lf\n", d3, f3);
-//    printf("\t\tdstar %.15lf, fs: %.15lf\n", dstar, fs);
-
-//  this is wrong, current point might not be the minimum.
-//    memcpy(minimum, current_point, sizeof(double) * number_parameters);
-    for (i = 0; i < number_parameters; i++) {
-        minimum[i] = point[i] + (d2 * direction[i]);
+    new_point.resize(point.size(), 0.0);
+    for (uint32_t i = 0; i < point.size(); i++) {
+        new_point[i] = point[i] + (d2 * direction[i]);
     }
 
-    (*fitness) = f2;
-
-    free(current_point);
-    return LS_SUCCESS;
+    new_fitness = f2;
+    status = "success";
 }
 
-
-void randomized_line_search(int number_parameters, double *point, double *step, int ls_evaluations, int ls_iterations, double **new_point, double *current_fitness) {
+/*
+int LineSearch::randomized_line_search(int number_parameters, double *point, double *step, int ls_evaluations, int ls_iterations, double **new_point, double *current_fitness) {
     int i, j, k;
     double *x, *y;
     double a, b, c;
@@ -241,3 +288,4 @@ void randomized_line_search(int number_parameters, double *point, double *step, 
     free(x);
     free(y);
 }
+*/

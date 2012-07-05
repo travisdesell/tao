@@ -1,59 +1,60 @@
 #include <iostream>
 #include <vector>
 
-#include "hessian.hxx"
-#include "matrix.hxx"
+#include "synchronous_algorithms/hessian.hxx"
+#include "synchronous_algorithms/matrix.hxx"
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/io.hpp>
+//#include <boost/numeric/ublas/matrix.hpp>
+//#include <boost/numeric/ublas/lu.hpp>
+//#include <boost/numeric/ublas/io.hpp>
 
 using std::vector;
 using std::cout;
 using std::endl;
 
-using namespace boost::numeric::ublas; 
+//using namespace boost::numeric::ublas; 
 
 void get_hessian(double (*objective_function)(const std::vector<double> &), const vector<double> &point, const vector<double> &step, vector< vector<double> > &hessian) {
-    int i, j;
+    vector<double> point_copy(point);
+
     double e1, e2, e3, e4;
     double pi, pj;
 
-    for (uint32_t i = 0; i < point.size(); i++) {
-        for (uint32_t j = 0; j < point.size(); j++) {
-            pi = point[i];
-            pj = point[j];
+    for (uint32_t i = 0; i < point_copy.size(); i++) {
+        for (uint32_t j = 0; j < point_copy.size(); j++) {
+            pi = point_copy[i];
+            pj = point_copy[j];
 
             if (i == j) {
-                point[i] = pi + step[i] + step[i];
+                point_copy[i] = pi + step[i] + step[i];
 
-                e1 = objective_function(point);
-                point[i] = pi;
+                e1 = objective_function(point_copy);
+                point_copy[i] = pi;
 
-                e2 = objective_function(point);
+                e2 = objective_function(point_copy);
                 e3 = e2;
 
-                point[i] = pi - (step[i] + step[i]); 
-                e4 = objective_function(point);
+                point_copy[i] = pi - (step[i] + step[i]); 
+                e4 = objective_function(point_copy);
 
             } else {
-                point[i] = pi + step[i];
-                point[j] = pj + step[j];
-                e1 = objective_function(point);
+                point_copy[i] = pi + step[i];
+                point_copy[j] = pj + step[j];
+                e1 = objective_function(point_copy);
 
-                point[i] = pi - step[i];
-                e2 = objective_function(point);
+                point_copy[i] = pi - step[i];
+                e2 = objective_function(point_copy);
 
-                point[i] = pi + step[i];
-                point[j] = pj - step[j];
-                e3 = objective_function(point);
+                point_copy[i] = pi + step[i];
+                point_copy[j] = pj - step[j];
+                e3 = objective_function(point_copy);
 
-                point[i] = pi - step[i];
-                e4 = objective_function(point);
+                point_copy[i] = pi - step[i];
+                e4 = objective_function(point_copy);
             }
 
-            point[i] = pi;
-            point[j] = pj;
+            point_copy[i] = pi;
+            point_copy[j] = pj;
 
             hessian[i][j] = (e1 - e3 - e2 + e4)/(4 * step[i] * step[j]);
             cout << "\t\thessian[" << i << "][" << j << "]: " << hessian[i][j] << endl;
@@ -151,31 +152,38 @@ void randomized_hessian(const vector< vector<double> > &actual_points, const vec
         }
     }
 
+    uint32_t number_parameters = points[0].size();
     /********
      *	X = [1, x1, ... xn, 0.5*x1^2, ... 0.5*xn^2, x1*x2, ..., x1*xn, x2*x3, ..., x2*xn, ...]
      ********/
     uint32_t x_len = 1 + number_parameters + number_parameters;
-    for (i = number_parameters - 1; i > 0; i--) x_len += i;
+    for (uint32_t i = number_parameters - 1; i > 0; i--) x_len += i;
 
     vector< vector<double> > Y(points.size(), vector<double>(1, 0.0));
     vector< vector<double> > X(points.size(), vector<double>(x_len, 0.0));
 
-    for (i = 0; i < number_points; i++) {
+    for (uint32_t i = 0; i < points.size(); i++) {
         Y[i][0] = fitness[i];
 
         X[i][0] = 1;
-        for (j = 0; j < number_parameters; j++) {
+        for (uint32_t j = 0; j < number_parameters; j++) {
             X[i][1+j] = points[i][j];
             X[i][1+number_parameters+j] = 0.5 * points[i][j] * points[i][j];
         }
-        current = 0;
-        for (j = 0; j < number_parameters; j++) {
-            for (k = j+1; k < number_parameters; k++) {
+        uint32_t current = 0;
+        for (uint32_t j = 0; j < number_parameters; j++) {
+            for (uint32_t k = j+1; k < number_parameters; k++) {
                 X[i][1+number_parameters+number_parameters+current] = points[i][j] * points[i][k];
                 current++;
             }
         }
     }
+
+    vector< vector<double> > X_transpose;
+    vector< vector<double> > X_inverse;
+    vector< vector<double> > X2;
+    vector< vector<double> > X3;
+    vector< vector<double> > W;
 
     matrix_transpose(X, X_transpose);
     matrix_multiply(X_transpose, X, X2);
@@ -183,13 +191,13 @@ void randomized_hessian(const vector< vector<double> > &actual_points, const vec
     matrix_multiply(X_inverse, X_transpose, X3);
     matrix_multiply(X3, Y, W);
 
-    for (i = 0; i < number_parameters; i++) {
+    for (uint32_t i = 0; i < number_parameters; i++) {
         gradient[i] = W[1+i][0];
         hessian[i][i] = W[1 + number_parameters + i][0];
 
-        current = 0;
-        for (j = i; j < number_parameters; j++) {
-            for (k = j+1; k < number_parameters; k++) {
+        uint32_t current = 0;
+        for (uint32_t j = i; j < number_parameters; j++) {
+            for (uint32_t k = j+1; k < number_parameters; k++) {
                 hessian[j][k] = W[1 + number_parameters + number_parameters + current][0];
                 hessian[k][j] = W[1 + number_parameters + number_parameters + current][0];
                 current++;

@@ -6,9 +6,10 @@
 
 #include "stdint.h"
 
+#include "synchronous_algorithms/synchronous_newton_method.hxx"
 #include "synchronous_algorithms/gradient.hxx"
 #include "synchronous_algorithms/hessian.hxx"
-#include "synchronous_algorithms/newton_method.hxx"
+#include "synchronous_algorithms/newton_step.hxx"
 #include "synchronous_algorithms/line_search.hxx"
 
 #include "undvc_common/vector_io.hxx"
@@ -27,9 +28,7 @@ void synchronous_newton_method(vector<string> arguments, double (*objective_func
 }
 
 void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
-	double current_fitness;
-	uint32_t iterations, retval, evaluations;
-
+	uint32_t iterations;
     get_argument(arguments, "--iterations", true, iterations);
 
     vector<double> point(starting_point);
@@ -38,34 +37,37 @@ void synchronous_newton_method(vector<string> arguments, double (*objective_func
     vector<double> gradient(point.size(), 0.0);
     vector< vector<double> > hessian( point.size(), vector<double>(point.size(), 0.0));
 
-	current_fitness = objective_function(point);
+	double current_fitness = objective_function(point);
 
     cout.precision(15);
 
-    LineSearch line_search();
+    LineSearch line_search(objective_function, arguments);
 
 	for (uint32_t i = 0; i < iterations; i++) {
         cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
 
-        cout << "\tcalculating gradient." << endl;
-		get_gradient(number_parameters, point, range, gradient);
+        try {
+            get_gradient(objective_function, point, step_size, gradient);
+            get_hessian(objective_function, point, step_size, hessian);
+            newton_step(hessian, gradient, direction);
+        } catch (string err_msg) {
+            cout << "Calculating gradient and hessian failed with message: [" << err_msg << "]" << endl;
+            break;
+        }
 
-        cout << "\tcalculating hessian." << endl;
-		get_hessian(number_parameters, point, range, hessian);
+        for (uint32_t j = 0; j < direction.size(); j++) direction[j] = -direction[j];
 
-        cout << "\tcalculating direction." << endl;
-		newton_step(number_parameters, hessian, gradient, direction);
-		for (uint32_t j = 0; j < direction.size(); j++) direction[j] = -direction[j];
+        cout << "\t\tdirection: " << vector_to_string(direction) << endl;
 
-        cout << "\tdirection: " << vector_to_string(direction) << endl;
+        try {
+            line_search.line_search(point, current_fitness, direction, new_point, current_fitness);
+        } catch (string err_msg) {
+            cout << "\tline search failed with message: [" << err_msg << "]" << endl;
+            break;
+        }
+        cout << "\tline search status: [" << line_search.get_status() << "]" << endl;
+        cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
-        line_search.go(point, current_fitness, step, number_parameters, new_point, &current_fitness, &evaluations);
-
-        cout << "\tnew point: " << vector_to_string(new_point) << endl;
-		cout << "\tline search took: " << evaluations << " evaluations for new fitness: " << current_fitness << ", with result: [" << line_search.get_status() << "]" << endl;
-
-        if ( !line_search.made_progress() ) break;
-
-        point.assign(new_point);
+        point.assign(new_point.begin(), new_point.end());
 	}
 }
