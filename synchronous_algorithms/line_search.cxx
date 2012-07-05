@@ -7,7 +7,7 @@
 
 #include "synchronous_algorithms/gradient.hxx"
 #include "synchronous_algorithms/line_search.hxx"
-#include "synchronous_algorithms/regression.hxx"
+//#include "synchronous_algorithms/regression.hxx"
 
 #include "undvc_common/arguments.hxx"
 #include "undvc_common/vector_io.hxx"

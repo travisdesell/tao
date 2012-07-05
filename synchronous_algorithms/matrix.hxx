@@ -1,55 +1,23 @@
-/*
-Copyright 2008, 2009 Travis Desell, Dave Przybylo, Nathan Cole,
-Boleslaw Szymanski, Heidi Newberg, Carlos Varela, Malik Magdon-Ismail
-and Rensselaer Polytechnic Institute.
+#ifndef TAO_MATRIX_H
+#define TAO_MATRIX_H
 
-This file is part of Milkway@Home.
+#include <vector>
+#include <string>
 
-Milkyway@Home is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+using std::vector;
+using std::string;
 
-Milkyway@Home is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+vector< vector<double> > matrix_transpose(const vector< vector<double> > &m) throw (string);
 
-You should have received a copy of the GNU General Public License
-along with Milkyway@Home.  If not, see <http://www.gnu.org/licenses/>.
-*/
+vector< vector<double> > matrix_multiply(const vector< vector<double> > &m1, const vector< vector<double> > &m2) throw (string);
 
-#ifndef FGDO_MATRIX_H
-#define FGDO_MATRIX_H
+vector<double> matrix_vector_multiply(const vector< vector<double> > &m, const vector<double> &v) throw (string);
 
-#include <stdio.h>
 
-extern char MATRIX__ERROR_MSG[1024];
+void LUP_decomposition(const vector<vector <double> > &A, vector <vector <double> > &LU, vector<uint32_t> &P) throw (string);
 
-#define MATRIX__MxM_INVALID_MATCH 1
-#define MATRIX__READ_ERROR 2
+void LUP_solve(const vector< vector<double> > &LU, const vector<uint32_t> &P, const vector<double> &b, vector<double> &result) throw (string);
 
-void new_matrix(double ***m, int r, int c);
-void free_matrix(double ***m, int r, int c);
-
-void copy_matrix(double **m, int r, int c, double **result);
-void copy_matrix__alloc(double **m, int r, int c, double ***result);
-
-int fwrite_matrix(FILE* file, const char* name, double **m, int r, int c);
-int fread_matrix(FILE* file, const char* name, double **m, int r, int c);
-int fread_matrix__alloc(FILE* file, char** name, double ***m, int *r, int *c);
-
-void matrix_transpose__alloc(double** m, int r, int c, double*** result);
-void matrix_transpose__inline(double** m, int r, int c);
-
-int matrix_multiply(double** m1, int r1, int c1, double** m2, int r2, int c2, double** result);
-int matrix_multiply__alloc(double** m1, int r1, int c1, double** m2, int r2, int c2, double*** result);
-
-int matrix_vector_multiply(double **m, int r1, int c1, double *v, int r2, double *result);
-int matrix_vector_multiply__alloc(double **m, int r1, int c1, double *v, int r2, double **result);
-
-int matrix_invert(double** initial, int rows, int cols, double** inverse);
-int matrix_invert__alloc(double** initial, int rows, int cols, double*** inverse);
-int matrix_invert__inline(double** initial, int rows, int cols);
+vector< vector<double> > matrix_invert(const vector< vector<double> > &m) throw (string);
 
 #endif

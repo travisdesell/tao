@@ -179,17 +179,12 @@ void randomized_hessian(const vector< vector<double> > &actual_points, const vec
         }
     }
 
-    vector< vector<double> > X_transpose;
-    vector< vector<double> > X_inverse;
-    vector< vector<double> > X2;
-    vector< vector<double> > X3;
-    vector< vector<double> > W;
 
-    matrix_transpose(X, X_transpose);
-    matrix_multiply(X_transpose, X, X2);
-    matrix_invert(X2, X_inverse);
-    matrix_multiply(X_inverse, X_transpose, X3);
-    matrix_multiply(X3, Y, W);
+    vector< vector<double> > X_transpose    = matrix_transpose(X);
+    vector< vector<double> > X2             = matrix_multiply(X_transpose, X);
+    vector< vector<double> > X_inverse      = matrix_invert(X2);
+    vector< vector<double> > X3             = matrix_multiply(X_inverse, X_transpose);
+    vector< vector<double> > W              = matrix_multiply(X3, Y);
 
     for (uint32_t i = 0; i < number_parameters; i++) {
         gradient[i] = W[1+i][0];

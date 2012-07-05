@@ -25,8 +25,7 @@
 #include "string.h"
 #include "synchronous_algorithms/regression.hxx"
 
-#include "../util/matrix.h"
-#include "../util/io_util.h"
+#include "synchronous_algorithms/matrix.h"
 
 void parabolic_2d_helper(int number_points, int x_length, double **x, double *y, double **hessian, double *gradient, double *c, double ***Xni, int *X_length) {
 	int i, j, k, current, pos;
