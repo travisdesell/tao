@@ -22,28 +22,28 @@ using std::endl;
 LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vector<string> arguments) {
     this->objective_function = objective_function;
 
-    if (get_argument(arguments, "--loop1_max", false, tol)) {
+    if (!get_argument(arguments, "--loop1_max", false, LOOP1_MAX)) {
         cerr << "Argument '--loop1_max' not found, using default of 300 maximum iterations for loop 1 of the line search." << endl;
         LOOP1_MAX = 300;
     }
 
-    if (get_argument(arguments, "--loop2_max", false, tol)) {
+    if (!get_argument(arguments, "--loop2_max", false, LOOP2_MAX)) {
         cerr << "Argument '--loop2_max' not found, using default of 300 maximum iterations for loop 2 of the line search." << endl;
         LOOP2_MAX = 300;
     }
 
-    if (get_argument(arguments, "--nquad", false, tol)) {
+    if (!get_argument(arguments, "--nquad", false, NQUAD)) {
         cerr << "Argument '--nquad <i>' not found, using default of 4 iterations for loop 3 of the line search." << endl;
 
         NQUAD = 4;
     }
 
-    if (get_argument(arguments, "--tol", false, tol)) {
+    if (!get_argument(arguments, "--tol", false, tol)) {
         cerr << "Argument '--tol <d>' not found, using default of 1e-6 for tolerance of dstar in loop 3 of the line search." << endl;
         tol = 1e-6;
     }
 
-    bool threshold_specified = get_argument_vector(arguments, "--min_threshold", false, min_threshold);
+    threshold_specified = get_argument_vector(arguments, "--min_threshold", false, min_threshold);
 
     if (!threshold_specified) {
         cerr << "Argument '--min_threshold <d1, d2 .. dn>' not found. line search will not quit if the input direction is very small." << endl;
@@ -129,7 +129,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
 
     uint32_t eval_count = 0;
-    while (f3 >= f2 && !isnan(f1 - f2 - f3) && eval_count < LOOP2_MAX) {
+    while (f3 >= (f2 + tol) && !isnan(f1) && !isnan(f2) && !isnan(f3) && eval_count < LOOP2_MAX) {
         d1 = d2;
         f1 = f2;
         d2 = d3;
@@ -202,6 +202,11 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         if (dstar < d2 + tol && dstar >= d2) dstar = d2 + tol;
         else if (dstar > d2 - tol && dstar <= d2) dstar = d2 - tol;
 
+        if (isnan(dstar) || isinf(dstar)) {
+            cout << "\t\tterminating loop 3 because dstar is NAN or INF" << endl;
+            break;
+        }
+
         // fs = evaluate(point + (dstar * step * direction));
         fs = evaluate_step(point, dstar * step, direction, current_point);
         evaluations_done++;
@@ -237,6 +242,15 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         cout << "\t\t\td2:    " << d2    << ", f2: " << f2 << endl;
         cout << "\t\t\td3:    " << d3    << ", f3: " << f3 << endl;
         cout << "\t\t\tdstar: " << dstar << ", fs: " << fs << endl;
+
+        if (fabs(f1 - f2) < tol && fabs(f2 - f3) < tol && fabs(f1 - f3) < tol) {
+//            ostringstream err_msg;
+//            err_msg << "f1 - f2, f2 - f3, f1 - f3 all less than tolerance (" << tol << ") search finished.";
+//            status = err_msg.str();
+//            throw status;
+            cout << "\t\tterminating loop 3 because f1 - f2, f2 - f3 and f1 - f3 all less than tolerance(" << tol << ")." << endl;
+            break;
+        }
     }
 
     new_point.resize(point.size(), 0.0);
