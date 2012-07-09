@@ -1,6 +1,8 @@
 #include <vector>
 #include <iostream>
 
+#include "stdint.h"
+
 #include "gradient.hxx"
 
 using std::vector;

@@ -1,7 +1,14 @@
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <vector>
 #include <string>
 #include <sstream>
+
+#ifdef _MSC_VER
+#include <float.h> //for _isnan and _isinf on windows
+#define isnan(x) _isnan(x)
+#define isinf(x) !_finite(x)
+#endif
 
 #include "stdint.h"
 

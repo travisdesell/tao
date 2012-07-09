@@ -20,7 +20,8 @@
 #ifndef TAO_BENCHMARKS_H
 #define TAO_BENCHMARKS_H
 
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <vector>
 
 
@@ -75,9 +76,9 @@ double griewank(const vector<double> &x) {
     }
     sum1 /= 4000;
 
-    sum2 = cos( x[0] / sqrt(1) );
+    sum2 = cos( x[0] / sqrt(1.0) );
     for (i = 1; i < x.size(); i++) {
-        sum2 *= cos( x[i] / sqrt(i+1) );
+        sum2 *= cos( x[i] / sqrt((double)i+1) );
     }
 
     return -(sum1 - sum2 + 1);

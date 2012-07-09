@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+#include "stdint.h"
+
 #include "synchronous_algorithms/matrix.hxx"
 
 #include "undvc_common/vector_io.hxx"

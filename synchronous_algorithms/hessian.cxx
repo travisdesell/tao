@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 
+#include "stdint.h"
+
 #include "synchronous_algorithms/hessian.hxx"
 #include "synchronous_algorithms/matrix.hxx"
 
