@@ -10,25 +10,13 @@
 
 using std::vector;
 
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
-    vector<double> starting_point;
-    vector<double> step_size;
-
-    get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
-    get_argument_vector<double>(arguments, "--step_size", true, step_size);
-
-    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size);
-}
-
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
     uint32_t iterations;
     get_argument(arguments, "--iterations", true, iterations);
 
     vector<double> point(starting_point);
     vector<double> new_point(starting_point);
     vector<double> gradient(starting_point.size(), 0.0);
-
-    LineSearch line_search(objective_function, arguments);
 
     double current_fitness = objective_function(point);
 
@@ -39,28 +27,46 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
 
         try {
             line_search.line_search(point, current_fitness, gradient, new_point, current_fitness);
-        } catch (string err_msg) {
-            cout << "\tline search failed with message: [" << err_msg << "]" << endl;
-            break;
+        } catch (LineSearchException *lse) {
+            cout << "\tLINE SEARCH EXCEPTION: " << *lse << endl;
+
+            if (lse->get_type() != LineSearchException::LOOP_2_OUT_OF_BOUNDS && lse->get_type() != LineSearchException::LOOP_3_OUT_OF_BOUNDS) {
+                break; //dont quit for out of bounds errors
+            }
+
+            delete lse;
         }
-        cout << "\tline search status: [" << line_search.get_status() << "]" << endl;
+
         cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
         point.assign(new_point.begin(), new_point.end());
     }
 }
 
-void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
     vector<double> starting_point;
     vector<double> step_size;
 
     get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
     get_argument_vector<double>(arguments, "--step_size", true, step_size);
 
-    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size);
+    LineSearch line_search(objective_function, arguments);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
 }
 
-void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, arguments);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, min_bound, max_bound, arguments);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+
+
+void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
     uint32_t iterations, reset, reset_count = 0;
     get_argument(arguments, "--iterations", true, iterations);
     get_argument(arguments, "--cgd_reset", true, reset);
@@ -71,8 +77,6 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
     vector<double> previous_direction(starting_point.size(), 0.0);
     vector<double> direction(starting_point.size(), 0.0);
     vector<double> gradient(starting_point.size(), 0.0);
-
-    LineSearch line_search(objective_function, arguments);
 
     double current_fitness = objective_function(point);
 
@@ -105,12 +109,17 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
         cout << "\tconjugate direction: " << vector_to_string(direction) << endl;
 
         try {
-            line_search.line_search(point, current_fitness, direction, new_point, current_fitness);
-        } catch (string err_msg) {
-            cout << "\tline search failed with message: [" << err_msg << "]" << endl;
-            break;
+            line_search.line_search(point, current_fitness, gradient, new_point, current_fitness);
+        } catch (LineSearchException *lse) {
+            cout << "\tLINE SEARCH EXCEPTION: " << *lse << endl;
+
+            if (lse->get_type() != LineSearchException::LOOP_2_OUT_OF_BOUNDS && lse->get_type() != LineSearchException::LOOP_3_OUT_OF_BOUNDS) {
+                break; //dont quit for out of bounds errors
+            }
+            
+            delete lse;
         }
-        cout << "\tline search status: [" << line_search.get_status() << "]" << endl;
+
         cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
         point.assign(new_point.begin(), new_point.end());
@@ -119,4 +128,26 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
         if (reset == reset_count) reset = 0;
     }
 }
+
+void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
+    vector<double> starting_point;
+    vector<double> step_size;
+
+    get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
+    get_argument_vector<double>(arguments, "--step_size", true, step_size);
+
+    LineSearch lien_search(objective_function, arguments);
+    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size);
+}
+
+void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, arguments);
+    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, min_bound, max_bound, arguments);
+    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+}
+
 

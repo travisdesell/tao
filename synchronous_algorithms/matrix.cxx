@@ -29,7 +29,7 @@ vector< vector<double> > identity_matrix(uint32_t r) {
 /**
  * 	Matrix Transpose Code
  */
-vector< vector<double> > matrix_transpose(const vector< vector<double> > &m) throw (string) {
+vector< vector<double> > matrix_transpose(const vector< vector<double> > &m) throw (const char*) {
     if (m.size() != m[0].size()) {
         ostringstream err_msg;
         err_msg << "can only transpose square matrices, this one had rows (" << m.size() << ") != columns (" << m[0].size() << ")";
@@ -48,7 +48,7 @@ vector< vector<double> > matrix_transpose(const vector< vector<double> > &m) thr
 /**
  * 	Matrix Multiplication Code
  */
-vector< vector<double> > matrix_multiply(const vector< vector<double> > &m1, const vector< vector<double> > &m2) throw (string) {
+vector< vector<double> > matrix_multiply(const vector< vector<double> > &m1, const vector< vector<double> > &m2) throw (const char*) {
 	if (m1[0].size() != m2.size()) {
         ostringstream err_msg;
         err_msg << "matrix multiply error, columns of first matrix[" << m1[0].size() << " do not match rows of the second matrix [" << m2.size() << "]" << endl;
@@ -70,7 +70,7 @@ vector< vector<double> > matrix_multiply(const vector< vector<double> > &m1, con
 
 //a matrix times a vector is a vector (result is rows of first by columns of second)
 //columns of the matrix must == rows of the vector 
-vector<double> matrix_vector_multiply(const vector< vector<double> > &m, const vector<double> &v) throw (string) {
+vector<double> matrix_vector_multiply(const vector< vector<double> > &m, const vector<double> &v) throw (const char*) {
 	if (m[0].size() != v.size()) {
         ostringstream err_msg;
         err_msg << "matrix vector multiply error, columns of matrix[" << m[0].size() << " must match length of the vector [" << v.size() << "]" << endl;
@@ -91,7 +91,7 @@ vector<double> matrix_vector_multiply(const vector< vector<double> > &m, const v
 /**
  * 	Matrix Inversion and LUP decomposition
  */
-void LUP_decomposition(const vector<vector <double> > &A, vector <vector <double> > &LU, vector<uint32_t> &P) throw (string) {
+void LUP_decomposition(const vector<vector <double> > &A, vector <vector <double> > &LU, vector<uint32_t> &P) throw (const char*) {
 	double p, divisor;
 
     uint32_t length = A.size();
@@ -130,7 +130,7 @@ void LUP_decomposition(const vector<vector <double> > &A, vector <vector <double
 	}
 }
 
-void LUP_solve(const vector< vector<double> > &LU, const vector<uint32_t> &P, const vector<double> &b, vector<double> &result) throw (string) {
+void LUP_solve(const vector< vector<double> > &LU, const vector<uint32_t> &P, const vector<double> &b, vector<double> &result) throw (const char*) {
     int32_t length = LU.size();
 
     vector<double> y(length, 0.0);
@@ -153,7 +153,7 @@ void LUP_solve(const vector< vector<double> > &LU, const vector<uint32_t> &P, co
 	}
 }
 
-vector< vector<double> > matrix_invert(const vector< vector<double> > &initial) throw (string) {
+vector< vector<double> > matrix_invert(const vector< vector<double> > &initial) throw (const char*) {
     vector< vector<double> > LU;
     vector<uint32_t> p;
 	LUP_decomposition(initial, LU, p);

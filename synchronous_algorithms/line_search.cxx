@@ -16,6 +16,8 @@
 #include "synchronous_algorithms/line_search.hxx"
 //#include "synchronous_algorithms/regression.hxx"
 
+#include "evolutionary_algorithms/recombination.hxx"
+
 #include "undvc_common/arguments.hxx"
 #include "undvc_common/vector_io.hxx"
 
@@ -25,10 +27,32 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+LineSearchException::LineSearchException(uint32_t type, string message) {
+    this->type = type;
+    this->message = message;
+}
 
-LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vector<string> arguments) {
-    this->objective_function = objective_function;
+LineSearchException::~LineSearchException() {
+}
 
+uint32_t LineSearchException::get_type() {
+    return type;
+}
+
+string LineSearchException::get_message() {
+    return message;
+}
+
+void LineSearchException::print_to(ostream& stream) {
+    stream << "'" << message.c_str() << "'";
+}
+
+ostream& operator<< (ostream& stream, LineSearchException &lse) {
+    lse.print_to(stream);
+    return stream;
+}
+
+void LineSearch::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--loop1_max", false, LOOP1_MAX)) {
         cerr << "Argument '--loop1_max' not found, using default of 300 maximum iterations for loop 1 of the line search." << endl;
         LOOP1_MAX = 300;
@@ -57,19 +81,52 @@ LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vec
     }
 }
 
+LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vector<string> arguments) {
+    this->objective_function = objective_function;
+    parse_arguments(arguments);
+
+    using_bounds = true;
+    if (!get_argument_vector(arguments, "--min_bound", false, min_bound) || !get_argument_vector(arguments, "--max_bound", false, max_bound)) {
+        cerr << "Arguments '--min_bound <d1 .. dn>' and '--max_bound <d1 .. dn>' not found. line search will not be bounded." << endl;
+        using_bounds = false;
+    }
+
+}
+
+LineSearch::LineSearch(double (*objective_function)(const vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, vector<string> arguments) {
+    this->objective_function = objective_function;
+    parse_arguments(arguments);
+
+    using_bounds = true;
+    this->min_bound.assign(min_bound.begin(), min_bound.end());
+    this->max_bound.assign(max_bound.begin(), max_bound.end());
+}
+
+
 LineSearch::LineSearch(double (*objective_function)(const vector<double> &), const double tol, const uint32_t LOOP1_MAX, const uint32_t LOOP2_MAX, const uint32_t NQUAD) {
     this->objective_function = objective_function;
     this->tol = tol;
     this->LOOP1_MAX = LOOP1_MAX;
     this->LOOP2_MAX = LOOP2_MAX;
     this->NQUAD = NQUAD;
+
+    using_bounds = false;
 }
+
+LineSearch::LineSearch(double (*objective_function)(const vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const double tol, const uint32_t LOOP1_MAX, const uint32_t LOOP2_MAX, const uint32_t NQUAD) {
+    this->objective_function = objective_function;
+    this->tol = tol;
+    this->LOOP1_MAX = LOOP1_MAX;
+    this->LOOP2_MAX = LOOP2_MAX;
+    this->NQUAD = NQUAD;
+
+    using_bounds = true;
+    this->min_bound.assign(min_bound.begin(), min_bound.end());
+    this->max_bound.assign(max_bound.begin(), max_bound.end());
+}
+
 
 LineSearch::~LineSearch() {
-}
-
-string LineSearch::get_status() {
-    return status;
 }
 
 double LineSearch::evaluate_step(const vector<double> &point, const double step, const vector<double> &direction, vector<double> &current_point) {
@@ -79,21 +136,18 @@ double LineSearch::evaluate_step(const vector<double> &point, const double step,
     return objective_function(current_point);
 }
 
-void LineSearch::line_search(const vector<double> &point, double initial_fitness, const vector<double> &direction, vector <double> &new_point, double &new_fitness) throw (string) {
+void LineSearch::line_search(const vector<double> &point, double initial_fitness, const vector<double> &direction, vector <double> &new_point, double &new_fitness) throw (LineSearchException*) {
     if (threshold_specified && gradient_below_threshold(direction, min_threshold)) {
         cerr << "\tDirection dropped below threshold:" << endl;
         cerr << "\tdirection:  " << vector_to_string(direction) << endl;
         cerr << "\tthreshold: " << vector_to_string(min_threshold) << endl;
 
-        status = "direction dropped below threshold";
-        throw status;
+        throw new LineSearchException(LineSearchException::DIRECTION_BELOW_THRESHOLD, "direction dropped below threshold");
     }
 
     uint32_t evaluations_done;
     double d1, d2, d3, dstar;
     double a, b, c, top, bottom;
-
-    status = "init";
 
     vector<double> current_point(point);
 
@@ -149,17 +203,31 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         eval_count++;
 
         cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
+
+        if ( using_bounds && Recombination::out_of_bounds(min_bound, max_bound, current_point) ) {
+            new_point.resize(point.size(), 0.0);
+            for (uint32_t i = 0; i < point.size(); i++) {
+                new_point[i] = point[i] + (d3 * direction[i]);
+            }
+            Recombination::bound_parameters(min_bound, max_bound, new_point);
+            new_fitness = objective_function(new_point);
+
+            throw new LineSearchException(LineSearchException::LOOP_2_OUT_OF_BOUNDS, "parameters out of bounds in loop 2");
+        }
     }
 
-    if (isnan(f1)) { status = "f1 was NAN in loop 2"; throw status; }
-    if (isnan(f2)) { status = "f2 was NAN in loop 2"; throw status; }
-    if (isnan(f3)) { status = "f3 was NAN in loop 2"; throw status; }
+    if (isnan(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_NAN, "f1 was NAN in loop 2"); 
+    if (isnan(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_NAN, "f2 was NAN in loop 2"); 
+    if (isnan(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_NAN, "f3 was NAN in loop 2"); 
+    if (isinf(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_INF, "f1 was INF in loop 2"); 
+    if (isinf(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_INF, "f2 was INF in loop 2"); 
+    if (isinf(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_INF, "f3 was INF in loop 2"); 
 
     if (eval_count >= LOOP2_MAX) {
         ostringstream ex_msg;
         ex_msg << "loop 2 reached maximum evaluation count: " << eval_count;
-        status = ex_msg.str();
-        throw status;
+
+        throw new LineSearchException(LineSearchException::LOOP_2_MAX_REACHED, ex_msg.str());
     }
 
 
@@ -220,7 +288,19 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
 
         cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << fs << ", dstar: " << dstar << endl;
 
-        if (isnan(fs)) { status = "fs was NAN in loop 3"; throw status; }
+        if ( using_bounds && Recombination::out_of_bounds(min_bound, max_bound, current_point) ) {
+            new_point.resize(point.size(), 0.0);
+            for (uint32_t i = 0; i < point.size(); i++) {
+                new_point[i] = point[i] + (dstar * direction[i]);
+            }
+            Recombination::bound_parameters(min_bound, max_bound, new_point);
+            new_fitness = objective_function(new_point);
+
+            throw new LineSearchException(LineSearchException::LOOP_3_OUT_OF_BOUNDS, "parameters out of bounds in loop 3");
+        }
+
+        if (isnan(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_NAN, "fs was NAN in loop 3"); 
+        if (isinf(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_INF, "fs was INF in loop 3"); 
 
         if (dstar > d2 ) {
             if (fs < f2) {
@@ -253,8 +333,6 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         if (fabs(f1 - f2) < tol && fabs(f2 - f3) < tol && fabs(f1 - f3) < tol) {
 //            ostringstream err_msg;
 //            err_msg << "f1 - f2, f2 - f3, f1 - f3 all less than tolerance (" << tol << ") search finished.";
-//            status = err_msg.str();
-//            throw status;
             cout << "\t\tterminating loop 3 because f1 - f2, f2 - f3 and f1 - f3 all less than tolerance(" << tol << ")." << endl;
             break;
         }
@@ -264,9 +342,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     for (uint32_t i = 0; i < point.size(); i++) {
         new_point[i] = point[i] + (d2 * direction[i]);
     }
-
     new_fitness = f2;
-    status = "success";
 }
 
 /*

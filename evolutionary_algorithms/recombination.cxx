@@ -33,21 +33,31 @@ using boost::variate_generator;
 using boost::mt19937;
 using boost::uniform_real;
 
-using namespace std;
+using std::vector;
+
 
 /**
  *  Functions dealing with bounds.
  */
 void
-Recombination::bound_parameters(const std::vector<double> &min_bound, const std::vector<double> &max_bound, std::vector<double> &dest) {
+Recombination::bound_parameters(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest) {
     for (uint32_t i = 0; i < min_bound.size(); i++) {
         if (dest[i] < min_bound[i]) dest[i] = min_bound[i];
         if (dest[i] > max_bound[i]) dest[i] = max_bound[i];
     }
 }
 
+bool
+Recombination::out_of_bounds(const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &parameters) {
+    for (uint32_t i = 0; i < min_bound.size(); i++) {
+        if (parameters[i] < min_bound[i]) return true;
+        if (parameters[i] > max_bound[i]) return true;
+    }
+    return false;
+}
+
 void
-Recombination::check_bounds(const std::vector<double> &min_bound, const std::vector<double> &max_bound) throw (std::string) {
+Recombination::check_bounds(const vector<double> &min_bound, const vector<double> &max_bound) throw (std::string) {
     if (min_bound.size() != max_bound.size()) {
         std::stringstream oss;
         oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: length of min_bound (" << min_bound.size() << ") was not equal to length of max_bound (" << max_bound.size() << ")"; 
@@ -68,7 +78,7 @@ Recombination::check_bounds(const std::vector<double> &min_bound, const std::vec
  */
 
 void
-Recombination::random_parameters(const std::vector<double> &min_bound, const std::vector<double> &max_bound, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_parameters(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     if (dest.size() != min_bound.size()) dest.resize(min_bound.size());
 
     for (uint32_t i = 0; i < min_bound.size(); i++) {
@@ -77,7 +87,7 @@ Recombination::random_parameters(const std::vector<double> &min_bound, const std
 }
 
 void
-Recombination::binary_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::binary_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     uint32_t selected = (uint32_t)((*rng)() * src1.size());
 
     if (dest.size() != src1.size()) dest.resize(src1.size());
@@ -92,7 +102,7 @@ Recombination::binary_recombination(const std::vector<double> &src1, const std::
 }
 
 void
-Recombination::exponential_recombination(const std::vector<double> &src1, const std::vector<double> &src2, double crossover_rate, std::vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::exponential_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     uint32_t selected = (uint32_t)((*rng)() * src1.size());
 
     if (dest.size() != src1.size()) dest.resize(src1.size());

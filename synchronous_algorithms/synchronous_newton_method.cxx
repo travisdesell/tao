@@ -17,17 +17,8 @@
 
 using namespace std;
 
-void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
-    vector<double> starting_point;
-    vector<double> step_size;
 
-    get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
-    get_argument_vector<double>(arguments, "--step_size", true, step_size);
-
-    synchronous_newton_method(arguments, objective_function, starting_point, step_size);
-}
-
-void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
 	uint32_t iterations;
     get_argument(arguments, "--iterations", true, iterations);
 
@@ -41,8 +32,6 @@ void synchronous_newton_method(vector<string> arguments, double (*objective_func
 
     cout.precision(15);
 
-    LineSearch line_search(objective_function, arguments);
-
 	for (uint32_t i = 0; i < iterations; i++) {
         cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
 
@@ -50,8 +39,8 @@ void synchronous_newton_method(vector<string> arguments, double (*objective_func
             get_gradient(objective_function, point, step_size, gradient);
             get_hessian(objective_function, point, step_size, hessian);
             newton_step(hessian, gradient, direction);
-        } catch (string err_msg) {
-            cout << "Calculating gradient and hessian failed with message: [" << err_msg << "]" << endl;
+        } catch (const char *err_msg) {
+            cout << "\tCalculating gradient and hessian failed with message: [" << err_msg << "]" << endl;
             break;
         }
 
@@ -60,14 +49,43 @@ void synchronous_newton_method(vector<string> arguments, double (*objective_func
         cout << "\t\tdirection: " << vector_to_string(direction) << endl;
 
         try {
-            line_search.line_search(point, current_fitness, direction, new_point, current_fitness);
-        } catch (string err_msg) {
-            cout << "\tline search failed with message: [" << err_msg << "]" << endl;
-            break;
+            line_search.line_search(point, current_fitness, gradient, new_point, current_fitness);
+        } catch (LineSearchException *lse) {
+            cout << "\tLINE SEARCH EXCEPTION: " << *lse << endl;
+
+            if (lse->get_type() != LineSearchException::LOOP_2_OUT_OF_BOUNDS && lse->get_type() != LineSearchException::LOOP_3_OUT_OF_BOUNDS) {
+                break; //dont quit for out of bounds errors
+            }
+
+            delete lse;
         }
-        cout << "\tline search status: [" << line_search.get_status() << "]" << endl;
+
         cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
         point.assign(new_point.begin(), new_point.end());
 	}
 }
+
+void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
+    vector<double> starting_point;
+    vector<double> step_size;
+
+    get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
+    get_argument_vector<double>(arguments, "--step_size", true, step_size);
+
+    LineSearch line_search(objective_function, arguments);
+
+    synchronous_newton_method(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, arguments);
+    synchronous_newton_method(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+void synchronous_newton_method(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &starting_point, const vector<double> &step_size) {
+    LineSearch line_search(objective_function, min_bound, max_bound, arguments);
+    synchronous_newton_method(arguments, objective_function, starting_point, step_size, line_search);
+}
+
+
