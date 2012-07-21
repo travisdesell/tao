@@ -37,9 +37,20 @@ void parameter_sweep(const std::vector<double> &min_bound, const std::vector<dou
     double best_fitness = -numeric_limits<double>::max();
     double current_fitness;
 
+    for (uint32_t i = 0; i < max_bound.size(); i++) {
+        cout << "max_bound[" << i << "]: " << max_bound[i] << ", min_bound[" << i << "]: " << min_bound[i] << ", step_size[" << i << "]: " << step_size[i] << ", steps: " << ((max_bound[i] - min_bound[i]) / step_size[i]) + 1 << endl;
+    }
+
+    uint64_t expected_evaluations = ((max_bound[0] - min_bound[0]) / step_size[0]) + 1;
+    for (uint32_t i = 1; i < max_bound.size(); i++) {
+        expected_evaluations *= ((max_bound[i] - min_bound[i]) / step_size[i]) + 1;
+    }
+
+    cout << "expected evaluations: " << expected_evaluations << endl;
+
+
     uint64_t iteration = 0;
-    uint32_t current;
-    while (parameters < max_bound) {
+    while (parameters[parameters.size() - 1] <= max_bound[max_bound.size() - 1]) {
         current_fitness = objective_function(parameters);
 
         if (current_fitness >= best_fitness) {
@@ -47,22 +58,18 @@ void parameter_sweep(const std::vector<double> &min_bound, const std::vector<dou
             best_fitness = current_fitness;
         }
 
-        current = 0;
-        while (current < parameters.size()) {
-            parameters[current] += step_size[current];
-
-            if (parameters[current] <= max_bound[current]) {
-                break;
+        parameters[0] += step_size[0];
+        for (uint32_t i = 1; i < parameters.size(); i++) {
+            if (parameters[i - 1] > max_bound[i - 1]) {
+                parameters[i - 1] = min_bound[i - 1];
+                parameters[i] += step_size[i];
             }
-
-            parameters[current] = min_bound[current];
-            current++;
         }
 
         iteration++;
     }
 
-    cout << "total evaluations: " << iteration << endl;
-
+    cout << "expected evaluations: " << expected_evaluations << endl;
+    cout << "total    evaluations: " << iteration << endl;
 }
 
