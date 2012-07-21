@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "synchronous_algorithms/synchronous_gradient_descent.hxx"
 #include "synchronous_algorithms/gradient.hxx"
 #include "synchronous_algorithms/line_search.hxx"
@@ -11,16 +14,24 @@
 using std::vector;
 
 void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
-    uint32_t iterations;
-    get_argument(arguments, "--iterations", true, iterations);
+    uint32_t max_iterations = 0;
+    if ( !get_argument(arguments, "--max_iterations", false, max_iterations) ) {
+        cerr << "Argument '--max_iterations <i>' not found, synchronous conjugate gradient descent could potentially run forever." << endl;
+    }
+
+    double min_improvement = 1e-5;
+    if ( !get_argument(arguments, "--min_improvement", false, min_improvement) ) {
+        cerr << "Argument ''--min_improvement <f>' not found, using default of " << min_improvement << endl;
+    }
 
     vector<double> point(starting_point);
     vector<double> new_point(starting_point);
     vector<double> gradient(starting_point.size(), 0.0);
 
     double current_fitness = objective_function(point);
+    double previous_fitness = current_fitness;
 
-    for (uint32_t i = 0; i < iterations; i++) {
+    for (uint32_t i = 0; max_iterations == 0 || i < max_iterations; i++) {
         cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
 
         get_gradient(objective_function, point, step_size, gradient);
@@ -31,15 +42,22 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
             cout << "\tLINE SEARCH EXCEPTION: " << *lse << endl;
 
             if (lse->get_type() != LineSearchException::LOOP_2_OUT_OF_BOUNDS && lse->get_type() != LineSearchException::LOOP_3_OUT_OF_BOUNDS) {
+                delete lse;
                 break; //dont quit for out of bounds errors
+            } else {
+                delete lse;
             }
-
-            delete lse;
         }
 
         cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
         point.assign(new_point.begin(), new_point.end());
+
+        if (fabs(current_fitness - previous_fitness) < min_improvement) {
+            cout << "Search terminating because (current fitness (" << current_fitness << ") - previous fitness (" << previous_fitness << ") == " << fabs(current_fitness - previous_fitness) << ") < minimum improvement (" << min_improvement << ")" << endl;
+            break;
+        }
+        previous_fitness = current_fitness;
     }
 }
 
@@ -67,9 +85,18 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
 
 
 void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
-    uint32_t iterations, reset, reset_count = 0;
-    get_argument(arguments, "--iterations", true, iterations);
+    uint32_t max_iterations = 0;
+    if ( !get_argument(arguments, "--max_iterations", false, max_iterations) ) {
+        cerr << "Argument '--max_iterations <i>' not found, synchronous conjugate gradient descent could potentially run forever." << endl;
+    }
+
+    uint32_t reset, reset_count = 0;
     get_argument(arguments, "--cgd_reset", true, reset);
+
+    double min_improvement = 1e-5;
+    if ( !get_argument(arguments, "--min_improvement", false, min_improvement) ) {
+        cerr << "Argument ''--min_improvement <f>' not found, using default of " << min_improvement << endl;
+    }
 
     vector<double> point(starting_point);
     vector<double> new_point(starting_point);
@@ -79,9 +106,10 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
     vector<double> gradient(starting_point.size(), 0.0);
 
     double current_fitness = objective_function(point);
+    double previous_fitness = current_fitness;
 
     double bet, betdiv;
-    for (uint32_t i = 0; i < iterations; i++) {
+    for (uint32_t i = 0; max_iterations == 0 || i < max_iterations; i++) {
         cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
 
         get_gradient(objective_function, point, step_size, gradient);
@@ -114,10 +142,11 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
             cout << "\tLINE SEARCH EXCEPTION: " << *lse << endl;
 
             if (lse->get_type() != LineSearchException::LOOP_2_OUT_OF_BOUNDS && lse->get_type() != LineSearchException::LOOP_3_OUT_OF_BOUNDS) {
+                delete lse;
                 break; //dont quit for out of bounds errors
+            } else {
+                delete lse;
             }
-            
-            delete lse;
         }
 
         cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
@@ -126,6 +155,12 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
 
         reset++;
         if (reset == reset_count) reset = 0;
+
+        if (fabs(current_fitness - previous_fitness) < min_improvement) {
+            cout << "Search terminating because (current fitness (" << current_fitness << ") - previous fitness (" << previous_fitness << ") == " << fabs(current_fitness - previous_fitness) << ") < minimum improvement (" << min_improvement << ")" << endl;
+            break;
+        }
+        previous_fitness = current_fitness;
     }
 }
 
