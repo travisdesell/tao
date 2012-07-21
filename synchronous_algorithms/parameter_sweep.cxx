@@ -48,9 +48,8 @@ void parameter_sweep(const std::vector<double> &min_bound, const std::vector<dou
 
     cout << "expected evaluations: " << expected_evaluations << endl;
 
-
     uint64_t iteration = 0;
-    while (parameters[parameters.size() - 1] <= max_bound[max_bound.size() - 1]) {
+    while (iteration < expected_evaluations) {
         current_fitness = objective_function(parameters);
 
         if (current_fitness >= best_fitness) {
@@ -69,7 +68,6 @@ void parameter_sweep(const std::vector<double> &min_bound, const std::vector<dou
         iteration++;
     }
 
-    cout << "expected evaluations: " << expected_evaluations << endl;
     cout << "total    evaluations: " << iteration << endl;
 }
 
