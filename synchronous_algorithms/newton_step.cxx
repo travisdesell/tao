@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "synchronous_algorithms/newton_step.hxx"
-#include "synchronous_algorithms/matrix.hxx"
+#include "util/matrix.hxx"
 
 using std::vector;
 

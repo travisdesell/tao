@@ -23,8 +23,8 @@
 
 #include "stdint.h"
 
-#include "individual.hxx"
-#include "statistics.hxx"
+#include "asynchronous_algorithms/individual.hxx"
+#include "util/statistics.hxx"
 
 using namespace std;
 

@@ -18,8 +18,9 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(undvc_common)
 
 add_subdirectory(undvc_common)
-add_subdirectory(evolutionary_algorithms)
+add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
+add_subdirectory(util)
 add_subdirectory(examples)
 
 link_directories(${Boost_LIBRARY_DIRS})

@@ -22,14 +22,14 @@
 #include <limits>
 #include <iostream>
 
-#include "evolutionary_algorithm.hxx"
-#include "differential_evolution.hxx"
-#include "recombination.hxx"
-#include "statistics.hxx"
+#include "asynchronous_algorithms/evolutionary_algorithm.hxx"
+#include "asynchronous_algorithms/differential_evolution.hxx"
+#include "util/recombination.hxx"
+#include "util/statistics.hxx"
 
 //from undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
+#include "undvc_common/vector_io.hxx"
+#include "undvc_common/arguments.hxx"
 
 using namespace std;
 

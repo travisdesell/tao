@@ -25,11 +25,11 @@
 
 #include <stdint.h>
 
-#include "evolutionary_algorithm.hxx"
-#include "recombination.hxx"
+#include "asynchronous_algorithms/evolutionary_algorithm.hxx"
 
-//from undvc_common
-#include "arguments.hxx"
+#include "util/recombination.hxx"
+
+#include "undvc_common/arguments.hxx"
 
 #include "boost/random.hpp"
 #include "boost/generator_iterator.hpp"

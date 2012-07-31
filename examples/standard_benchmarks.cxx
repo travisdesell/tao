@@ -25,12 +25,13 @@
 #include <string>
 #include <stdint.h>
 
-#include "particle_swarm.hxx"
-#include "differential_evolution.hxx"
+#include "examples/benchmarks.hxx"
+
+#include "asynchronous_algorithms/particle_swarm.hxx"
+#include "asynchronous_algorithms/differential_evolution.hxx"
 
 //from undvc_common
-#include "arguments.hxx"
-#include "benchmarks.hxx"
+#include "undvc_common/arguments.hxx"
 
 /**
  *  Define a type for our objective function so we

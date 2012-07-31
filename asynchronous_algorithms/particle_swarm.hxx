@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "evolutionary_algorithm.hxx"
+#include "asynchronous_algorithms/evolutionary_algorithm.hxx"
 
 class ParticleSwarm : public EvolutionaryAlgorithm {
     protected:

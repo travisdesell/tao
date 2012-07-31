@@ -14,9 +14,9 @@
 
 #include "synchronous_algorithms/gradient.hxx"
 #include "synchronous_algorithms/line_search.hxx"
-//#include "synchronous_algorithms/regression.hxx"
 
-#include "evolutionary_algorithms/recombination.hxx"
+//#include "util/regression.hxx"
+#include "util/recombination.hxx"
 
 #include "undvc_common/arguments.hxx"
 #include "undvc_common/vector_io.hxx"

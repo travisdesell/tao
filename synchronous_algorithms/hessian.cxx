@@ -4,7 +4,7 @@
 #include "stdint.h"
 
 #include "synchronous_algorithms/hessian.hxx"
-#include "synchronous_algorithms/matrix.hxx"
+#include "util/matrix.hxx"
 
 //#include <boost/numeric/ublas/matrix.hpp>
 //#include <boost/numeric/ublas/lu.hpp>
@@ -180,7 +180,6 @@ void randomized_hessian(const vector< vector<double> > &actual_points, const vec
             }
         }
     }
-
 
     vector< vector<double> > X_transpose    = matrix_transpose(X);
     vector< vector<double> > X2             = matrix_multiply(X_transpose, X);

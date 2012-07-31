@@ -1,12 +1,4 @@
 include_directories(${Boost_INCLUDE_DIR})
 
-add_executable(matrix_mul_test matrix)
-target_link_libraries(matrix_mul_test undvc_common ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-set_target_properties(matrix_mul_test PROPERTIES COMPILE_FLAGS -DMATRIX_MUL_TEST)
-
-add_executable(matrix_inverse_test matrix)
-target_link_libraries(matrix_inverse_test undvc_common ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-set_target_properties(matrix_inverse_test PROPERTIES COMPILE_FLAGS -DMATRIX_INVERSE_TEST)
-
-add_library(SynchronousAlgorithms parameter_sweep synchronous_gradient_descent synchronous_newton_method gradient hessian line_search newton_step matrix)
-target_link_libraries(SynchronousAlgorithms undvc_common ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+add_library(synchronous_algorithms parameter_sweep synchronous_gradient_descent synchronous_newton_method gradient hessian line_search newton_step)
+target_link_libraries(synchronous_algorithms undvc_common tao_util ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})

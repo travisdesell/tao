@@ -23,15 +23,16 @@
 #include <iostream>
 #include <iomanip>
 
-#include "particle_swarm.hxx"
-#include "recombination.hxx"
-#include "statistics.hxx"
+#include "asynchronous_algorithms/particle_swarm.hxx"
+#include "asynchronous_algorithms/individual.hxx"
+
+#include "util/recombination.hxx"
+#include "util/statistics.hxx"
 
 //From undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
+#include "undvc_common/vector_io.hxx"
+#include "undvc_common/arguments.hxx"
 
-#include "individual.hxx"
 
 using namespace std;
 
