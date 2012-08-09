@@ -3,7 +3,7 @@
 
 #include "stdint.h"
 
-#include "synchronous_algorithms/hessian.hxx"
+#include "util/hessian.hxx"
 #include "util/matrix.hxx"
 
 //#include <boost/numeric/ublas/matrix.hpp>
@@ -146,7 +146,7 @@ void randomized_hessian(const vector< vector<double> > &points, const vector<dou
  *  OLD C VERSION AS FOLLOWS.
  *  TODO: compare vs boost version above
  */
-void randomized_hessian(const vector< vector<double> > &actual_points, const vector<double> &center, const vector<double> &fitness, vector< vector<double> > &hessian, vector<double> &gradient) {
+void randomized_hessian(const vector< vector<double> > &actual_points, const vector<double> &center, const vector<double> &fitness, vector< vector<double> > &hessian, vector<double> &gradient) throw (string) {
     vector< vector<double> > points( actual_points );
     for (uint32_t i = 0; i < points.size(); i++) {
         for (uint32_t j = 0; j < points[i].size(); j++) {
@@ -186,6 +186,9 @@ void randomized_hessian(const vector< vector<double> > &actual_points, const vec
     vector< vector<double> > X_inverse      = matrix_invert(X2);
     vector< vector<double> > X3             = matrix_multiply(X_inverse, X_transpose);
     vector< vector<double> > W              = matrix_multiply(X3, Y);
+
+    gradient.resize(number_parameters);
+    hessian.resize(number_parameters, vector<double>(number_parameters));
 
     for (uint32_t i = 0; i < number_parameters; i++) {
         gradient[i] = W[1+i][0];

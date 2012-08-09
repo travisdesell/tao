@@ -29,6 +29,7 @@
 
 #include "asynchronous_algorithms/particle_swarm.hxx"
 #include "asynchronous_algorithms/differential_evolution.hxx"
+#include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 
 //from undvc_common
 #include "undvc_common/arguments.hxx"
@@ -76,8 +77,10 @@ int main(int argc /* number of command line arguments */, char **argv /* command
     get_argument(arguments, "--n_parameters", true, number_of_parameters);
     vector<double> min_bound(number_of_parameters, 0);
     vector<double> max_bound(number_of_parameters, 0);
+    vector<double> radius(number_of_parameters, 0);
 
     for (uint32_t i = 0; i < number_of_parameters; i++) {        //arrays go from 0 to size - 1 (not 1 to size)
+        radius[i] = 0.1;
         if (objective_function_name.compare("sphere") == 0) {
             min_bound[i] = -100;
             max_bound[i] = 100;
@@ -105,6 +108,10 @@ int main(int argc /* number of command line arguments */, char **argv /* command
     } else if (search_type.compare("de") == 0) {
         DifferentialEvolution de(min_bound, max_bound, arguments);
         de.iterate(f);
+
+    } else if (search_type.compare("anm") == 0) {
+        AsynchronousNewtonMethod anm(min_bound, max_bound, radius, arguments);
+        anm.iterate(f);
 
     } else {
         cerr << "Improperly specified search type: '" << search_type.c_str() <<"'" << endl;

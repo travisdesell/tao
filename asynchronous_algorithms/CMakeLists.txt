@@ -1,6 +1,6 @@
 include_directories(${Boost_INCLUDE_DIR})
 
-add_library(asynchronous_algorithms evolutionary_algorithm particle_swarm differential_evolution individual)
+add_library(asynchronous_algorithms evolutionary_algorithm particle_swarm differential_evolution individual asynchronous_newton_method)
 target_link_libraries(asynchronous_algorithms undvc_common tao_util)
 
 if (MYSQL_FOUND)

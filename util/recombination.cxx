@@ -78,7 +78,7 @@ Recombination::check_step(const vector<double> &step) throw (std::string) {
     for (uint32_t i = 0; i < step.size(); i++) {
         if (step[i] <= 0) {
             std::stringstream oss;
-            oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: step or width[" << i << "] (" << step[i] << ") was <= 0)"; 
+            oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: step or radius[" << i << "] (" << step[i] << ") was <= 0)"; 
             throw oss.str();
         }
     }
@@ -99,11 +99,11 @@ Recombination::random_within(const vector<double> &min_bound, const vector<doubl
 }
 
 void
-Recombination::random_around(const vector<double> &center, const vector<double> &width, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_around(const vector<double> &center, const vector<double> &radius, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     if (dest.size() != center.size()) dest.resize(center.size());
 
     for (uint32_t i = 0; i < center.size(); i++) {
-        dest[i] = center[i] - width[i] + ((*rng)() * 2.0 * width[i]);
+        dest[i] = center[i] - radius[i] + ((*rng)() * 2.0 * radius[i]);
     }
 }
 
@@ -112,8 +112,9 @@ void
 Recombination::random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     if (dest.size() != center.size()) dest.resize(center.size());
 
+    double distance = (*rng)();
     for (uint32_t i = 0; i < center.size(); i++) {
-        dest[i] = center[i] + (center[i] - (ls_min * direction[i])) + ((*rng)() * (ls_max - ls_min) * direction[i]);
+        dest[i] = center[i] + (ls_min * direction[i]) + (distance * (ls_max - ls_min) * direction[i]);
     }
 }
 
