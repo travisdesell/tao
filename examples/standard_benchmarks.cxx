@@ -80,7 +80,7 @@ int main(int argc /* number of command line arguments */, char **argv /* command
     vector<double> radius(number_of_parameters, 0);
 
     for (uint32_t i = 0; i < number_of_parameters; i++) {        //arrays go from 0 to size - 1 (not 1 to size)
-        radius[i] = 0.1;
+        radius[i] = 2;
         if (objective_function_name.compare("sphere") == 0) {
             min_bound[i] = -100;
             max_bound[i] = 100;
@@ -95,7 +95,7 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             max_bound[i] = 5.12;
         } else if (objective_function_name.compare("rosenbrock") == 0) {
             min_bound[i] = -5;
-            min_bound[i] = 10;
+            max_bound[i] = 10;
         }
     }
 

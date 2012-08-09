@@ -47,6 +47,9 @@ class AsynchronousNewtonMethod {
         vector<double> regression_radius;
         vector<double> center;
 
+        double center_fitness;
+        uint32_t failed_improvements;
+
         bool minimum_regression_individuals_defined;
         uint32_t minimum_regression_individuals;
 

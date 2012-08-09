@@ -87,12 +87,6 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
     this->regression_radius_defined = true;
     this->regression_radius.assign(regression_radius.begin(), regression_radius.end());
 
-    this->minimum_regression_individuals_defined = true;
-    this->minimum_regression_individuals = minimum_regression_individuals;
-
-    this->minimum_line_search_individuals_defined = true;
-    this->minimum_line_search_individuals = minimum_line_search_individuals;
-
     parse_arguments(arguments);
     initialize();
 }
@@ -118,12 +112,6 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
 
     this->regression_radius_defined = true;
     this->regression_radius.assign(regression_radius.begin(), regression_radius.end());
-
-    this->minimum_regression_individuals_defined = true;
-    this->minimum_regression_individuals = minimum_regression_individuals;
-
-    this->minimum_line_search_individuals_defined = true;
-    this->minimum_line_search_individuals = minimum_line_search_individuals;
 
     parse_arguments(arguments);
     initialize();
@@ -175,6 +163,8 @@ AsynchronousNewtonMethod::parse_arguments(const vector<string> &arguments) {
         get_argument_vector(arguments, "--max_bound", true, max_bound);
     }
 
+    number_parameters = min_bound.size();
+
     if (!regression_radius_defined) {
         //This is the radius in which the random individuals are generated to calculate the hessian/gradient
         get_argument_vector(arguments, "--regression_radius", true, regression_radius);
@@ -189,8 +179,11 @@ AsynchronousNewtonMethod::parse_arguments(const vector<string> &arguments) {
         cerr << "\tpoint:     " << vector_to_string(center) << endl;
     }
 
+    cout << "minimum_regression_individuals_defined: " << minimum_regression_individuals_defined << endl;
+    cout << "minimum_line_search_individuals_defined: " << minimum_line_search_individuals_defined << endl;
+
     uint32_t rps_min = 4 * number_parameters * number_parameters;
-    if (minimum_regression_individuals_defined &&
+    if (!minimum_regression_individuals_defined &&
             (!get_argument(arguments, "--minimum_regression_individuals", false, minimum_regression_individuals) || minimum_regression_individuals  < rps_min)) {
         cerr << "Argument '--minimum_regression_individuals <I>' not found or less than minimum, using minimum of 4 * number_parameters^2 = " << rps_min << endl;
         minimum_regression_individuals = rps_min;
@@ -250,6 +243,9 @@ AsynchronousNewtonMethod::initialize() {
     first_workunits_generated = false;
 
     iteration = 0;
+
+    center_fitness = -std::numeric_limits<double>::max();
+    failed_improvements = 0;
 }
 
 bool
@@ -271,11 +267,13 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
     cout << "first workunits generated: " << first_workunits_generated << endl;
 
     if (!first_workunits_generated) {
-        cout << "generating first workunits" << endl;
 
         iteration = this->iteration;
 
         number_individuals = minimum_regression_individuals + extra_workunits;
+
+        cout << "generating first workunits (" << number_individuals << ")" << endl;
+
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
         for (uint32_t i = 0; i < number_individuals; i++) {
@@ -293,8 +291,6 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         return true;
 
     } else if (this->iteration % 2 == 0 && regression_individuals_reported >= minimum_regression_individuals) {
-        cout << "generating line search individuals" << endl;
-
         //even iterations calculate gradient/hessian
         //this iteration has finished, so set the direction
         regression_individuals.resize(regression_individuals_reported);  //need to resize these so the randomized_hessian function works right
@@ -327,18 +323,18 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         number_individuals = minimum_line_search_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
+        cout << "generating line search workunits (" << number_individuals << ")" << endl;
+
         for (uint32_t i = 0; i < number_individuals; i++) {
             Recombination::random_along(center, line_search_direction, line_search_min, line_search_max, parameters[i], random_number_generator);
             Recombination::bound_parameters(min_bound, max_bound, parameters[i]);
-            cout << "generated parameters: " << vector_to_string(parameters[i]) << endl;
+//            cout << "generated parameters: " << vector_to_string(parameters[i]) << endl;
         }
         line_search_individuals_reported = 0;
         line_search_individuals.resize(minimum_line_search_individuals + extra_workunits, vector<double>(number_parameters));
 
         return true;
     } else if (line_search_individuals_reported >= minimum_line_search_individuals) {
-        cout << "generating regression individuals" << endl;
-
         //odd iterations do a line search
         //this iteration has finished so set the new center 
         line_search_individuals.resize(line_search_individuals_reported);
@@ -348,17 +344,32 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         for (uint32_t i = 1; i < line_search_fitnesses.size(); i++) {
             if (best_fitness < line_search_fitnesses[i]) best = i;
         }
-        center.assign(line_search_individuals[best].begin(), line_search_individuals[best].end());
-
-        cout << "best individual:         " << best << endl;
-        cout << "best individual found:   " << vector_to_string(line_search_individuals[best]) << endl;
-        cout << "best individual fitness: " << best_fitness << endl;
+        
+        if (best_fitness > center_fitness) {
+            center.assign(line_search_individuals[best].begin(), line_search_individuals[best].end());
+            center_fitness = best_fitness;
+            
+            failed_improvements = 0;
+            cout << "best individual:          " << best << endl;
+            cout << "best individual found:    " << vector_to_string(line_search_individuals[best]) << endl;
+            cout << "best individual fitness:  " << best_fitness << endl;
+        } else {
+            failed_improvements++;
+            cout << "best individual:          " << best << endl;
+            cout << "best individual found:    " << vector_to_string(line_search_individuals[best]) << endl;
+            cout << "best individual fitness:  " << best_fitness << endl;
+            cout << "no improvement:           " << failed_improvements << endl;
+            cout << "using previous center:    " << vector_to_string(center) << endl;
+            cout << "preveious center fitness: " << center_fitness << endl;
+        }
 
         this->iteration++;
         iteration = this->iteration;
         
         number_individuals = minimum_regression_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
+
+        cout << "generating regression workunits (" << number_individuals << ")" << endl;
 
         for (uint32_t i = 0; i < number_individuals; i++) {
             Recombination::random_around(center, regression_radius, parameters[i], random_number_generator);
@@ -399,7 +410,7 @@ AsynchronousNewtonMethod::insert_individual(uint32_t iteration, const vector<dou
         if (iteration % 2 == 0 && regression_individuals_reported < minimum_regression_individuals + extra_workunits) {
             //even iterations calculate a hessian/gradient
 
-//            cout << "setting " << regression_individuals_reported << " -- fitness: " << fitness << " -- parameters " << vector_to_string(parameters) << endl;
+//            cout << "setting [regression]  " << regression_individuals_reported << " -- fitness: " << fitness << " -- parameters " << vector_to_string(parameters) << endl;
             regression_individuals[regression_individuals_reported] = parameters;
             regression_fitnesses[regression_individuals_reported] = fitness;
             regression_individuals_reported++;
@@ -408,7 +419,7 @@ AsynchronousNewtonMethod::insert_individual(uint32_t iteration, const vector<dou
         } else if (line_search_individuals_reported < minimum_line_search_individuals + extra_workunits) {
             //odd iterations do a line search
             //
-//            cout << "setting " << line_search_individuals_reported << " -- fitness: " << fitness << " -- parameters " << vector_to_string(parameters) << endl;
+//            cout << "setting [line search] " << line_search_individuals_reported << " -- fitness: " << fitness << " -- parameters " << vector_to_string(parameters) << endl;
             line_search_individuals[line_search_individuals_reported] = parameters;
             line_search_fitnesses[line_search_individuals_reported] = fitness;
             line_search_individuals_reported++;
