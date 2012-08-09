@@ -84,6 +84,9 @@ class AsynchronousNewtonMethod {
         bool first_workunits_generated;
         uint32_t iteration;
 
+        bool max_failed_improvements_defined;
+        uint32_t max_failed_improvements;
+
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
 
     public:

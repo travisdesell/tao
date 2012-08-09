@@ -67,6 +67,7 @@ AsynchronousNewtonMethod::pre_initialize() {
     center_defined = false;
     min_bound_defined = false;
     max_bound_defined = false;
+    max_failed_improvements_defined = false;
 }
 
 AsynchronousNewtonMethod::AsynchronousNewtonMethod(
@@ -218,6 +219,12 @@ AsynchronousNewtonMethod::parse_arguments(const vector<string> &arguments) {
             !get_argument(arguments, "--extra_workunits", false, extra_workunits)) {
         cerr << "Argument '--extra_worknits <I>' not found, using default of 100." << endl;
         extra_workunits = 100;
+    }
+
+    if (!max_failed_improvements_defined &&
+            !get_argument(arguments, "--max_failed_improvements", false, max_failed_improvements)) {
+        cerr << "Argument '--max_failed_improvements <I> not found, using default of 0. Search may not terminate automatically." << endl;
+        max_failed_improvements = 0;
     }
 }
 
@@ -455,6 +462,8 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
         }
         fitnesses.resize(individuals.size());
 
+        if (max_failed_improvements > 0 && failed_improvements >= max_failed_improvements) break;
+
         for (uint32_t i = 0; i < individuals.size(); i++) {
             fitnesses[i] = objective_function(individuals[i]);
 
@@ -489,6 +498,8 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
             break;
         }
         fitnesses.resize(individuals.size());
+
+        if (max_failed_improvements > 0 && failed_improvements >= max_failed_improvements) break;
 
         for (uint32_t i = 0; i < individuals.size(); i++) {
             fitnesses[i] = objective_function(individuals[i], seeds[i]);
