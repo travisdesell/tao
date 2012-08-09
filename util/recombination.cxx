@@ -73,16 +73,47 @@ Recombination::check_bounds(const vector<double> &min_bound, const vector<double
     }
 }
 
+void
+Recombination::check_step(const vector<double> &step) throw (std::string) {
+    for (uint32_t i = 0; i < step.size(); i++) {
+        if (step[i] <= 0) {
+            std::stringstream oss;
+            oss << "ERROR [file: " << __FILE__ << ", line: " << __LINE__ << "]: step or width[" << i << "] (" << step[i] << ") was <= 0)"; 
+            throw oss.str();
+        }
+    }
+}
+
+
 /**
  *  Functions dealing with parameter generation
  */
 
 void
-Recombination::random_parameters(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_within(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
     if (dest.size() != min_bound.size()) dest.resize(min_bound.size());
 
     for (uint32_t i = 0; i < min_bound.size(); i++) {
         dest[i] = min_bound[i] + ((*rng)() * (max_bound[i] - min_bound[i]));
+    }
+}
+
+void
+Recombination::random_around(const vector<double> &center, const vector<double> &width, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+    if (dest.size() != center.size()) dest.resize(center.size());
+
+    for (uint32_t i = 0; i < center.size(); i++) {
+        dest[i] = center[i] - width[i] + ((*rng)() * 2.0 * width[i]);
+    }
+}
+
+//generate a set of parameters randomly along a direction
+void
+Recombination::random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+    if (dest.size() != center.size()) dest.resize(center.size());
+
+    for (uint32_t i = 0; i < center.size(); i++) {
+        dest[i] = center[i] + (center[i] - (ls_min * direction[i])) + ((*rng)() * (ls_max - ls_min) * direction[i]);
     }
 }
 
