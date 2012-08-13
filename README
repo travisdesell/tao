@@ -14,6 +14,7 @@ undvc_common (make in a similar fashion)
 
 
 TODO:
-    * add asynchronous newton method
+    * clean up constructors (use set methods)
+    * comments & documentation
 
 BUGS:

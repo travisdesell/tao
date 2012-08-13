@@ -54,8 +54,13 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
 }
 
 void
-AsynchronousNewtonMethod::pre_initialize() {
+AsynchronousNewtonMethod::initialize_rng() {
     random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+}
+
+void
+AsynchronousNewtonMethod::pre_initialize() {
+    initialize_rng();
 
     maximum_iterations_defined = false;
     line_search_min_defined = false;
@@ -73,7 +78,7 @@ AsynchronousNewtonMethod::pre_initialize() {
 AsynchronousNewtonMethod::AsynchronousNewtonMethod(
                                     const vector<double> &min_bound,
                                     const vector<double> &max_bound,
-                                    const vector<double> regression_radius,
+                                    const vector<double> &regression_radius,
                                     const vector<string> &arguments
                                 ) throw (string) {
 
@@ -95,8 +100,8 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
 AsynchronousNewtonMethod::AsynchronousNewtonMethod(
                                     const vector<double> &min_bound,
                                     const vector<double> &max_bound,
-                                    const vector<double> center,
-                                    const vector<double> regression_radius,
+                                    const vector<double> &center,
+                                    const vector<double> &regression_radius,
                                     const vector<string> &arguments
                                 ) throw (string) {
 
@@ -249,7 +254,7 @@ AsynchronousNewtonMethod::initialize() {
 
     first_workunits_generated = false;
 
-    iteration = 0;
+    current_iteration = 0;
 
     center_fitness = -std::numeric_limits<double>::max();
     failed_improvements = 0;
@@ -275,7 +280,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 
     if (!first_workunits_generated) {
 
-        iteration = this->iteration;
+        iteration = this->current_iteration;
 
         number_individuals = minimum_regression_individuals + extra_workunits;
 
@@ -297,7 +302,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 
         return true;
 
-    } else if (this->iteration % 2 == 0 && regression_individuals_reported >= minimum_regression_individuals) {
+    } else if (this->current_iteration % 2 == 0 && regression_individuals_reported >= minimum_regression_individuals) {
         //even iterations calculate gradient/hessian
         //this iteration has finished, so set the direction
         regression_individuals.resize(regression_individuals_reported);  //need to resize these so the randomized_hessian function works right
@@ -324,8 +329,8 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         cout << "center:                " << vector_to_string(center) << endl;
         cout << "line_search_direction: " << vector_to_string(line_search_direction) << endl;
 
-        this->iteration++;
-        iteration = this->iteration;
+        this->current_iteration++;
+        iteration = this->current_iteration;
         
         number_individuals = minimum_line_search_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
@@ -370,8 +375,8 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
             cout << "preveious center fitness: " << center_fitness << endl;
         }
 
-        this->iteration++;
-        iteration = this->iteration;
+        this->current_iteration++;
+        iteration = this->current_iteration;
         
         number_individuals = minimum_regression_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
@@ -413,7 +418,7 @@ bool
 AsynchronousNewtonMethod::insert_individual(uint32_t iteration, const vector<double> &parameters, double fitness) throw (string) {
     bool modified = false;
 
-    if (iteration == this->iteration) {
+    if (iteration == this->current_iteration) {
         if (iteration % 2 == 0 && regression_individuals_reported < minimum_regression_individuals + extra_workunits) {
             //even iterations calculate a hessian/gradient
 
@@ -455,7 +460,9 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
     vector< vector<double> > individuals;
     vector<double> fitnesses;
 
-    while (maximum_iterations == 0 || iteration < maximum_iterations) {
+    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
+        cout << "iteration: " << current_iteration << endl;
+
         if ( !generate_individuals(number_individuals, individuals_iteration, individuals) ) {
             cerr << "generated individuals didn't generate any individuals." << endl;
             break;
@@ -490,9 +497,7 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
     vector<double> fitnesses;
     vector<uint32_t> seeds;
 
-    while (maximum_iterations == 0 || iteration < maximum_iterations) {
-        cout << "iteration: " << iteration << endl;
-
+    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
         if ( !generate_individuals(number_individuals, individuals_iteration, individuals, seeds) ) {
             cerr << "generated individuals didn't generate any individuals." << endl;
             break;

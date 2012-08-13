@@ -1,3 +1,6 @@
+#ifndef TAO_ASYNCHRONOUS_NEWTON_METHOD_H
+#define TAO_ASYNCHRONOUS_NEWTON_METHOD_H
+
 /*
  * Copyright 2012, 2009 Travis Desell and the University of North Dakota.
  *
@@ -38,7 +41,7 @@
 using namespace std;
 
 class AsynchronousNewtonMethod {
-    private:
+    protected:
         bool min_bound_defined, max_bound_defined;
         vector<double> max_bound;
         vector<double> min_bound;
@@ -82,31 +85,31 @@ class AsynchronousNewtonMethod {
         uint32_t maximum_iterations;
 
         bool first_workunits_generated;
-        uint32_t iteration;
+        uint32_t current_iteration;
 
         bool max_failed_improvements_defined;
         uint32_t max_failed_improvements;
 
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
 
+        AsynchronousNewtonMethod();
     public:
         ~AsynchronousNewtonMethod();
 
-        AsynchronousNewtonMethod();
         AsynchronousNewtonMethod(const vector<string> &arguments) throw (string);
 
         AsynchronousNewtonMethod(
                                 const vector<double> &min_bound,
                                 const vector<double> &max_bound,
-                                const vector<double> regression_width,
+                                const vector<double> &regression_width,
                                 const vector<string> &arguments
                             ) throw (string);
 
         AsynchronousNewtonMethod(
                                 const vector<double> &min_bound,
                                 const vector<double> &max_bound,
-                                const vector<double> current_center,
-                                const vector<double> regression_width,
+                                const vector<double> &current_center,
+                                const vector<double> &regression_width,
                                 const vector<string> &arguments
                             ) throw (string);
 
@@ -120,18 +123,21 @@ class AsynchronousNewtonMethod {
                                 const uint32_t maximum_iterations                 /* default value is 0 which means no termination */
                             ) throw (string);
 
+        void initialize_rng();
         void parse_arguments(const vector<string> &arguments);
         void pre_initialize();
         void initialize();
 
         //returns true if it generates individuals
-        bool generate_individuals(uint32_t &number_individuals, uint32_t &iteration, vector< vector<double> > &parameters, vector<uint32_t> &seeds) throw (string);
-        bool generate_individuals(uint32_t &number_individuals, uint32_t &iteration, vector< vector<double> > &parameters) throw (string);
+        virtual bool generate_individuals(uint32_t &number_individuals, uint32_t &iteration, vector< vector<double> > &parameters, vector<uint32_t> &seeds) throw (string);
+        virtual bool generate_individuals(uint32_t &number_individuals, uint32_t &iteration, vector< vector<double> > &parameters) throw (string);
 
         //returns true if modified
-        bool insert_individual(uint32_t iteration, const vector<double> &parameters, double fitness, uint32_t seed) throw (string);
-        bool insert_individual(uint32_t iteration, const vector<double> &parameters, double fitness) throw (string);
+        virtual bool insert_individual(uint32_t iteration, const vector<double> &parameters, double fitness, uint32_t seed) throw (string);
+        virtual bool insert_individual(uint32_t iteration, const vector<double> &parameters, double fitness) throw (string);
 
         void iterate(double (*objective_function)(const vector<double> &)) throw (string);
         void iterate(double (*objective_function)(const vector<double> &, const uint32_t)) throw (string);
 };
+
+#endif
