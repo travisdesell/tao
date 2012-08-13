@@ -275,16 +275,13 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 //returns true if it generates individuals
 bool
 AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uint32_t &iteration, vector< vector<double> > &parameters) throw (string) {
-    cout << "generating individuals" << endl;
-    cout << "first workunits generated: " << first_workunits_generated << endl;
-
     if (!first_workunits_generated) {
 
         iteration = this->current_iteration;
 
         number_individuals = minimum_regression_individuals + extra_workunits;
 
-        cout << "generating first workunits (" << number_individuals << ")" << endl;
+//        cout << "generating first workunits (" << number_individuals << ")" << endl;
 
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
@@ -335,7 +332,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         number_individuals = minimum_line_search_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
-        cout << "generating line search workunits (" << number_individuals << ")" << endl;
+//        cout << "generating line search workunits (" << number_individuals << ")" << endl;
 
         for (uint32_t i = 0; i < number_individuals; i++) {
             Recombination::random_along(center, line_search_direction, line_search_min, line_search_max, parameters[i], random_number_generator);
@@ -362,12 +359,12 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
             center_fitness = best_fitness;
             
             failed_improvements = 0;
-            cout << "best individual:          " << best << endl;
+//            cout << "best individual:          " << best << endl;
             cout << "best individual found:    " << vector_to_string(line_search_individuals[best]) << endl;
             cout << "best individual fitness:  " << best_fitness << endl;
         } else {
             failed_improvements++;
-            cout << "best individual:          " << best << endl;
+//            cout << "best individual:          " << best << endl;
             cout << "best individual found:    " << vector_to_string(line_search_individuals[best]) << endl;
             cout << "best individual fitness:  " << best_fitness << endl;
             cout << "no improvement:           " << failed_improvements << endl;
@@ -381,7 +378,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         number_individuals = minimum_regression_individuals + extra_workunits;
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
-        cout << "generating regression workunits (" << number_individuals << ")" << endl;
+//        cout << "generating regression workunits (" << number_individuals << ")" << endl;
 
         for (uint32_t i = 0; i < number_individuals; i++) {
             Recombination::random_around(center, regression_radius, parameters[i], random_number_generator);
@@ -460,9 +457,13 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
     vector< vector<double> > individuals;
     vector<double> fitnesses;
 
-    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
-        cout << "iteration: " << current_iteration << endl;
+    if (current_iteration > 0) {
+        //This is a hack for restarting ANMs using a database
+        if (current_iteration % 2 == 1) current_iteration--;
+        regression_individuals_reported = minimum_regression_individuals;
+    }
 
+    while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
         if ( !generate_individuals(number_individuals, individuals_iteration, individuals) ) {
             cerr << "generated individuals didn't generate any individuals." << endl;
             break;
@@ -496,6 +497,12 @@ AsynchronousNewtonMethod::iterate(double (*objective_function)(const vector<doub
     vector< vector<double> > individuals;
     vector<double> fitnesses;
     vector<uint32_t> seeds;
+
+    if (current_iteration > 0) {
+        //This is a hack for restarting ANMs using a database
+        if (current_iteration % 2 == 1) current_iteration--;
+        regression_individuals_reported = minimum_regression_individuals;
+    }
 
     while (maximum_iterations == 0 || current_iteration < maximum_iterations) {
         if ( !generate_individuals(number_individuals, individuals_iteration, individuals, seeds) ) {
