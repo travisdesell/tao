@@ -85,7 +85,7 @@ function print_de_table($des) {
             print_div_td("individuals_reported", $de->individuals_reported . " / " . $de->maximum_reported);
             print_div_td("individuals_created", $de->individuals_created . " / " . $de->maximum_created);
 
-            $parent_n_recombinaton = "";
+            $parent_n_recombination = "";
 
             //This is bad, should have these defined in some common location/method -- if these get changed in differential_evolution.hxx they wont be changed here
             if ($de->parent_selection == 0) {
