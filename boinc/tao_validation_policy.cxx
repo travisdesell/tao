@@ -168,6 +168,9 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
 
                 log_messages.printf(MSG_DEBUG, "Opening log file for search '%s': '%s'\n", search_name.c_str(), log_file_path);
 
+                /**
+                 * Should write to database instead
+                 */
                 ea->set_log_file( new ofstream(log_file_path, fstream::app) );
             }
         } else {

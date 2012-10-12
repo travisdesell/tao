@@ -28,6 +28,8 @@
 #include "vector_io.hxx"
 #include "arguments.hxx"
 
+#include "util/statistics.hxx"
+
 /**
  *  From MYSQL
  */
@@ -535,10 +537,36 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: updating particle_swarm with query: '" << particle_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: updating particle_swarm with query: '" << swarm_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
 //        mysql_free_result(result);
+
+        double best, average, median, worst;
+        calculate_fitness_statistics(local_best_fitnesses, best, average, median, worst);
+
+        ostringstream log_query;
+        log_query << "INSERT INTO particle_swarm_log"
+            << " SET "
+            << "  search_id = " << this->id
+            << ", evaluation = " << this->individuals_reported
+            << ", current = " << local_best_fitnesses[id]
+            << ", best = " << best
+            << ", average = " << average
+            << ", median = " << median
+            << ", worst = " << worst
+            << ", particle = " << id
+            << ", seed = " << seed
+            << ", global = " << (local_best_fitnesses[id] == global_best_fitness);
+
+        mysql_query(conn, log_query.str().c_str());
+
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: updating particle_swarm_log with query: '" << log_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }
+
     }
 
     return modified;
