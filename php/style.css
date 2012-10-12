@@ -5,47 +5,29 @@ a, a:link, a:visited, a:active {color: #0069A1;}
 
 table {font-size: 12px;}
 
-.de_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50}
-.de_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:70px;}
-.de_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:20px;}
-.de_header_selection {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:90px;}
+.de_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50;}
+.de_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
+.de_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
+.de_header_selection {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .de_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px;}
-.de_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:80px;}
+.de_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .de_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px;}
-    .parent_selection               { width:70px;}
-    .number_pairs                   { width:70px;}
-    .recombination_selection        { width:70px;}
-    .parent_scaling_factor          { width:70px;}
-    .differential_scaling_factor    { width:70px;}
-    .crossover_rate                 { width:70px;}
-    .directional                    { width:70px;}
-    .selection                      { width:90px;}
 
-.pso_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50}
-.pso_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:70px;}
-.pso_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:20px;}
+.pso_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50;}
+.pso_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
+.pso_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .pso_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px;}
-.pso_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:80px;}
+.pso_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .pso_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
     .d0                     {background-color: #F8F8FF; color: black;}
     .d1                     {background-color: #DFF0FF; color: black;}
-    .id                     {width: 20px;}
-    .name                   { width:80px;}
-    .population_size        { width:70px;}
-    .inertia                { width:70px;}
-    .global_best_weight     { width:70px;}
-    .local_best_weight      { width:70px;}
 
-    .min_bound              {}
-    .max_bound              {}
-
-.anm_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50}
-.anm_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:70px;}
-.anm_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:20px;}
+.anm_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:50;}
+.anm_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
+.anm_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .anm_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px;}
-.anm_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:80px;}
+.anm_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 .anm_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px;}
-.anm_header_fitness {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; width:90px;}
-    .fitness        { width:90px;}
+.anm_header_fitness {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 5px; height:55px; }
 
 .bounds_table td {text-align:right;}
