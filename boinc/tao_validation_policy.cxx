@@ -36,8 +36,8 @@
 #include "validate_util.h"
 #include "validate_util2.h"
 
-#include "evolutionary_algorithms/particle_swarm_db.hxx"
-#include "evolutionary_algorithms/differential_evolution_db.hxx"
+#include "asynchronous_algorithms/particle_swarm_db.hxx"
+#include "asynchronous_algorithms/differential_evolution_db.hxx"
 
 #include "undvc_common/vector_io.hxx"
 #include "undvc_common/parse_xml.hxx"

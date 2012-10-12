@@ -46,9 +46,9 @@
 #include "undvc_common/parse_xml.hxx"
 #include "undvc_common/vector_io.hxx"
 
-#include "evolutionary_algorithms/evolutionary_algorithm.hxx"
-#include "evolutionary_algorithms/particle_swarm_db.hxx"
-#include "evolutionary_algorithms/differential_evolution_db.hxx"
+#include "asynchronous_algorithms/evolutionary_algorithm.hxx"
+#include "asynchronous_algorithms/particle_swarm_db.hxx"
+#include "asynchronous_algorithms/differential_evolution_db.hxx"
 
 #include "workunit_information.hxx"
 
