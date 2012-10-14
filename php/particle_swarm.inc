@@ -48,12 +48,13 @@ function print_pso_header() {
     print_div_td("pso_header_id", "id");
     print_div_td("pso_header_name", "name");
     print_div_td("pso_header", "population size");
-    print_div_td("pso_header_free", "individuals reported / max");
-    print_div_td("pso_header_free", "individuals created / max");
+    print_div_td("pso_header_free", "max / individuals reported ");
+    print_div_td("pso_header_free", "max / individuals created");
     print_div_td("pso_header", "inertia");
     print_div_td("pso_header", "local best weight");
     print_div_td("pso_header", "global best weight");
-    print_div_td("pso_header_bound", "bounds");
+    print_div_td("pso_header", "");
+//    print_div_td("pso_header_bound", "bounds");
     echo "</tr>";
 }
 
@@ -76,12 +77,13 @@ function print_pso_table($psos) {
             print_div_td("id", $pso->id);
             print_div_td("name", $pso->name);
             print_div_td("population_size", $pso->population_size);
-            print_div_td("individuals_reported", intval($pso->individuals_reported) . " / " . intval($pso->maximum_reported));
-            print_div_td("individuals_created", intval($pso->individuals_created). " / " . intval($pso->maximum_created));
+            print_div_td("individuals_reported", intval($pso->maximum_created) . " / " . intval($pso->individuals_reported));
+            print_div_td("individuals_created", intval($pso->maximum_created). " / " . intval($pso->individuals_created));
             print_div_td("inertia", $pso->inertia);
             print_div_td("global_best_weight", $pso->global_best_weight);
             print_div_td("local_best_weight", $pso->local_best_weight);
-            print_div_td("bound", mini_table(array("min", "max"), array($pso->min_bound, $pso->max_bound)));
+            print_div_td("name", "<a href='./search_errors.php?name=$pso->name'>error statistics</a>");
+//            print_div_td("bound", mini_table(array("min", "max"), array($pso->min_bound, $pso->max_bound)));
 
             echo "</tr>\n";
 

@@ -52,14 +52,14 @@ function print_de_header() {
     print_div_td("de_header_id", "id");
     print_div_td("de_header_name", "name");
     print_div_td("de_header", "population size");
-    print_div_td("de_header_free", "individuals reported / max");
-    print_div_td("de_header_free", "individuals created / max");
+    print_div_td("de_header_free", "max / individuals reported");
+    print_div_td("de_header_free", "max / individuals created");
     print_div_td("de_header_selection", "parent / pairs / recombination");
     print_div_td("de_header", "parent scaling factor");
     print_div_td("de_header", "differential scaling factor");
     print_div_td("de_header", "crossover rate");
     print_div_td("de_header", "directional");
-    print_div_td("de_header_bound", "bounds");
+    print_div_td("de_header", "");
     echo "</tr>";
 }
 
@@ -82,8 +82,8 @@ function print_de_table($des) {
             print_div_td("id", $de->id);
             print_div_td("name", $de->name);
             print_div_td("population_size", $de->population_size);
-            print_div_td("individuals_reported", $de->individuals_reported . " / " . $de->maximum_reported);
-            print_div_td("individuals_created", $de->individuals_created . " / " . $de->maximum_created);
+            print_div_td("individuals_reported", $de->maximum_reported . " / " . $de->individuals_reported);
+            print_div_td("individuals_created", $de->maximum_created . " / " . $de->individuals_created);
 
             $parent_n_recombination = "";
 
@@ -140,7 +140,8 @@ function print_de_table($des) {
                 print_div_td("directional", "unknown");
             }
 
-            print_div_td("bound", mini_table(array("min", "max"), array($de->min_bound, $de->max_bound)));
+//            print_div_td("bound", mini_table(array("min", "max"), array($de->min_bound, $de->max_bound)));
+            print_div_td("name", "<a href='./search_errors.php?name=$de->name'>error statistics</a>");
 
             echo "</tr>\n";
 

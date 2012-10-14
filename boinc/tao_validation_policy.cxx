@@ -237,12 +237,15 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
         double canonical_fitness;
         int canonical_resultid = -1;
 
+        int matches;
+
         for (uint32_t i = 0; i < results.size(); i++) {
             if (had_error[i]) continue;
 
-            int matches = 0;
+            matches = 0;
             for (uint32_t j = 0; j < results.size(); j++) {
                 if (had_error[j]) continue;
+                if (i == j) continue;
 
                 if (fabs(result_fitness[i] - result_fitness[j]) < FITNESS_ERROR_BOUND) {
                     matches++;
@@ -259,16 +262,17 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
         if (canonical_resultid > 0) {
             canonicalid = canonical_resultid;
 
+            log_messages.printf(MSG_DEBUG, "    min_quorum: %d, matches: %d, canonical_resultid: %d\n", min_quorum, matches, canonical_resultid);
             log_messages.printf(MSG_DEBUG, "    canonical_fitness: %lf\n", canonical_fitness);
             //We found a canonical result so mark the valid results valid the the others invalid
             for (uint32_t i = 0; i < results.size(); i++) {
                 if (fabs(result_fitness[i] - canonical_fitness) < FITNESS_ERROR_BOUND) {
                     results[i].validate_state = VALIDATE_STATE_VALID;
-                    log_messages.printf(MSG_DEBUG, "              fitness: %lf -- marked valid.\n", result_fitness[i]);
+                    log_messages.printf(MSG_DEBUG, "              fitness: %lf -- marked valid,   result_id: %d.\n", result_fitness[i], results[i].id);
                 } else {
                     results[i].outcome = RESULT_OUTCOME_VALIDATE_ERROR;
                     results[i].validate_state = VALIDATE_STATE_INVALID;
-                    log_messages.printf(MSG_DEBUG, "              fitness: %lf -- marked INVALID.\n", result_fitness[i]);
+                    log_messages.printf(MSG_DEBUG, "              fitness: %lf -- marked INVALID, result_id: %d.\n", result_fitness[i], results[i].id);
                 }
             }
 

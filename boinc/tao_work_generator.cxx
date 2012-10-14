@@ -164,14 +164,22 @@ int make_jobs(uint32_t number_jobs) {
 
     vector<EvolutionaryAlgorithmDB*> unfinished_searches;
     try {
+        log_messages.printf(MSG_DEBUG, "getting unfinished particle swarms\n");
         ParticleSwarmDB::add_unfinished_searches(boinc_db.mysql, app.id, unfinished_searches);
+        log_messages.printf(MSG_DEBUG, "getting unfinished differential_evolutions\n");
         DifferentialEvolutionDB::add_unfinished_searches(boinc_db.mysql, app.id, unfinished_searches);
     } catch (string err_msg) {
         log_messages.printf(MSG_CRITICAL, "Error thrown getting unfinished searches:\n    '%s'\n", err_msg.c_str());
         exit(1);
     }
 
-    uint32_t portion = (number_jobs / unfinished_searches.size());
+    log_messages.printf(MSG_DEBUG, "got %lu unfinished searches\n", unfinished_searches.size());
+    log_messages.printf(MSG_DEBUG, "number jobs: %u\n", number_jobs);
+
+    if (unfinished_searches.size() == 0) return 0;
+    uint64_t portion = (uint64_t)number_jobs / unfinished_searches.size();
+
+    log_messages.printf(MSG_DEBUG, "ALMOST FOR LOOP\n");
 
     log_messages.printf(MSG_DEBUG, "Generating %u total jobs for %lu unfinished searches.\n", number_jobs, unfinished_searches.size());
 
@@ -179,7 +187,7 @@ int make_jobs(uint32_t number_jobs) {
      *  For each unfinished search generate equal portion of workunits
      */
     for (uint32_t i = 0; i < unfinished_searches.size(); i++) {
-        log_messages.printf(MSG_DEBUG, "    Generating %u jobs for unfinished search '%s'.\n", portion, unfinished_searches[i]->get_name().c_str());
+        log_messages.printf(MSG_DEBUG, "    Generating %lu jobs for unfinished search '%s'.\n", portion, unfinished_searches[i]->get_name().c_str());
 
         /**
          *  Get the standard workunit information for this search

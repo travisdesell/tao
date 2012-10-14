@@ -5,7 +5,7 @@ require_once("asynchronous_newton_method.inc");
 require_once("differential_evolution.inc");
 require_once("particle_swarm.inc");
 
-require_once("db.inc");
+require_once("/boinc/src/milkyway_server/tao/db.inc");
 
 $host = '127.0.0.1';
 
