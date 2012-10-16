@@ -34,11 +34,14 @@ if (!empty($_GET)) {
     $y_min = null;
     $y_max = null;
     if ($_GET['y_min'] != null) {
-        $y_min = intval($_GET['y_min']);
+        $y_min = doubleval($_GET['y_min']);
     }
     if ($_GET['y_max'] != null) {
-        $y_max = intval($_GET['y_max']);
+        $y_max = doubleval($_GET['y_max']);
     }
+
+//    echo "y_min: $y_min<br>\n";
+//    echo "y_max: $y_max<br>\n";
 
     $limit = 1000;
     if ($_GET['limit'] != null) {
