@@ -11,8 +11,8 @@
 
 #include "synchronous_algorithms/synchronous_newton_method.hxx"
 #include "synchronous_algorithms/gradient.hxx"
-#include "synchronous_algorithms/hessian.hxx"
-#include "synchronous_algorithms/newton_step.hxx"
+#include "util/hessian.hxx"
+#include "util/newton_step.hxx"
 #include "synchronous_algorithms/line_search.hxx"
 
 #include "undvc_common/vector_io.hxx"

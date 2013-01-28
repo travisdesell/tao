@@ -1,0 +1,36 @@
+/*General Items*/
+/*Stuff ported over from main.css on the main site*/
+body {font-family: verdana; font-size: 12px; margin: 5px 10px;}
+a, a:link, a:visited, a:active {color: #0069A1;}
+
+table {font-size: 12px;}
+
+.error_stats_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+
+.de_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; width:60;}
+.de_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+.de_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+.de_header_selection {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+.de_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px;}
+.de_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; width:250px;}
+.de_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px;}
+
+.pso_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; width:60;}
+.pso_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+.pso_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+.pso_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px;}
+.pso_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; width:250px;}
+.pso_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:20px; }
+    .d0                     {background-color: #F8F8FF; color: black;}
+    .d1                     {background-color: #DFF0FF; color: black;}
+
+.anm_header_checks {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px; width:60;}
+.anm_header {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px; }
+.anm_header_id {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px; }
+.anm_header_free {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px;}
+.anm_header_name {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px; }
+.anm_header_bound {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px;}
+.anm_header_fitness {background-color: #DFF0FF; border: 2px solid lightBlue; padding: 3px 1px 1px 1px; height:55px; }
+
+.bounds_table td {text-align:right;}
+

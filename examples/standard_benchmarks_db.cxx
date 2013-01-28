@@ -31,6 +31,8 @@
 #include "asynchronous_algorithms/particle_swarm_db.hxx"
 #include "asynchronous_algorithms/differential_evolution.hxx"
 #include "asynchronous_algorithms/differential_evolution_db.hxx"
+#include "asynchronous_algorithms/asynchronous_newton_method.hxx"
+#include "asynchronous_algorithms/asynchronous_newton_method_db.hxx"
 
 //from undvc_common
 #include "undvc_common/arguments.hxx"
@@ -80,8 +82,10 @@ int main(int argc /* number of command line arguments */, char **argv /* command
     get_argument(arguments, "--n_parameters", true, number_of_parameters);
     vector<double> min_bound(number_of_parameters, 0);
     vector<double> max_bound(number_of_parameters, 0);
+    vector<double> radius(number_of_parameters, 0);
 
     for (uint32_t i = 0; i < number_of_parameters; i++) {        //arrays go from 0 to size - 1 (not 1 to size)
+        radius[i] = 0.2;
         if (objective_function_name.compare("sphere") == 0) {
             min_bound[i] = -100;
             max_bound[i] = 100;
@@ -118,20 +122,24 @@ int main(int argc /* number of command line arguments */, char **argv /* command
         exit(1);
     }
 
-    if (argument_exists(arguments, "--create_tables")) {
-        ParticleSwarmDB::create_tables(conn);
-        DifferentialEvolutionDB::create_tables(conn);
-    }
-
     string search_type;
     get_argument(arguments, "--search_type", true, search_type);
+
+    try {
+        if (search_type.compare("anm") == 0 && argument_exists(arguments, "--create_tables"))    AsynchronousNewtonMethodDB::create_tables(conn);
+        if (search_type.compare("de") == 0  && argument_exists(arguments, "--create_tables"))    DifferentialEvolutionDB::create_tables(conn);
+        if (search_type.compare("ps") == 0  && argument_exists(arguments, "--create_tables"))    ParticleSwarmDB::create_tables(conn);
+    } catch (string err_msg) {
+        cout << "Creating tables for search '" << search_type << "' failed with message: " << endl;
+        cout << "    " << err_msg << endl;
+        exit(0);
+    }
 
     string search_name;
     get_argument(arguments, "--search_name", true, search_name);
 
     try {
         if (search_type.compare("ps") == 0) {
-
             if (ParticleSwarmDB::search_exists(conn, search_name)) {
                 cout << "Restarting database particle swarm search called '" << search_name << "'." << endl;
                 ParticleSwarmDB ps(conn, search_name);
@@ -144,7 +152,6 @@ int main(int argc /* number of command line arguments */, char **argv /* command
             }
 
         } else if (search_type.compare("de") == 0) {
-
             if (DifferentialEvolutionDB::search_exists(conn, search_name)) {
                 cout << "Restarting database differential evolution search called '" << search_name << "'." << endl;
                 DifferentialEvolutionDB de(conn, search_name);
@@ -156,9 +163,22 @@ int main(int argc /* number of command line arguments */, char **argv /* command
                 de.iterate(f);
             }
 
+        } else if (search_type.compare("anm") == 0) {
+            if (AsynchronousNewtonMethodDB::search_exists(conn, search_name)) {
+                cout << "Restarting database asynchronous newton method search called '" << search_name << "'." << endl;
+                AsynchronousNewtonMethodDB anm(conn, search_name);
+                anm.iterate(f);
+            } else {
+                cout << "Creating new database asynchronous newton method search called '" << search_name << "'." << endl;
+                AsynchronousNewtonMethodDB anm(conn, min_bound, max_bound, radius, arguments);
+ //               exit(1);
+                anm.iterate(f);
+            }
+
         } else {
             cerr << "Improperly specified search type: '" << search_type.c_str() << "'" << endl;
             cerr << "Possibilities are:" << endl;
+            cerr << "    anm    -       asynchronous newton method" << endl;
             cerr << "    de     -       differential evolution" << endl;
             cerr << "    ps     -       particle swarm optimization" << endl;
             exit(1);

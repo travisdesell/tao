@@ -21,6 +21,7 @@
 #define TAO_STATISTICS_H
 
 #include <vector>
+#include "asynchronous_algorithms/individual.hxx"
 
 using namespace std;
 

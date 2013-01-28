@@ -235,7 +235,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
     if (current_individual >= population_size) current_individual = 0;
 
     if (initialized_individuals < population_size) { //The search has not been fully initalized so keep generating random individuals
-        Recombination::random_parameters(min_bound, max_bound, parameters, random_number_generator);
+        Recombination::random_within(min_bound, max_bound, parameters, random_number_generator);
         population[id].assign(parameters.begin(), parameters.end());
         individuals_created++;
         return;

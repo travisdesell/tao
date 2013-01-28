@@ -28,6 +28,8 @@
 #include "vector_io.hxx"
 #include "arguments.hxx"
 
+#include "util/statistics.hxx"
+
 /**
  *  From MYSQL
  */
@@ -139,6 +141,11 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
                       << ") ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
     cout << "creating de_individual table with: " << endl << individual_query.str() << endl << endl;
+
+    /**
+     *  Create the log
+     */
+    //create table `particle_swarm_log` (`swarm_id` int(11) not null, `evaluation` int(11) not null, `fitness` double, `particle` int(11) not null, `r1` double, `r2` double, `global` bool not null, PRIMARY KEY(`swarm_id`, `evaluation`)) ENGINE=InnoDB;
 
     if (mysql_query(conn, individual_query.str().c_str())) {
         ostringstream ex_msg;
@@ -532,6 +539,35 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
             ex_msg << "ERROR: updating differential_evolution with query: '" << individual_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
+
+
+        double best, average, median, worst;
+        calculate_fitness_statistics(fitnesses, best, average, median, worst);
+
+        ostringstream log_query;
+        log_query << "INSERT INTO differential_evolution_log"
+            << " SET "
+            << "  search_id = " << this->id
+            << ", evaluation = " << this->individuals_reported
+            << ", current = " << fitnesses[id]
+            << ", best = " << best
+            << ", average = " << average
+            << ", median = " << median
+            << ", worst = " << worst
+            << ", individual = " << id
+            << ", seed = " << seed
+            << ", global = " << (fitnesses[id] == global_best_fitness);
+//            << ", parameters = '" << vector_to_string<double>(parameters) << "'" << endl;
+
+        mysql_query(conn, log_query.str().c_str());
+
+        if (mysql_errno(conn) != 0) {
+            ostringstream ex_msg;
+            ex_msg << "ERROR: updating differential_evolution_log with query: '" << log_query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            throw ex_msg.str();
+        }
+
+
     }
 
     return modified;

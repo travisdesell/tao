@@ -145,8 +145,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 
     //We haven't initialied all the particles so generate a random one
     if (initialized_individuals < particles.size()) {
-        Recombination::random_parameters(min_bound, max_bound, particles[id], random_number_generator);
-        Recombination::random_parameters(min_bound, max_bound, velocities[id], random_number_generator);
+        Recombination::random_within(min_bound, max_bound, particles[id], random_number_generator);
+        Recombination::random_within(min_bound, max_bound, velocities[id], random_number_generator);
 
         //Set each velocity to the randomly generated position minus where the particle is at now (ie., each velocity
         //the difference between where the particle is now and some other random position in the search area)

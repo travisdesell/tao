@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <limits>
 
 #include "stdint.h"
 
@@ -58,4 +59,8 @@ void calculate_fitness_statistics(const vector<double> &fitness, double &best, d
         average += fitness_copy[i];
     }
     average = average / fitness_copy.size();
+
+    if (average == -numeric_limits<double>::infinity()) {
+        average = -numeric_limits<double>::max();
+    }
 }

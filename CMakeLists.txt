@@ -25,8 +25,8 @@ add_subdirectory(examples)
 
 link_directories(${Boost_LIBRARY_DIRS})
 
-if (BOINC_FOUND AND MYSQL_FOUND)
+if (BOINC_SERVER_FOUND AND MYSQL_FOUND)
     add_subdirectory(boinc)
-else (BOINC_FOUND AND MYSQL_FOUND)
-    message(STATUS "Either BOINC libraries (found = ${BOINC_FOUND}) or MYSQL libraries (found = ${MYSQL_FOUND}) missing, not compiling boinc subdirectory.")
-endif (BOINC_FOUND AND MYSQL_FOUND)
+else (BOINC_SERVER_FOUND AND MYSQL_FOUND)
+    message(STATUS "Either BOINC libraries (found = ${BOINC_SERVER_FOUND}) or MYSQL libraries (found = ${MYSQL_FOUND}) missing, not compiling boinc subdirectory.")
+endif (BOINC_SERVER_FOUND AND MYSQL_FOUND)

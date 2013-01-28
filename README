@@ -1,5 +1,8 @@
 To build:
 
+git submodule init
+git submodule update
+
 mkdir build
 cd build
 cmake ..
@@ -11,13 +14,7 @@ undvc_common (make in a similar fashion)
 
 
 TODO:
-    * add parameter sweep
-    * add GD/CGD
-    * add newton method
-    * add asynchronous newton method
-    * add asynchronous parameter sweep
-    * add genetic search
+    * clean up constructors (use set methods)
+    * comments & documentation
 
 BUGS:
-
-

@@ -7,6 +7,6 @@
 using std::vector;
 using std::string;
 
-void newton_step(const vector< vector<double> > &hessian, const vector<double> &gradient, vector<double> &step) throw (const char*);
+void newton_step(const vector< vector<double> > &hessian, const vector<double> &gradient, vector<double> &step) throw (string);
 
 #endif

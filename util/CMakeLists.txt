@@ -2,7 +2,7 @@ include_directories(${Boost_INCLUDE_DIR})
 
 message(STATUS "boost include dir: ${Boost_INCLUDE_DIR}")
 
-add_library(tao_util recombination statistics matrix)
+add_library(tao_util recombination statistics matrix hessian newton_step)
 target_link_libraries(tao_util undvc_common ${BOOST_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
 add_executable(matrix_mul_test matrix)
