@@ -10,6 +10,8 @@
 //#include <boost/numeric/ublas/lu.hpp>
 //#include <boost/numeric/ublas/io.hpp>
 
+#include "undvc_common/vector_io.hxx"
+
 using std::vector;
 using std::cout;
 using std::endl;
@@ -31,35 +33,42 @@ void get_hessian(double (*objective_function)(const std::vector<double> &), cons
                 point_copy[i] = pi + step[i] + step[i];
 
                 e1 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e1 << endl;
                 point_copy[i] = pi;
 
                 e2 = objective_function(point_copy);
                 e3 = e2;
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e2 << " == " << e3 << endl;
 
                 point_copy[i] = pi - (step[i] + step[i]); 
                 e4 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e4 << endl;
 
             } else {
                 point_copy[i] = pi + step[i];
                 point_copy[j] = pj + step[j];
                 e1 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e1 << endl;
 
                 point_copy[i] = pi - step[i];
                 e2 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e2 << endl;
 
                 point_copy[i] = pi + step[i];
                 point_copy[j] = pj - step[j];
                 e3 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e3 << endl;
 
                 point_copy[i] = pi - step[i];
                 e4 = objective_function(point_copy);
+//                cout << "evaluating point: " << vector_to_string(point_copy) << " = " << e4 << endl;
             }
 
             point_copy[i] = pi;
             point_copy[j] = pj;
 
             hessian[i][j] = (e1 - e3 - e2 + e4)/(4 * step[i] * step[j]);
-            cout << "\t\thessian[" << i << "][" << j << "]: " << hessian[i][j] << endl;
+            cout << "\t\thessian[" << i << "][" << j << "]: " << hessian[i][j] << " = (" << e1 << " - " << e3 << " - " << e2 << " + " << e4 << ") / (4 * " << step[i] << " * " << step[j] << ")" << endl;
         }
     }
 }
