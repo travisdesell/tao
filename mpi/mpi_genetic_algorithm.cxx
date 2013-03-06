@@ -8,12 +8,13 @@
 #include "asynchronous_algorithms/asynchronous_genetic_search.hxx"
 #include "mpi/mpi_genetic_algorithm.hxx"
 
+#include "undvc_common/arguments.hxx"
+
 using namespace std;
 
-template <typename T>
-void master(int encoding_length) {
+void GeneticAlgorithmMPI::master() {
     MPI_Status status;
-    int individual[encoding_length];
+    int individual[GeneticAlgorithm::encoding_length];
 
     while (true) {
         //Wait on a message from any worker
@@ -27,26 +28,30 @@ void master(int encoding_length) {
             cout << "worker " << source << " requested: " << n_requested_individuals << " individuals, with a tag: " << tag << ". " << endl;
 
             for (int i = 0; i < n_requested_individuals; i++) {
-                vector<int> new_individual = random_encoding();
+                vector<int> new_individual = GeneticAlgorithm::get_new_individual();
 
-                MPI_Send(&new_individual[0], encoding_length, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
-                cout << "[master      ] sent individual to " << source << endl;
+                MPI_Send(&new_individual[0], GeneticAlgorithm::encoding_length, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+//                cout << "[master      ] sent individual to " << source << endl;
             }
 
         } else if (tag == REPORT_FITNESS_TAG) {
             double fitness;
             MPI_Recv(&fitness, 1, MPI_DOUBLE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
-            MPI_Recv(individual, encoding_length, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(individual, GeneticAlgorithm::encoding_length, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
+            /*
             cout << "[master      ] recv fitness " << setw(10) << fitness << " from " << setw(4) << source << " [";
-            for (int i = 0; i < encoding_length; i++) {
+            for (int i = 0; i < GeneticAlgorithm::encoding_length; i++) {
                 cout << " " << individual[i];
             }
             cout << "]" << endl;
+            */
 
-            vector<int> new_individual = random_encoding();
+            GeneticAlgorithm::insert_individual(fitness, individual);
 
-            MPI_Send(&new_individual[0], encoding_length, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+            vector<int> new_individual = GeneticAlgorithm::get_new_individual();
+
+            MPI_Send(&new_individual[0], GeneticAlgorithm::encoding_length, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
 //            cout << "[master      ] sent individual to " << source << endl;
         } else {
             cerr << "Unknown tag '" << tag << "' received from MPI_Probe on file '" << __FILE__ << "', line " << __LINE__ << endl;
@@ -56,10 +61,10 @@ void master(int encoding_length) {
     }
 }
 
-void worker(int rank, objective_function *f, int encoding_length, int max_queue_size) {
+void GeneticAlgorithmMPI::worker(objective_function_type objective_function) {
     MPI_Status status;
     int tag;
-    int individual[encoding_length];
+    int individual[GeneticAlgorithm::encoding_length];
     queue< vector<int>* > individuals_queue;
 
     /**
@@ -69,11 +74,11 @@ void worker(int rank, objective_function *f, int encoding_length, int max_queue_
 
     //Fill up the initial queue
     for (int i = 0; i < max_queue_size; i++) {
-        MPI_Recv(individual, encoding_length, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(individual, GeneticAlgorithm::encoding_length, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
-        vector<int> *new_individual = new vector<int>(individual, individual + encoding_length);
+        vector<int> *new_individual = new vector<int>(individual, individual + GeneticAlgorithm::encoding_length);
         individuals_queue.push(new_individual);
-        cout << "[worker " << setw(5) << rank << "] received an initial individual, queue size: " << individuals_queue.size() << endl;
+//        cout << "[worker " << setw(5) << rank << "] received an initial individual, queue size: " << individuals_queue.size() << endl;
     }
 
     //Loop forever calculating individual fitness
@@ -82,11 +87,11 @@ void worker(int rank, objective_function *f, int encoding_length, int max_queue_
             //The queue is empty, block waiting for a message from the master
             MPI_Probe(0 /*master is rank 0*/, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             tag = status.MPI_TAG;
-            MPI_Recv(individual, encoding_length, MPI_INT, 0 /*master is rank 0*/, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(individual, GeneticAlgorithm::encoding_length, MPI_INT, 0 /*master is rank 0*/, tag, MPI_COMM_WORLD, &status);
 
-            vector<int> *new_individual = new vector<int>(individual, individual + encoding_length);
+            vector<int> *new_individual = new vector<int>(individual, individual + GeneticAlgorithm::encoding_length);
             individuals_queue.push(new_individual);
-            cout << "[worker " << setw(5) << rank << "] received an individual (tag " << tag << "), queue size: " << individuals_queue.size() << endl;
+//            cout << "[worker " << setw(5) << rank << "] received an individual (tag " << tag << "), queue size: " << individuals_queue.size() << endl;
         } 
 
         //The queue is not empty, check to see if there's an incoming message from the master
@@ -97,11 +102,11 @@ void worker(int rank, objective_function *f, int encoding_length, int max_queue_
         while (flag) {
             tag = status.MPI_TAG;
             //there's an incoming individual, receive it.
-            MPI_Recv(individual, encoding_length, MPI_INT, 0 /*master is rank 0*/, tag, MPI_COMM_WORLD, &status);
+            MPI_Recv(individual, GeneticAlgorithm::encoding_length, MPI_INT, 0 /*master is rank 0*/, tag, MPI_COMM_WORLD, &status);
 
-            vector<int> *new_individual = new vector<int>(individual, individual + encoding_length);
+            vector<int> *new_individual = new vector<int>(individual, individual + GeneticAlgorithm::encoding_length);
             individuals_queue.push(new_individual);
-            cout << "[worker " << setw(5) << rank << "] received an individual (tag " << tag << "), queue size: " << individuals_queue.size() << endl;
+//            cout << "[worker " << setw(5) << rank << "] received an individual (tag " << tag << "), queue size: " << individuals_queue.size() << endl;
 
             MPI_Iprobe(0 /*master is rank 0*/, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
         }
@@ -112,18 +117,18 @@ void worker(int rank, objective_function *f, int encoding_length, int max_queue_
 
         /*
         cout << "[worker " << setw(5) << rank << "] calculating fitness on           [";
-        for (int j = 0; j < encoding_length; j++) {
+        for (int j = 0; j < GeneticAlgorithm::encoding_length; j++) {
             cout << " " << current_individual->at(j);
         }
         cout << "]" << endl;
         */
 
         //calculate the fitness of the head of the individual queue
-        double fitness = f(*current_individual);
+        double fitness = objective_function(*current_individual);
 
         /*
         cout << "[worker " << setw(5) << rank << "] calc fitness " << setw(10) << fitness << "           [";
-        for (int j = 0; j < encoding_length; j++) {
+        for (int j = 0; j < GeneticAlgorithm::encoding_length; j++) {
             cout << " " << current_individual->at(j);
         }
         cout << "]" << endl;
@@ -131,11 +136,35 @@ void worker(int rank, objective_function *f, int encoding_length, int max_queue_
 
         //Send the fitness and the individual back to the master
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0 /*master is rank 0*/, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
-        MPI_Send(&(*current_individual)[0], encoding_length, MPI_INT, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
+        MPI_Send(&(*current_individual)[0], GeneticAlgorithm::encoding_length, MPI_INT, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
 
         //Delete the popped individual
         delete current_individual;
     }
 }
 
+GeneticAlgorithmMPI::GeneticAlgorithmMPI(const vector<string> &arguments,
+                                         int encoding_length,
+                                         random_encoding_type random_encoding,
+                                         mutate_type mutate,
+                                         crossover_type crossover) : GeneticAlgorithm(arguments, encoding_length, random_encoding, mutate, crossover) {
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (!get_argument(arguments, "--max_queue_size", false, max_queue_size)) {
+        if (rank == 0) {
+            cout << "Argument '--max_queue_size <I>' not found, using default of 3." << endl;
+        }
+        max_queue_size = 3;
+    }
+}
+
+
+void GeneticAlgorithmMPI::go(objective_function_type objective_function) {
+    if (rank == 0) {
+        master();
+    } else {
+        worker(objective_function);
+    }
+}
 
