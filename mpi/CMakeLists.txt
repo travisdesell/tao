@@ -7,6 +7,6 @@ if (MPI_FOUND)
 
     include_directories(${Boost_INCLUDE_DIR})
 
-    add_library(mpi_algorithms mpi_genetic_algorithm)
+    add_library(mpi_algorithms mpi_genetic_algorithm mpi_particle_swarm)
     target_link_libraries(mpi_algorithms asynchronous_algorithms undvc_common tao_util ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${MPI_LIBRARIES})
 endif (MPI_FOUND)
