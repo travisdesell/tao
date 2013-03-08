@@ -81,7 +81,11 @@ void GeneticAlgorithmMPI::worker(objective_function_type objective_function) {
 //        cout << "[worker " << setw(5) << rank << "] received an initial individual, queue size: " << individuals_queue.size() << endl;
     }
 
+    long communication_time = 0, communication_start;
+    long processing_time = 0, processing_start;
+
     //Loop forever calculating individual fitness
+    communication_start = time(NULL);
     while (true) {
         if (individuals_queue.size() == 0) {
             //The queue is empty, block waiting for a message from the master
@@ -115,6 +119,9 @@ void GeneticAlgorithmMPI::worker(objective_function_type objective_function) {
         vector<int> *current_individual = individuals_queue.front();
         individuals_queue.pop();
 
+        communication_time += time(NULL) - communication_start;
+        processing_start = time(NULL);
+
         /*
         cout << "[worker " << setw(5) << rank << "] calculating fitness on           [";
         for (int j = 0; j < GeneticAlgorithm::encoding_length; j++) {
@@ -125,6 +132,7 @@ void GeneticAlgorithmMPI::worker(objective_function_type objective_function) {
 
         //calculate the fitness of the head of the individual queue
         double fitness = objective_function(*current_individual);
+        processing_time += time(NULL) - processing_start;
 
         /*
         cout << "[worker " << setw(5) << rank << "] calc fitness " << setw(10) << fitness << "           [";
@@ -134,9 +142,13 @@ void GeneticAlgorithmMPI::worker(objective_function_type objective_function) {
         cout << "]" << endl;
         */
 
+        communication_start = time(NULL);
+
         //Send the fitness and the individual back to the master
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0 /*master is rank 0*/, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
         MPI_Send(&(*current_individual)[0], GeneticAlgorithm::encoding_length, MPI_INT, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
+
+//        cout << "[worker " << setw(5) << rank << "] processing \% time: " << ((double)processing_time / ((double)communication_time + (double)processing_time)) << endl;
 
         //Delete the popped individual
         delete current_individual;
