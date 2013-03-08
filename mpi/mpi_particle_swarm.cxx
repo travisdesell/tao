@@ -30,8 +30,16 @@ void ParticleSwarmMPI::master() {
             cout << "worker " << source << " requested: " << n_requested_individuals << " individuals, with a tag: " << tag << ". " << endl;
 
             for (int i = 0; i < n_requested_individuals; i++) {
-                vector<double> new_individual;
+                vector<double> new_individual(ParticleSwarm::number_parameters, 0);
                 ParticleSwarm::new_individual(individual_position, new_individual);
+
+                /*
+                cout << "generated individual " << individual_position << " [";
+                for (int j = 0; j < ParticleSwarm::number_parameters; j++) {
+                    cout << " " << new_individual[j];
+                }
+                cout << "]" << endl;
+                */
 
                 MPI_Send(&new_individual[0], ParticleSwarm::number_parameters, MPI_DOUBLE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
                 MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
@@ -45,17 +53,17 @@ void ParticleSwarmMPI::master() {
             MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
             /*
-            cout << "[master      ] recv fitness " << setw(10) << fitness << " from " << setw(4) << source << " [";
+            cout << "[master      ] recv fitness " << setw(10) << fitness << " from " << setw(4) << source << " pos " << individual_position << " [";
             for (int i = 0; i < ParticleSwarm::number_parameters; i++) {
                 cout << " " << individual[i];
             }
             cout << "]" << endl;
             */
 
-            vector<double> received_individual(individual[0], ParticleSwarm::number_parameters);
+            vector<double> received_individual(individual, individual + ParticleSwarm::number_parameters);
             ParticleSwarm::insert_individual(individual_position, received_individual, fitness);
 
-            vector<double> new_individual;
+            vector<double> new_individual(ParticleSwarm::number_parameters, 0);
             ParticleSwarm::new_individual(individual_position, new_individual);
 
             MPI_Send(&new_individual[0], ParticleSwarm::number_parameters, MPI_DOUBLE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
@@ -88,6 +96,14 @@ void ParticleSwarmMPI::worker(double (*objective_function)(const std::vector<dou
         MPI_Recv(&individual_position, 1, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
         vector<double> *new_individual = new vector<double>(individual, individual + ParticleSwarm::number_parameters);
+        /*
+        cout << "received individual " << individual_position << " [";
+        for (int j = 0; j < ParticleSwarm::number_parameters; j++) {
+            cout << " " << new_individual->at(j);
+        }
+        cout << "]" << endl;
+        */
+
         individuals_queue.push(new_individual);
         individuals_position_queue.push(individual_position);
 //        cout << "[worker " << setw(5) << rank << "] received an initial individual, queue size: " << individuals_queue.size() << endl;
@@ -107,6 +123,14 @@ void ParticleSwarmMPI::worker(double (*objective_function)(const std::vector<dou
             MPI_Recv(&individual_position, 1, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
             vector<double> *new_individual = new vector<double>(individual, individual + ParticleSwarm::number_parameters);
+            /*
+            cout << "received individual " << individual_position << " [";
+            for (int j = 0; j < ParticleSwarm::number_parameters; j++) {
+                cout << " " << new_individual->at(j);
+            }
+            cout << "]" << endl;
+            */
+
             individuals_queue.push(new_individual);
             individuals_position_queue.push(individual_position);
 //            cout << "[worker " << setw(5) << rank << "] received an individual (tag " << tag << "), queue size: " << individuals_queue.size() << endl;
