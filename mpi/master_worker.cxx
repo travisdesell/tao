@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <queue>
+#include <limits>
 
 #include "mpi.h"
 
@@ -50,14 +51,14 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
         if (tag == REQUEST_INDIVIDUALS_TAG) {
             MPI_Recv(&n_requested_individuals, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
-            cout << "[master     ] request from worker " << source << " for " << n_requested_individuals << " individuals, with tag: " << tag << ". " << endl;
+            cout << "[master      ] request from worker " << source << " for " << n_requested_individuals << " individuals, with tag: " << tag << ". " << endl;
 
             for (int i = 0; i < n_requested_individuals; i++) {
                 vector<T> new_individual(ea->get_number_parameters(), 0);
                 ea->new_individual(individual_position, new_individual);
 
                 /*
-                cout << "[master     ] sending individual: [";
+                cout << "[master      ] sending individual: [";
                 for (int i = 0; i < number_parameters; i++) {
                     cout << " " << new_individual[i];
                 }
@@ -77,8 +78,8 @@ void master(EvolutionaryAlgorithmsType *ea) {
             MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
             /*
-            cout << "[master     ] received fitness: " << fitness << endl;
-            cout << "[master     ] received individual: [";
+            cout << "[master      ] received fitness: " << fitness << endl;
+            cout << "[master      ] received individual: [";
             for (int i = 0; i < number_parameters; i++) {
                 cout << " " << individual[i];
             }
@@ -93,9 +94,9 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
             MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
-            //            cout << "[master      ] sent individual to " << source << endl;
+            //            cout << "[master       ] sent individual to " << source << endl;
         } else {
-            cerr << "[master     ] Unknown tag '" << tag << "' received from MPI_Probe on file '" << __FILE__ << "', line " << __LINE__ << endl;
+            cerr << "[master      ] Unknown tag '" << tag << "' received from MPI_Probe on file '" << __FILE__ << "', line " << __LINE__ << endl;
             MPI_Finalize();
             exit(1);
         }
@@ -103,7 +104,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
         if (!ea->is_running()) {
             //The termination conditions for the search have been met
             for (int i = 0; i < max_rank; i++) {
-                cout << "[master     ] sending terminate to process: " << i << endl;
+                cout << "[master      ] sending terminate to process: " << i << endl;
                 //Just send an int we don't need any contents -- the terminate tag will make the worker quit
                 individual_position = 0;    
                 MPI_Send(&individual_position, 1, MPI_INT, i, TERMINATE_TAG, MPI_COMM_WORLD);
@@ -153,6 +154,9 @@ void worker(double (*objective_function)(const std::vector<T> &),
 
     long communication_time = 0, communication_start;
     long processing_time = 0, processing_start;
+    long min_processing_time = -numeric_limits<long>::max(), max_processing_time = 0;
+    long min_communication_time = -numeric_limits<long>::max(), max_communication_time = 0;
+    long current_communication_time, current_processing_time;
 
     //Loop forever calculating individual fitness
     communication_start = time(NULL);
@@ -203,12 +207,23 @@ void worker(double (*objective_function)(const std::vector<T> &),
         int current_individual_position = individuals_position_queue.front();
         individuals_position_queue.pop();
 
-        communication_time += time(NULL) - communication_start;
+        current_communication_time = time(NULL) - communication_start;
+        communication_time += current_communication_time;
 
         //calculate the fitness of the head of the individual queue
         processing_start = time(NULL);
         double fitness = objective_function(*current_individual);
-        processing_time += time(NULL) - processing_start;
+        current_processing_time = time(NULL) - processing_start;
+        processing_time += current_processing_time;
+
+        if (current_processing_time < min_processing_time) min_processing_time = current_processing_time;
+        if (current_processing_time > max_processing_time) max_processing_time = current_processing_time;
+        if (current_communication_time < min_communication_time) min_communication_time = current_communication_time;
+        if (current_communication_time > max_communication_time) max_communication_time = current_communication_time;
+
+        cout << "[worker " << setw(5) << rank << "] current_processing_time: " << current_processing_time << ", current_communication_time: " << current_communication_time << endl;
+        cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
+        cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
 
         communication_start = time(NULL);
 
