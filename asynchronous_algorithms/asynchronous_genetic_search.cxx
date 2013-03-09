@@ -30,6 +30,16 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
                  mutate_type _mutate,
                  crossover_type _crossover) : encoding_length(_encoding_length), random_encoding(_random_encoding), mutate(_mutate), crossover(_crossover) {
 
+    if (!get_argument(arguments, "--maximum_reported", false, maximum_reported)) {
+        cerr << "Argument '--maximum_reported <I>' not specified, could run forever.Hit control-C to quit." << endl;
+        maximum_reported = 0;
+    }
+
+    if (!get_argument(arguments, "--maximum_created", false, maximum_created)) {
+        cerr << "Argument '--maximum_created <I>' not specified, could run forever.Hit control-C to quit." << endl;
+        maximum_created = 0;
+    }
+
     if (!get_argument(arguments, "--population_size", false, population_size)) {
         cerr << "Argument '--population_size <I>' not found, using default of 50." << endl;
         population_size = 50;
@@ -53,8 +63,8 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
 
     random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
 
-    individuals_generated = 0;
-    individuals_inserted = 0;
+    individuals_created = 0;
+    individuals_reported = 0;
 }
 
 bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {
@@ -73,46 +83,45 @@ bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {
     return false;
 }
 
-vector<int> GeneticAlgorithm::get_new_individual() {
-    individuals_generated++;
+void GeneticAlgorithm::new_individual(uint32_t &individual_position, vector<int> &individual) {
+    individuals_created++;
 
-    vector<int> new_individual;
+    individual_position = 0;    //we can ignore the position
+
     if (population.size() < population_size) {
-        new_individual = random_encoding();
+        individual = random_encoding();
     } else {
         if ( (*random_number_generator)() < mutation_rate) {
             int position = (*random_number_generator)() * population_size;
-            new_individual = mutate( population[position]->encoding );
+            individual = mutate( population[position]->encoding );
         } else {
             int position1 = (*random_number_generator)() * population_size;
             int position2 = (*random_number_generator)() * (population_size - 1);
 
             if (position2 >= position1) position2++;
 
-            new_individual = crossover(population[position1]->encoding, population[position2]->encoding);
+            individual = crossover(population[position1]->encoding, population[position2]->encoding);
         }
     }
     //try again
-    if (is_duplicate(new_individual)) {
+    if (is_duplicate(individual)) {
         cout << "[master     ] generated duplicate individual, retrying." << endl;
-        return get_new_individual();
-    } else {
-        return new_individual;
+        new_individual(individual_position, individual);
     }
 }
 
-void GeneticAlgorithm::insert_individual(double fitness, const int* encoding) {
+void GeneticAlgorithm::insert_individual(uint32_t individual_position, const int* encoding, double fitness) {
     vector<int> encoding_v(encoding, encoding + encoding_length);
-    insert_individual(fitness, encoding_v);
+    insert_individual(individual_position, encoding_v, fitness);
 }
 
-void GeneticAlgorithm::insert_individual(double fitness, const vector<int> &encoding) {
-    individuals_inserted++;
+void GeneticAlgorithm::insert_individual(uint32_t individual_position, const vector<int> &encoding, double fitness) {
+    individuals_reported++;
 
     //This fitness is worse than anything in the population, discard it
     if (population.size() == population_size && fitness < population[population_size - 1]->fitness) {
         /*
-        cout << "[master     ] " << individuals_inserted << "/" << individuals_generated << " -- discarding fitness " << fitness << " [";
+        cout << "[master     ] " << individuals_reported << "/" << individuals_created << " -- discarding fitness " << fitness << " [";
         for (int i = 0; i < encoding_length; i++) {
             cout << " " << encoding[i];
         }
@@ -142,9 +151,9 @@ void GeneticAlgorithm::insert_individual(double fitness, const vector<int> &enco
 
     //Found a new best fitness
     if (population.size() > 0 && fitness == population[0]->fitness) {
-        cout << "[master     ] " << individuals_inserted << "/" << individuals_generated << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] new best fitness   " << setw(9) << fitness << " [";
+        cout << "[master     ] " << individuals_reported << "/" << individuals_created << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] new best fitness   " << setw(9) << fitness << " [";
     } else {
-        cout << "[master     ] " << individuals_inserted << "/" << individuals_generated << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] inserting fitness  " << setw(9) << fitness << " [";
+        cout << "[master     ] " << individuals_reported << "/" << individuals_created << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] inserting fitness  " << setw(9) << fitness << " [";
     }
 
     for (int i = 0; i < encoding_length; i++) {
@@ -158,5 +167,9 @@ void GeneticAlgorithm::insert_individual(double fitness, const vector<int> &enco
         cout << "\t[" << setw(4) << i << "] " << population[i]->fitness << endl;
     }
     */
+}
 
+bool GeneticAlgorithm::is_running() {
+    return (maximum_created <= 0 || individuals_created < maximum_created) &&
+           (maximum_reported <= 0 || individuals_reported < maximum_reported);
 }

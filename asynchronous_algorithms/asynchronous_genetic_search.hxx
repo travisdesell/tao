@@ -28,8 +28,11 @@ class GeneticAlgorithmIndividual {
 
 class GeneticAlgorithm {
     private:
-        int individuals_inserted;
-        int individuals_generated;
+        int individuals_reported;
+        int individuals_created;
+        int maximum_created;
+        int maximum_reported;
+
         vector<GeneticAlgorithmIndividual*> population;
 
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
@@ -50,6 +53,7 @@ class GeneticAlgorithm {
         crossover_type crossover;
 
     public:
+        int get_number_parameters()   { return encoding_length; }
 
         GeneticAlgorithm(const vector<string> &arguments,
                          int _encoding_length,
@@ -58,9 +62,11 @@ class GeneticAlgorithm {
                          crossover_type _crossover);
 
 
-        vector<int> get_new_individual();
-        void insert_individual(double fitness, const int* encoding);
-        void insert_individual(double fitness, const vector<int> &encoding);
+        void new_individual(uint32_t &individual_position, vector<int> &individual);
+        void insert_individual(uint32_t individual_position, const int* encoding, double fitness);
+        void insert_individual(uint32_t individual_position, const vector<int> &encoding, double fitness);
+        
+        bool is_running();
 };
 
 

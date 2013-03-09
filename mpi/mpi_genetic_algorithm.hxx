@@ -7,17 +7,9 @@
 
 using std::vector;
 
-#define REQUEST_INDIVIDUALS_TAG 0
-#define REPORT_FITNESS_TAG 1000
-
-class GeneticAlgorithmMPI : GeneticAlgorithm {
+class GeneticAlgorithmMPI : public GeneticAlgorithm {
     private:
         int max_queue_size;
-        int rank;
-
-        void master();
-        void worker(objective_function_type objective_function);
-
     public:
         GeneticAlgorithmMPI(const vector<string> &arguments,
                             int encoding_length,

@@ -68,6 +68,7 @@ class EvolutionaryAlgorithm {
         uint32_t get_current_individual()   { return current_individual; }
         uint32_t get_current_iteration()    { return current_iteration; }
         uint32_t get_individuals_created()  { return individuals_created; }
+        uint32_t get_number_parameters()    { return number_parameters; }
 
         bool is_running() {
             return (maximum_reported == 0 || individuals_reported < maximum_reported) &&

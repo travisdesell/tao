@@ -1,5 +1,5 @@
-#ifndef TAO_MPI_GENETIC_ALGORITHM_H
-#define TAO_MPI_GENETIC_ALGORITHM_H
+#ifndef TAO_MPI_PARTICLE_SWARM_H
+#define TAO_MPI_PARTICLE_SWARM_H
 
 #include <vector>
 
@@ -7,18 +7,9 @@
 
 using std::vector;
 
-#define REQUEST_INDIVIDUALS_TAG 0
-#define REPORT_FITNESS_TAG 1000
-#define TERMINATE_TAG 2000
-
 class ParticleSwarmMPI : public ParticleSwarm {
     private:
         int max_queue_size;
-        int max_rank;
-        int rank;
-
-        void master();
-        void worker(double (*objective_function)(const std::vector<double> &));
 
     public:
         ParticleSwarmMPI(const std::vector<double> &min_bound,      /* min bound is copied into the search */
