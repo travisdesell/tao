@@ -67,6 +67,8 @@ void master(EvolutionaryAlgorithmsType *ea) {
             MPI_Recv(individual, number_parameters, MPI_DATATYPE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
             MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
+            cout << "[master     ] received fitness: " << fitness << endl;
+
             vector<T> received_individual(individual, individual + ea->get_number_parameters());
             ea->insert_individual(individual_position, received_individual, fitness);
 
