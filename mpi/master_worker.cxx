@@ -154,8 +154,8 @@ void worker(double (*objective_function)(const std::vector<T> &),
 
     long communication_time = 0, communication_start;
     long processing_time = 0, processing_start;
-    long min_processing_time = -numeric_limits<long>::max(), max_processing_time = 0;
-    long min_communication_time = -numeric_limits<long>::max(), max_communication_time = 0;
+    long min_processing_time = numeric_limits<long>::max(), max_processing_time = 0;
+    long min_communication_time = numeric_limits<long>::max(), max_communication_time = 0;
     long current_communication_time, current_processing_time;
 
     //Loop forever calculating individual fitness
