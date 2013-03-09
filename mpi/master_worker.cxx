@@ -15,6 +15,18 @@
 
 using namespace std;
 
+template <typename T>
+struct mpi_type_wrapper {
+    MPI_Datatype mpi_type;
+    mpi_type_wrapper();
+};
+
+template <>
+mpi_type_wrapper<int>::mpi_type_wrapper() : mpi_type(MPI_INT) {}
+
+template <>
+mpi_type_wrapper<double>::mpi_type_wrapper() : mpi_type(MPI_DOUBLE) {}
+
 template<typename EvolutionaryAlgorithmsType, typename T>
 void master(EvolutionaryAlgorithmsType *ea) {
     int max_rank, rank;
@@ -22,6 +34,9 @@ void master(EvolutionaryAlgorithmsType *ea) {
     MPI_Status status;
     int number_parameters = ea->get_number_parameters();
     T individual[number_parameters];
+
+    mpi_type_wrapper<T> parameter_type;
+    MPI_Datatype MPI_DATATYPE = parameter_type.mpi_type;
 
     MPI_Comm_size(MPI_COMM_WORLD, &max_rank);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -41,7 +56,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
                 vector<T> new_individual(ea->get_number_parameters(), 0);
                 ea->new_individual(individual_position, new_individual);
 
-                MPI_Send(&individual[0], number_parameters, MPI_DOUBLE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+                MPI_Send(&individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
                 MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             }
 
@@ -49,7 +64,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
             double fitness;
 
             MPI_Recv(&fitness, 1, MPI_DOUBLE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
-            MPI_Recv(individual, number_parameters, MPI_DOUBLE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(individual, number_parameters, MPI_DATATYPE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
             MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
             vector<T> received_individual(individual, individual + ea->get_number_parameters());
@@ -58,7 +73,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
             vector<T> new_individual(ea->get_number_parameters(), 0);
             ea->new_individual(individual_position, new_individual);
 
-            MPI_Send(&individual[0], number_parameters, MPI_DOUBLE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+            MPI_Send(&individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             //            cout << "[master      ] sent individual to " << source << endl;
         } else {
@@ -98,6 +113,9 @@ void worker(double (*objective_function)(const std::vector<T> &),
     int rank;
     T individual[number_parameters];
 
+    mpi_type_wrapper<T> parameter_type;
+    MPI_Datatype MPI_DATATYPE = parameter_type.mpi_type;
+
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /**
@@ -107,7 +125,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
 
     //Fill up the initial queue
     for (int i = 0; i < max_queue_size; i++) {
-        MPI_Recv(individual, number_parameters, MPI_DOUBLE, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(individual, number_parameters, MPI_DATATYPE, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
         MPI_Recv(&individual_position, 1, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
         vector<T> *new_individual = new vector<T>(individual, individual + number_parameters);
@@ -134,7 +152,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
             tag = status.MPI_TAG;
             if (tag == REQUEST_INDIVIDUALS_TAG) {
                 //there's an incoming individual, receive it.
-                MPI_Recv(individual, number_parameters, MPI_DOUBLE, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
+                MPI_Recv(individual, number_parameters, MPI_DATATYPE, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
                 MPI_Recv(&individual_position, 1, MPI_INT, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
                 vector<T> *new_individual = new vector<T>(individual, individual + number_parameters);
@@ -178,7 +196,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
 
         //Send the fitness and the individual back to the master
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0 /*master is rank 0*/, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
-        MPI_Send(&(*current_individual)[0], number_parameters, MPI_DOUBLE, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
+        MPI_Send(&(*current_individual)[0], number_parameters, MPI_DATATYPE, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
         MPI_Send(&current_individual_position, 1, MPI_INT, 0 /*master is rank 0 */, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
 
         //Delete the popped individual
@@ -186,12 +204,12 @@ void worker(double (*objective_function)(const std::vector<T> &),
     }
 }
 
-template void worker(double (*objective_function)(const std::vector<double> &),
+template void worker<double>(double (*objective_function)(const std::vector<double> &),
             int number_parameters,
             int max_queue_size
            );
 
-template void worker(double (*objective_function)(const std::vector<int> &),
+template void worker<int>(double (*objective_function)(const std::vector<int> &),
             int number_parameters,
             int max_queue_size
            );
