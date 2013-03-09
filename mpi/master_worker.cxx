@@ -56,7 +56,16 @@ void master(EvolutionaryAlgorithmsType *ea) {
                 vector<T> new_individual(ea->get_number_parameters(), 0);
                 ea->new_individual(individual_position, new_individual);
 
-                MPI_Send(&individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+                /*
+                cout << "[master     ] sending individual: [";
+                for (int i = 0; i < number_parameters; i++) {
+                    cout << " " << new_individual[i];
+                }
+                cout << "]" << endl;
+                */
+
+
+                MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
                 MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             }
 
@@ -67,7 +76,14 @@ void master(EvolutionaryAlgorithmsType *ea) {
             MPI_Recv(individual, number_parameters, MPI_DATATYPE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
             MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
 
-//            cout << "[master     ] received fitness: " << fitness << endl;
+            /*
+            cout << "[master     ] received fitness: " << fitness << endl;
+            cout << "[master     ] received individual: [";
+            for (int i = 0; i < number_parameters; i++) {
+                cout << " " << individual[i];
+            }
+            cout << "]" << endl;
+            */
 
             vector<T> received_individual(individual, individual + ea->get_number_parameters());
             ea->insert_individual(individual_position, received_individual, fitness);
@@ -75,7 +91,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
             vector<T> new_individual(ea->get_number_parameters(), 0);
             ea->new_individual(individual_position, new_individual);
 
-            MPI_Send(&individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
+            MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             //            cout << "[master      ] sent individual to " << source << endl;
         } else {
