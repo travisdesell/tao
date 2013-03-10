@@ -152,14 +152,14 @@ void worker(double (*objective_function)(const std::vector<T> &),
         individuals_position_queue.push(individual_position);
     }
 
-    long communication_time = 0, communication_start;
-    long processing_time = 0, processing_start;
-    long min_processing_time = numeric_limits<long>::max(), max_processing_time = 0;
-    long min_communication_time = numeric_limits<long>::max(), max_communication_time = 0;
-    long current_communication_time, current_processing_time;
+    double communication_time = 0, communication_start;
+    double processing_time = 0, processing_start;
+    double min_processing_time = numeric_limits<double>::max(), max_processing_time = 0;
+    double min_communication_time = numeric_limits<double>::max(), max_communication_time = 0;
+    double current_communication_time, current_processing_time;
 
     //Loop forever calculating individual fitness
-    communication_start = time(NULL);
+    communication_start = MPI_Wtime();
     while (true) {
         if (individuals_queue.size() == 0) {
             //The queue is empty, block waiting for a message from the master
@@ -207,13 +207,13 @@ void worker(double (*objective_function)(const std::vector<T> &),
         int current_individual_position = individuals_position_queue.front();
         individuals_position_queue.pop();
 
-        current_communication_time = time(NULL) - communication_start;
+        current_communication_time = MPI_Wtime() - communication_start;
         communication_time += current_communication_time;
 
         //calculate the fitness of the head of the individual queue
-        processing_start = time(NULL);
+        processing_start = MPI_Wtime();
         double fitness = objective_function(*current_individual);
-        current_processing_time = time(NULL) - processing_start;
+        current_processing_time = MPI_Wtime() - processing_start;
         processing_time += current_processing_time;
 
         if (current_processing_time < min_processing_time) min_processing_time = current_processing_time;
@@ -225,7 +225,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
         cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
         cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
 
-        communication_start = time(NULL);
+        communication_start = MPI_Wtime();
 
         //Send the fitness and the individual back to the master
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0 /*master is rank 0*/, REPORT_FITNESS_TAG, MPI_COMM_WORLD);
