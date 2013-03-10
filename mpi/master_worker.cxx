@@ -65,7 +65,6 @@ void master(EvolutionaryAlgorithmsType *ea) {
                 cout << "]" << endl;
                 */
 
-
                 MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
                 MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             }
@@ -103,7 +102,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
         if (!ea->is_running()) {
             //The termination conditions for the search have been met
-            for (int i = 0; i < max_rank; i++) {
+            for (int i = 1; i < max_rank; i++) {
                 cout << "[master      ] sending terminate to process: " << i << endl;
                 //Just send an int we don't need any contents -- the terminate tag will make the worker quit
                 individual_position = 0;    
@@ -191,6 +190,10 @@ void worker(double (*objective_function)(const std::vector<T> &),
                     delete current_individual;
                 }
 
+                cout << "[worker " << setw(5) << rank << "] processing_time: " << processing_time << ", communication_time: " << communication_time << endl;
+                cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
+                cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
+
                 return;
             } else {
                 cerr << "[worker " << setw(5) << rank << "] Received unknown tag: " << tag << endl;
@@ -220,10 +223,6 @@ void worker(double (*objective_function)(const std::vector<T> &),
         if (current_processing_time > max_processing_time) max_processing_time = current_processing_time;
         if (current_communication_time < min_communication_time) min_communication_time = current_communication_time;
         if (current_communication_time > max_communication_time) max_communication_time = current_communication_time;
-
-        cout << "[worker " << setw(5) << rank << "] current_processing_time: " << current_processing_time << ", current_communication_time: " << current_communication_time << endl;
-        cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
-        cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
 
         communication_start = MPI_Wtime();
 
