@@ -65,6 +65,8 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
 
     individuals_created = 0;
     individuals_reported = 0;
+
+    start_time = time(NULL);
 }
 
 bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {
@@ -88,26 +90,26 @@ void GeneticAlgorithm::new_individual(uint32_t &individual_position, vector<int>
 
     individual_position = 0;    //we can ignore the position
 
-    if (population.size() < population_size) {
-        individual = random_encoding();
-    } else {
-        if ( (*random_number_generator)() < mutation_rate) {
-            int position = (*random_number_generator)() * population_size;
-            individual = mutate( population[position]->encoding );
+    int count = 0;
+    do {
+        if (population.size() < population_size) {
+            individual = random_encoding();
         } else {
-            int position1 = (*random_number_generator)() * population_size;
-            int position2 = (*random_number_generator)() * (population_size - 1);
+            if ( (*random_number_generator)() < mutation_rate) {
+                int position = (*random_number_generator)() * population_size;
+                individual = mutate( population[position]->encoding );
+            } else {
+                int position1 = (*random_number_generator)() * population_size;
+                int position2 = (*random_number_generator)() * (population_size - 1);
 
-            if (position2 >= position1) position2++;
+                if (position2 >= position1) position2++;
 
-            individual = crossover(population[position1]->encoding, population[position2]->encoding);
+                individual = crossover(population[position1]->encoding, population[position2]->encoding);
+            }
         }
-    }
-    //try again
-    if (is_duplicate(individual)) {
-        cout << "[master     ] generated duplicate individual, retrying." << endl;
-        new_individual(individual_position, individual);
-    }
+        count++;
+    } while (is_duplicate(individual) && count < 200); //try again on duplicates
+
 }
 
 void GeneticAlgorithm::insert_individual(uint32_t individual_position, const int* encoding, double fitness) {
@@ -132,7 +134,7 @@ void GeneticAlgorithm::insert_individual(uint32_t individual_position, const vec
 
     //Don't insert a duplicate encoding
     if (is_duplicate(encoding)) {
-        cout << "[master     ] received duplicate individual, discarding." << endl;
+//        cout << "[master     ] received duplicate individual, discarding." << endl;
         return;
     }
 
@@ -150,16 +152,18 @@ void GeneticAlgorithm::insert_individual(uint32_t individual_position, const vec
     }
 
     //Found a new best fitness
-    if (population.size() > 0 && fitness == population[0]->fitness) {
-        cout << "[master     ] " << individuals_reported << "/" << individuals_created << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] new best fitness   " << setw(9) << fitness << " [";
-    } else {
-        cout << "[master     ] " << individuals_reported << "/" << individuals_created << " -- [b: " << setw(9) << population[0]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] inserting fitness  " << setw(9) << fitness << " [";
+    if (fitness == population[0]->fitness) {
+        cout << setw(7) << individuals_reported << "/" << setw(7) << individuals_created;
+        cout << "[" << setw(10) << ((double)individuals_reported / (time(NULL) - start_time)) << "] ";
+        cout << "[b: " << setw(9) << population[0]->fitness << ", m: " << setw(9) << population[population.size() / 2] << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] ";
+        cout << setw(20) << "new best fitness   " << setw(9) << fitness << " [";
+
+        for (int i = 0; i < encoding_length; i++) {
+            cout << " " << encoding[i];
+        }
+        cout << "]" << endl;
     }
 
-    for (int i = 0; i < encoding_length; i++) {
-        cout << " " << encoding[i];
-    }
-    cout << "]" << endl;
 
     /*
     cout << "population fitnesses:" << endl;

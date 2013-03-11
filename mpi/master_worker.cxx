@@ -41,6 +41,9 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
     MPI_Comm_size(MPI_COMM_WORLD, &max_rank);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    double start_time = MPI_Wtime();
+
     while (true) {
         //Wait on a message from any worker
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
@@ -101,12 +104,24 @@ void master(EvolutionaryAlgorithmsType *ea) {
         }
 
         if (!ea->is_running()) {
+            cout << endl;
+            cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds." << endl;
+            cout << endl;
+
             //The termination conditions for the search have been met
             for (int i = 1; i < max_rank; i++) {
-                cout << "[master      ] sending terminate to process: " << i << endl;
+//                cout << "[master      ] sending terminate to process: " << i << endl;
                 //Just send an int we don't need any contents -- the terminate tag will make the worker quit
                 individual_position = 0;    
                 MPI_Send(&individual_position, 1, MPI_INT, i, TERMINATE_TAG, MPI_COMM_WORLD);
+
+                double times[7];
+                MPI_Recv(times, 7, MPI_DOUBLE, i, TERMINATE_TAG, MPI_COMM_WORLD, &status);
+                cout << "[worker " << setw(5) << i << "] terminated -- n: " << times[0] << ", pt: " << times[1] << ", min_pt: " << times[2] << ", max_pt: " << times[3] << ", ct: " << times[4] << ", min_ct: " << times[5] << ", max_ct: " << times[6] << endl;
+
+//                cout << "[worker " << setw(5) << rank << "] processing_time: " << processing_time << ", communication_time: " << communication_time << endl;
+//                cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
+//                cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
             }
             return;
         }
@@ -151,6 +166,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
         individuals_position_queue.push(individual_position);
     }
 
+    long processing_jobs = 0;
     double communication_time = 0, communication_start;
     double processing_time = 0, processing_start;
     double min_processing_time = numeric_limits<double>::max(), max_processing_time = 0;
@@ -190,9 +206,12 @@ void worker(double (*objective_function)(const std::vector<T> &),
                     delete current_individual;
                 }
 
-                cout << "[worker " << setw(5) << rank << "] processing_time: " << processing_time << ", communication_time: " << communication_time << endl;
-                cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
-                cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
+                double times[] = { processing_jobs, processing_time, min_processing_time, max_processing_time, communication_time, min_communication_time, max_communication_time };
+
+                MPI_Send(times, 7, MPI_DOUBLE, 0 /*master is rank 0*/, TERMINATE_TAG, MPI_COMM_WORLD);
+//                cout << "[worker " << setw(5) << rank << "] processing_time: " << processing_time << ", communication_time: " << communication_time << endl;
+//                cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
+//                cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
 
                 return;
             } else {
@@ -218,6 +237,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
         double fitness = objective_function(*current_individual);
         current_processing_time = MPI_Wtime() - processing_start;
         processing_time += current_processing_time;
+        processing_jobs++;
 
         if (current_processing_time < min_processing_time) min_processing_time = current_processing_time;
         if (current_processing_time > max_processing_time) max_processing_time = current_processing_time;
