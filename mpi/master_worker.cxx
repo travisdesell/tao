@@ -197,7 +197,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
                 individuals_position_queue.push(individual_position);
             } else if (tag == TERMINATE_TAG) {
                 MPI_Recv(&individual_position, 1, MPI_INT, 0 /*master is rank 0*/, TERMINATE_TAG, MPI_COMM_WORLD, &status);
-                cerr << "[worker " << setw(5) << rank << "] Received terminate tag: " << tag << endl;
+//                cerr << "[worker " << setw(5) << rank << "] Received terminate tag: " << tag << endl;
 
                 //Clear out the queue
                 while (individuals_queue.size() > 0) {
