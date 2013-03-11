@@ -33,6 +33,8 @@ class GeneticAlgorithm {
         int maximum_created;
         int maximum_reported;
 
+        bool too_many_duplicates;
+
         double start_time;
 
         vector<GeneticAlgorithmIndividual*> population;

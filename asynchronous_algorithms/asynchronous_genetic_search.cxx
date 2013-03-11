@@ -66,6 +66,8 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
     individuals_created = 0;
     individuals_reported = 0;
 
+    too_many_duplicates = false;
+
     start_time = time(NULL);
 }
 
@@ -108,7 +110,9 @@ void GeneticAlgorithm::new_individual(uint32_t &individual_position, vector<int>
             }
         }
         count++;
-    } while (is_duplicate(individual) && count < 200); //try again on duplicates
+    } while (is_duplicate(individual) && count < 500); //try again on duplicates
+
+    if (count >= 500) too_many_duplicates = true;
 
 }
 
@@ -175,5 +179,6 @@ void GeneticAlgorithm::insert_individual(uint32_t individual_position, const vec
 
 bool GeneticAlgorithm::is_running() {
     return (maximum_created <= 0 || individuals_created < maximum_created) &&
-           (maximum_reported <= 0 || individuals_reported < maximum_reported);
+           (maximum_reported <= 0 || individuals_reported < maximum_reported) &&
+           !too_many_duplicates;
 }
