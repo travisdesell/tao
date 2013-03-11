@@ -157,8 +157,9 @@ void GeneticAlgorithm::insert_individual(uint32_t individual_position, const vec
 
     //Found a new best fitness
     if (fitness == population[0]->fitness) {
-        cout << setw(7) << individuals_reported << "/" << setw(7) << individuals_created;
-        cout << "[" << setw(10) << ((double)individuals_reported / (time(NULL) - start_time)) << "] ";
+        long run_time = time(NULL) - start_time;
+        cout << setw(10) << run_time << setw(7) << individuals_reported << "/" << setw(7) << individuals_created;
+        cout << "[" << setw(10) << ((double)individuals_reported / (double)run_time) << "] ";
         cout << "[b: " << setw(9) << population[0]->fitness << ", m: " << setw(9) << population[population.size() / 2]->fitness << ", w: " << setw(9) << population[population.size() - 1]->fitness << "] ";
         cout << setw(20) << "new best fitness   " << setw(9) << fitness << " [";
 
