@@ -41,6 +41,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
     MPI_Comm_size(MPI_COMM_WORLD, &max_rank);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
     while (true) {
         //Wait on a message from any worker
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);

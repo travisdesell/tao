@@ -234,7 +234,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 
         if (log_file == NULL) {
             cout.precision(15);
-            cout << individuals_reported << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(global_best) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+            cout << "[" << setw(5) << ((time(NULL) - start_time) / individuals_inserted) << "/s]" << individuals_reported << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(global_best) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
         }
     }
 
