@@ -33,6 +33,10 @@ class GeneticAlgorithm {
         int maximum_created;
         int maximum_reported;
 
+        bool too_many_duplicates;
+
+        double start_time;
+
         vector<GeneticAlgorithmIndividual*> population;
 
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
