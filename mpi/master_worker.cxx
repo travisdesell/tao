@@ -43,14 +43,20 @@ void master(EvolutionaryAlgorithmsType *ea) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     double start_time = MPI_Wtime();
+    double probe_time = 0, start_probe_time;
 
     while (true) {
         //Wait on a message from any worker
+
+        start_probe_time = MPI_Wtime();
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        probe_time += MPI_Wtime() - start_probe_time;
 
         int n_requested_individuals;
         int source = status.MPI_SOURCE;
         int tag = status.MPI_TAG;
+
+        double fitness = 0;
 
         if (tag == REQUEST_INDIVIDUALS_TAG) {
             MPI_Recv(&n_requested_individuals, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
@@ -73,7 +79,6 @@ void master(EvolutionaryAlgorithmsType *ea) {
             }
 
         } else if (tag == REPORT_FITNESS_TAG) {
-            double fitness;
 
             MPI_Recv(&fitness, 1, MPI_DOUBLE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
             MPI_Recv(individual, number_parameters, MPI_DATATYPE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
@@ -103,9 +108,9 @@ void master(EvolutionaryAlgorithmsType *ea) {
             exit(1);
         }
 
-        if (!ea->is_running()) {
+        if (!ea->is_running() || fitness == 173279) {
             cout << endl;
-            cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds." << endl;
+            cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds, time spent probing: " << probe_time << " seconds." << endl;
             cout << endl;
 
             //The termination conditions for the search have been met
