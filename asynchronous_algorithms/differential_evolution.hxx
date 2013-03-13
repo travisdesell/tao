@@ -51,6 +51,9 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
+        double get_global_best_fitness() { return global_best_fitness; }
+        std::vector<double> get_global_best() { return population[global_best_id]; }
+
         //The following are different types parent selection
         const static uint16_t PARENT_BEST = 0;
         const static uint16_t PARENT_RANDOM = 1;

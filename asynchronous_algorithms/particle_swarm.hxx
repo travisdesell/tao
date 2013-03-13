@@ -49,6 +49,12 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
+        std::vector< std::vector<double> > get_population() { return local_bests; }
+        std::vector< double > get_population_fitness() { return local_best_fitnesses; }
+
+        std::vector< double> get_global_best() { return global_best; }
+        double get_global_best_fitness() { return global_best_fitness; }
+
         ParticleSwarm( const std::vector<std::string> &arguments) throw (std::string);
 
         ParticleSwarm( const std::vector<double> &min_bound,            /* min bound is copied into the search */
