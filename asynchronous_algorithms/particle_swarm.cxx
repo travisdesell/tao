@@ -53,6 +53,8 @@ ParticleSwarm::initialize() {
 
     initialized_individuals = 0;
     current_individual = 0;
+
+    start_time = time(NULL);
 }
 
 void
@@ -234,7 +236,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 
         if (log_file == NULL) {
             cout.precision(15);
-            cout << current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(global_best) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+            cout << "[" << setw(5) << ((time(NULL) - start_time) / individuals_reported) << "/s]" << individuals_reported << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(global_best) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
         }
     }
 

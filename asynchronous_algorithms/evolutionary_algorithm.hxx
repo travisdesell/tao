@@ -54,6 +54,8 @@ class EvolutionaryAlgorithm {
         uint32_t population_size;
         std::vector<uint32_t> seeds;
 
+        double start_time;
+
         //For random number generation
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
         std::ofstream *log_file;
@@ -69,6 +71,7 @@ class EvolutionaryAlgorithm {
         uint32_t get_current_individual()   { return current_individual; }
         uint32_t get_current_iteration()    { return current_iteration; }
         uint32_t get_individuals_created()  { return individuals_created; }
+        uint32_t get_number_parameters()    { return number_parameters; }
 
         bool is_running() {
             return (maximum_reported == 0 || individuals_reported < maximum_reported) &&

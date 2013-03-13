@@ -1,6 +1,4 @@
-You need to have a file called "db.inc" with the following information to allow these php
-scripts to access the database.  Make sure this is in your .gitignore so you don't commit
-any of your passwords to github.
+You need to have a file called "db.inc" with the following information to allow these php scripts to access the database.  Make sure this is in your .gitignore so you don't commit any of your passwords to github.
 
 <?php
 $user = "deselt";
