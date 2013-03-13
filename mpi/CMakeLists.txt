@@ -1,4 +1,5 @@
 find_package(MPI REQUIRED)
+find_package(CUDA)
 
 if (MPI_FOUND)
     set (CMAKE_CXX_COMPILE_FLAGS ${CMAKE_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
@@ -7,6 +8,12 @@ if (MPI_FOUND)
 
     include_directories(${Boost_INCLUDE_DIR})
 
-    add_library(mpi_algorithms mpi_genetic_algorithm mpi_particle_swarm master_worker)
-    target_link_libraries(mpi_algorithms asynchronous_algorithms undvc_common tao_util ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${MPI_LIBRARIES})
+    if (CUDA_FOUND)
+        add_definitions( -DCUDA )
+        cuda_add_library(mpi_algorithms mpi_genetic_algorithm mpi_particle_swarm master_worker assign_device)
+    else (CUDA_FOUND)
+        add_library(mpi_algorithms mpi_genetic_algorithm mpi_particle_swarm master_worker)
+    endif (CUDA_FOUND)
+
+    target_link_libraries(mpi_algorithms asynchronous_algorithms undvc_common tao_util ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${MPI_LIBRARIES} ${CUDA_LIBRARIES})
 endif (MPI_FOUND)

@@ -108,7 +108,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
             exit(1);
         }
 
-        if (!ea->is_running() || fitness == 173279) {
+        if (!ea->is_running()) {
             cout << endl;
             cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds, time spent probing: " << probe_time << " seconds." << endl;
             cout << endl;

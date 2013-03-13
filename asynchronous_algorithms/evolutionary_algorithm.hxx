@@ -54,6 +54,8 @@ class EvolutionaryAlgorithm {
         uint32_t population_size;
         std::vector<uint32_t> seeds;
 
+        double start_time;
+
         //For random number generation
         boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
         std::ofstream *log_file;

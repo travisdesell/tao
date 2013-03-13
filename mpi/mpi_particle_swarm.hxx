@@ -18,6 +18,12 @@ class ParticleSwarmMPI : public ParticleSwarm {
                         );
 
         void go(double (*objective_function)(const std::vector<double> &));
+
+#ifdef CUDA
+        void go(double (*cpu_objective_function)(const std::vector<double> &),
+                double (*gpu_objective_function)(const std::vector<double> &),
+                int *device_assignments);
+#endif
 };
 
 #endif
