@@ -11,6 +11,7 @@
 #include "mpi/master_worker.hxx"
 #include "mpi/mpi_genetic_algorithm.hxx"
 #include "mpi/mpi_particle_swarm.hxx"
+#include "mpi/mpi_differential_evolution.hxx"
 
 #include "undvc_common/arguments.hxx"
 
@@ -133,6 +134,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
     }
 }
 
+template void master<DifferentialEvolutionMPI, double>(DifferentialEvolutionMPI *ea);
 template void master<ParticleSwarmMPI, double>(ParticleSwarmMPI *ea);
 template void master<GeneticAlgorithmMPI, int>(GeneticAlgorithmMPI *ea);
 
