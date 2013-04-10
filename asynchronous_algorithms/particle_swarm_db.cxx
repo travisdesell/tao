@@ -326,7 +326,7 @@ ParticleSwarmDB::insert_to_database() throw (string) {
                        << " SET "
                        << "  particle_swarm_id = " << id
                        << ", position = " << i
-                       << ", local_best_fitness = " << local_best_fitnesses[i]
+                       << ", local_best_fitness = " << setprecision(10) << local_best_fitnesses[i]
                        << ", parameters = '" << vector_to_string<double>(particles[i]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[i]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'"
@@ -497,7 +497,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         ostringstream particle_query;
         particle_query << "UPDATE particle"
                        << " SET "
-                       << "  local_best_fitness = " << local_best_fitnesses[id]
+                       << "  local_best_fitness = " << setprecision(10) << local_best_fitnesses[id]
                        << ", parameters = '" << vector_to_string<double>(particles[id]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[id]) << "'"
@@ -550,14 +550,14 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = " << local_best_fitnesses[id]
-            << ", best = " << best
-            << ", average = " << average
-            << ", median = " << median
-            << ", worst = " << worst
+            << ", current = " << setprecision(10) << local_best_fitnesses[id]
+            << ", best = " << setprecision(10) << best
+            << ", average = " << setprecision(10) << average
+            << ", median = " << setprecision(10) << median
+            << ", worst = " << setprecision(10) << worst
             << ", particle = " << id
             << ", seed = " << seed
-            << ", global = " << (local_best_fitnesses[id] == global_best_fitness);
+            << ", global = " << setprecision(10) << (local_best_fitnesses[id] == global_best_fitness);
 
         mysql_query(conn, log_query.str().c_str());
 
@@ -703,7 +703,7 @@ ParticleSwarmDB::print_to(ostream& stream) {
         stream << "    [Particle" << endl
                << "        particle_swarm_id = " << id << endl
                << "        position = " << i << endl
-               << "        local_best_fitness = " << local_best_fitnesses[i] << endl
+               << "        local_best_fitness = " << setprecision(10) << local_best_fitnesses[i] << endl
                << "        parameters = '" << vector_to_string<double>(particles[i]) << "'" << endl
                << "        velocity = '" << vector_to_string<double>(velocities[i]) << "'" << endl
                << "        local_best = '" << vector_to_string<double>(local_bests[i]) << "'" << endl
