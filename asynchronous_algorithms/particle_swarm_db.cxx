@@ -288,6 +288,7 @@ void
 ParticleSwarmDB::insert_to_database() throw (string) {
     ostringstream query;
 
+    query.precision(10);
     query << "INSERT INTO particle_swarm"
           << " SET "
           << "  name = '" << name << "'"
@@ -322,11 +323,12 @@ ParticleSwarmDB::insert_to_database() throw (string) {
 
     for (uint32_t i = 0; i < population_size; i++) {
         ostringstream particle_query;
+        particle_query.precision(10);
         particle_query << "INSERT INTO particle"
                        << " SET "
                        << "  particle_swarm_id = " << id
                        << ", position = " << i
-                       << ", local_best_fitness = " << local_best_fitnesses[i]
+                       << ", local_best_fitness = '" << local_best_fitnesses[i] << "'"
                        << ", parameters = '" << vector_to_string<double>(particles[i]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[i]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[i]) << "'"
@@ -497,7 +499,7 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         ostringstream particle_query;
         particle_query << "UPDATE particle"
                        << " SET "
-                       << "  local_best_fitness = " << local_best_fitnesses[id]
+                       << "  local_best_fitness = '" << local_best_fitnesses[id] << "'"
                        << ", parameters = '" << vector_to_string<double>(particles[id]) << "'"
                        << ", velocity = '" << vector_to_string<double>(velocities[id]) << "'"
                        << ", local_best = '" << vector_to_string<double>(local_bests[id]) << "'"
@@ -546,15 +548,16 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
         calculate_fitness_statistics(local_best_fitnesses, best, average, median, worst);
 
         ostringstream log_query;
+        log_query.precision(10);
         log_query << "INSERT INTO particle_swarm_log"
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = " << local_best_fitnesses[id]
-            << ", best = " << best
-            << ", average = " << average
-            << ", median = " << median
-            << ", worst = " << worst
+            << ", current = '" << local_best_fitnesses[id] << "'"
+            << ", best = '" << best << "'"
+            << ", average = '" << average << "'"
+            << ", median = '" << median << "'"
+            << ", worst = '" << worst << "'"
             << ", particle = " << id
             << ", seed = " << seed
             << ", global = " << (local_best_fitnesses[id] == global_best_fitness);

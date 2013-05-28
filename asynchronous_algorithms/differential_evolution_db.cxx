@@ -283,6 +283,7 @@ void
 DifferentialEvolutionDB::insert_to_database() throw (string) {
     ostringstream query;
 
+    query.precision(10);
     query << "INSERT INTO differential_evolution"
           << " SET "
           << "  name = '" << name << "'"
@@ -320,11 +321,12 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
 
     for (uint32_t i = 0; i < population_size; i++) {
         ostringstream individual_query;
+        individual_query.precision(10);
         individual_query << "INSERT INTO de_individual"
                          << " SET "
                          << "  differential_evolution_id = " << id
                          << ", position = " << i
-                         << ", fitness = " << fitnesses[i]
+                         << ", fitness = '" << fitnesses[i] << "'"
                          << ", parameters = '" << vector_to_string<double>(population[i]) << "'"
                          << ", seed = " << seeds[i];
 
@@ -545,15 +547,16 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         calculate_fitness_statistics(fitnesses, best, average, median, worst);
 
         ostringstream log_query;
+        log_query.precision(10);
         log_query << "INSERT INTO differential_evolution_log"
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = " << fitnesses[id]
-            << ", best = " << best
-            << ", average = " << average
-            << ", median = " << median
-            << ", worst = " << worst
+            << ", current = '" << fitnesses[id] << "'"
+            << ", best = '" << best << "'"
+            << ", average = '" << average << "'"
+            << ", median = '" << median << "'"
+            << ", worst = '" << worst << "'"
             << ", individual = " << id
             << ", seed = " << seed
             << ", global = " << (fitnesses[id] == global_best_fitness);

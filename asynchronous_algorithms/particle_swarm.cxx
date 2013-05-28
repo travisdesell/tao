@@ -216,7 +216,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 //        for (uint32_t i = 0; i < velocities.size(); i++) velocities[id] = parameters[i] - local_bests[i];   //Rewind the velocity
         local_bests[id].assign(parameters.begin(), parameters.end());
 
-//        cout.precision(15);
+//        cout.precision(10);
 //        cout <<  current_iteration << ":" << id << " - LOCAL: " << fitness << " " << vector_to_string(parameters) << endl;
 
         if (log_file != NULL) {
@@ -233,7 +233,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         global_best.assign(parameters.begin(), parameters.end());
 
         if (log_file == NULL) {
-            cout.precision(15);
+            cout.precision(10);
             cout << current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
         }
     }

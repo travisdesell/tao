@@ -284,13 +284,19 @@ int check_set(vector<RESULT>& results, WORKUNIT& wu, int& canonicalid, double&, 
                     uint32_t seed = parse_xml<uint32_t>(xml_doc, "seed");
                     ea->insert_individual(position, result_parameters, canonical_fitness, seed);
                 } catch (string error_message) {
-                    //can ignore if it's not there since it's optional
-                    ea->insert_individual(position, result_parameters, canonical_fitness);
+//                    log_messages.printf(MSG_DEBUG, "Inserting individual threw error: '%s'\n", error_message.c_str());
+
+                    //can ignore if the seed is not there since it's optional
+                    try {
+                        ea->insert_individual(position, result_parameters, canonical_fitness);
+                    } catch (string error_message2) {
+                        log_messages.printf(MSG_CRITICAL, "Error inserting individual: %s\n", error_message2.c_str());
+                        exit(1);
+                    }
                 }
             }
         }
     }
-
     return 0;
 }
 
