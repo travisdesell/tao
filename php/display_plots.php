@@ -4,7 +4,7 @@ echo "
 <title>TAO Parameter Optimization Progress Plots</title>
 </head>
 ";
-require_once("/boinc/src/milkyway_server/tao/db.inc");
+require_once("db.inc");
 
 $host = '127.0.0.1';
 
@@ -232,36 +232,55 @@ $(function () {
 
             title: {
                 text: 'Parameter Optimization Progress',
+                style: {
+                    font: '32px "Trebuchet MS", Verdana, sans-serif'
+                },
                 x: -20 //center
             },
 
-            subtitle: {
-                text: 'Source: MilkyWay@Home',
+/*            subtitle: {
+                text: 'Source: TAO',
                 x: -20
             },
+ */
 
             xAxis: {
-//                title: {
-//                    text: 'Evaluation',
-//                    x: -20
-//                }
+                labels: {
+                    style: {
+                        font: '18px "Trebuchet MS", Verdana, sans-serif'
+                    }
+                }
+/*                title: {
+                    text: 'Evaluation',
+                    style: {
+                        font: '32px "Trebuchet MS", Verdana, sans-serif'
+                    }
+            }*/
             },
 
             yAxis: {
                 title: {
-                    text: 'Fitness'
+                    text: 'Fitness',
+                    style: {
+                        font: '32px "Trebuchet MS", Verdana, sans-serif'
+                    }
                 },
                 plotLines: [{
                     value: 0,
                     width: 1,
                     color: '#808080'
-                }]
+                }],
+                labels: {
+                    style: {
+                        font: '18px "Trebuchet MS", Verdana, sans-serif'
+                    }
+                }
             },
 
             tooltip: {
                 formatter: function() {
                         return '<b>'+ this.series.name +'</b><br/>'+
-                        this.x +': '+ this.y;
+                        'evaluation: ' + this.x +' : fitness: ' + this.y;
                 }
             },
 
@@ -271,7 +290,10 @@ $(function () {
                 verticalAlign: 'top',
                 x: -10,
                 y: 100,
-                borderWidth: 0
+                borderWidth: 0,
+                itemStyle: {
+                    font: '24px "Trebuchet MS", Verdana, sans-serif'
+                }
             },
 
             series: <?php echo json_encode($data); ?>

@@ -53,6 +53,8 @@ ParticleSwarm::initialize() {
 
     initialized_individuals = 0;
     current_individual = 0;
+
+    start_time = time(NULL);
 }
 
 void
