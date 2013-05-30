@@ -22,6 +22,7 @@
 #include <string>
 #include <cstdlib>
 #include <limits>
+#include <iomanip>
 
 #include "evolutionary_algorithm_db.hxx"
 #include "differential_evolution_db.hxx"
@@ -326,7 +327,7 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
                          << " SET "
                          << "  differential_evolution_id = " << id
                          << ", position = " << i
-                         << ", fitness = '" << fitnesses[i] << "'"
+                         << ", fitness = '" << setprecision(10) << fitnesses[i] << "'"
                          << ", parameters = '" << vector_to_string<double>(population[i]) << "'"
                          << ", seed = " << seeds[i];
 
@@ -505,7 +506,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
         ostringstream individual_query;
         individual_query << "UPDATE de_individual"
                          << " SET "
-                         << "  fitness = " << fitnesses[id]
+                         << "  fitness = " << setprecision(10) << fitnesses[id]
                          << ", parameters = '" << vector_to_string<double>(population[id]) << "'"
                          << ", seed = " << seeds[id]
                          << " WHERE "
@@ -513,6 +514,8 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
                          << " AND position = " << id;
 
         mysql_query(conn, individual_query.str().c_str());
+
+//        cout << individual_query.str() << endl;
 
         if (mysql_errno(conn) != 0) {
             ostringstream ex_msg;
@@ -552,14 +555,14 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = '" << fitnesses[id] << "'"
+            << ", current = '" << setprecision(10) << fitnesses[id] << "'"
             << ", best = '" << best << "'"
             << ", average = '" << average << "'"
             << ", median = '" << median << "'"
             << ", worst = '" << worst << "'"
             << ", individual = " << id
             << ", seed = " << seed
-            << ", global = " << (fitnesses[id] == global_best_fitness);
+            << ", global = " << setprecision(10) << (fitnesses[id] == global_best_fitness);
 //            << ", parameters = '" << vector_to_string<double>(parameters) << "'" << endl;
 
         mysql_query(conn, log_query.str().c_str());
@@ -690,7 +693,7 @@ DifferentialEvolutionDB::print_to(ostream& stream) {
         stream << "    [DEIndividual" << endl
                << "        differential_evolution_id = " << id << endl
                << "        position = " << i << endl
-               << "        fitness = " << fitnesses[i] << endl
+               << "        fitness = " << setprecision(10) << fitnesses[i] << endl
                << "        parameters = '" << vector_to_string<double>(population[i]) << "'" << endl
                << "        seed = " << seeds[i] << endl
                << "    ]" << endl;

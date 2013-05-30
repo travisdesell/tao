@@ -22,6 +22,7 @@
 #include <string>
 #include <cstdlib>
 #include <limits>
+#include <iomanip>
 
 #include "evolutionary_algorithm_db.hxx"
 #include "particle_swarm_db.hxx"
@@ -553,11 +554,11 @@ ParticleSwarmDB::insert_individual(uint32_t id, const vector<double> &parameters
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = " << setprecision(10) << local_best_fitnesses[id]
-            << ", best = " << setprecision(10) << best
-            << ", average = " << setprecision(10) << average
-            << ", median = " << setprecision(10) << median
-            << ", worst = " << setprecision(10) << worst
+            << ", current = '" << setprecision(10) << local_best_fitnesses[id] << "'"
+            << ", best = '" << setprecision(10) << best << "'"
+            << ", average = '" << setprecision(10) << average << "'"
+            << ", median = '" << setprecision(10) << median << "'"
+            << ", worst = '" << setprecision(10) << worst << "'"
             << ", particle = " << id
             << ", seed = " << seed
             << ", global = " << setprecision(10) << (local_best_fitnesses[id] == global_best_fitness);
