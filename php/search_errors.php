@@ -116,7 +116,7 @@ function show_error_results($where_clause, $con) {
                 $doc = $row2['xml_doc'];
 
                 $first_pos = strpos($doc, "<name>") + 6;
-                $str_length = strrpos($doc, "</name>") - $first_pos;
+                $str_length = strpos($doc, "</name>") - $first_pos;
                 $app_name = substr($doc, $first_pos, $str_length);
 
                 $app_version_names[ $row['app_version_id'] ] = $app_name;
