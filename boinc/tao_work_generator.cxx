@@ -182,8 +182,6 @@ int make_jobs(uint32_t number_jobs) {
     if (unfinished_searches.size() == 0) return 0;
     uint64_t portion = (uint64_t)number_jobs / unfinished_searches.size();
 
-    log_messages.printf(MSG_DEBUG, "ALMOST FOR LOOP\n");
-
     log_messages.printf(MSG_DEBUG, "Generating %u total jobs for %lu unfinished searches.\n", number_jobs, unfinished_searches.size());
 
     /**

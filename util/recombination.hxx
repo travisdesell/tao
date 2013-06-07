@@ -37,7 +37,7 @@ using std::vector;
 class Recombination {
     public:
 
-        static void bound_parameters(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest);
+        static void bound_parameters(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, bool wrap_radians = false);
 
         static void check_bounds(const vector<double> &min_bound, const vector<double> &max_bound) throw (std::string);
         static void check_step(const vector<double> &step) throw (std::string);

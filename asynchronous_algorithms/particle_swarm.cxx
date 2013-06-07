@@ -161,8 +161,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
         return;
     }
 
-    double r1 = (*random_number_generator)();  //TODO: use a better random number generator
-    double r2 = (*random_number_generator)();  //TODO: use a better random number generator
+    double r1 = (*random_number_generator)();
+    double r2 = (*random_number_generator)();
 //    cout << "r1: " << r1 << endl;
 //    cout << "r2: " << r2 << endl;
 
@@ -182,15 +182,28 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 
         velocities[id][j] = modified_velocity + global_pull + local_pull;
 
-        //Enforce bounds
-        if (particles[id][j] + velocities[id][j] > max_bound[j]) {
-            velocities[id][j] = max_bound[j] - particles[id][j];
-            particles[id][j] = max_bound[j];
-        } else if (particles[id][j] + velocities[id][j] < min_bound[j]) {
-            velocities[id][j] = particles[id][j] - min_bound[j];
-            particles[id][j] = min_bound[j];
+        if (wrap_radians && (fabs(max_bound[j] - (2 * M_PI)) < 0.00001) && (fabs(min_bound[j] - (-2 * M_PI)) < 0.00001) ) {
+            double next_position = particles[id][j] + velocities[id][j];
+//            cout << "\tbounding radian start: " << next_position << endl;
+
+            while (next_position > max_bound[j]) next_position -= (2 * M_PI);
+            while (next_position < min_bound[j]) next_position += (2 * M_PI);
+
+//            cout << "\tbounding radian end:   " << next_position << endl;
+
+            particles[id][j] = next_position;
+
         } else {
-            particles[id][j] += velocities[id][j];
+            //Enforce bounds
+            if (particles[id][j] + velocities[id][j] > max_bound[j]) {
+                velocities[id][j] = max_bound[j] - particles[id][j];
+                particles[id][j] = max_bound[j];
+            } else if (particles[id][j] + velocities[id][j] < min_bound[j]) {
+                velocities[id][j] = particles[id][j] - min_bound[j];
+                particles[id][j] = min_bound[j];
+            } else {
+                particles[id][j] += velocities[id][j];
+            }
         }
 
 //        cout << "velocity   [" << j << "]: " << velocities[id][j] << endl;

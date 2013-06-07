@@ -316,21 +316,21 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
     switch (recombination_selection) {
         case RECOMBINATION_BINARY:
             Recombination::binary_recombination(population[id], parent, crossover_rate, parameters, random_number_generator);
-            Recombination::bound_parameters(min_bound, max_bound, parameters);
+            Recombination::bound_parameters(min_bound, max_bound, parameters, wrap_radians);
             break;
 
         case RECOMBINATION_EXPONENTIAL:
             Recombination::exponential_recombination(population[id], parent, crossover_rate, parameters, random_number_generator);
-            Recombination::bound_parameters(min_bound, max_bound, parameters);
+            Recombination::bound_parameters(min_bound, max_bound, parameters, wrap_radians);
             break;
 
         case RECOMBINATION_SUM:
             for (uint32_t i = 0; i < number_parameters; i++) parameters[i] = population[id][i] + parent[i];
-            Recombination::bound_parameters(min_bound, max_bound, parameters);
+            Recombination::bound_parameters(min_bound, max_bound, parameters, wrap_radians);
             break;
 
         case RECOMBINATION_NONE:
-            Recombination::bound_parameters(min_bound, max_bound, parent);
+            Recombination::bound_parameters(min_bound, max_bound, parent, wrap_radians);
             parameters.assign(parent.begin(), parent.end());
             break;
 

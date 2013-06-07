@@ -9,7 +9,7 @@ echo "
 </head>
 <html>
 ";
-require_once("/boinc/src/milkyway_server/tao/db.inc");
+require_once("/boinc/src/milkyway_server/tao/php/db.inc");
 
 $host = '127.0.0.1';
 

@@ -119,6 +119,7 @@ DifferentialEvolutionDB::create_tables(MYSQL *conn) throw (string) {
                 << "    `min_bound` varchar(2048) NOT NULL,"
                 << "    `max_bound` varchar(2048) NOT NULL,"
                 << "    `app_id`    int(11) NOT NULL DEFAULT '-1',"
+                << "    `wrap_radians` tinyint(1) NOT NULL default '0',"
                 << "PRIMARY KEY (`id`),"
                 << "UNIQUE KEY `name` (`name`)"
                 << ") ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1";
@@ -215,6 +216,7 @@ DifferentialEvolutionDB::construct_from_database(MYSQL_ROW row) throw (string) {
     string_to_vector<double>(row[18], min_bound);
     string_to_vector<double>(row[19], max_bound);
     app_id = atoi(row[20]);
+    wrap_radians = atoi(row[21]);
     number_parameters = min_bound.size();
 
     //Get the individual information from the database
@@ -306,7 +308,8 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
           << ", population_size = " << population_size
           << ", min_bound = '" << vector_to_string<double>(min_bound) << "'"
           << ", max_bound = '" << vector_to_string<double>(max_bound) << "'"
-          << ", app_id = " << app_id;
+          << ", app_id = " << app_id 
+          << ", wrap_radians = " << wrap_radians;
 
     mysql_query(conn, query.str().c_str());
 
