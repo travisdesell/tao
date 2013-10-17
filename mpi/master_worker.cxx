@@ -44,6 +44,8 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
     double start_time = MPI_Wtime();
     double probe_time = 0, start_probe_time;
+    double gen_time = 0, start_gen_time;
+    double insert_time = 0, start_insert_time;
 
     while (true) {
         //Wait on a message from any worker
@@ -93,11 +95,16 @@ void master(EvolutionaryAlgorithmsType *ea) {
             cout << "]" << endl;
             */
 
+            start_insert_time = MPI_Wtime();
             vector<T> received_individual(individual, individual + ea->get_number_parameters());
             ea->insert_individual(individual_position, received_individual, fitness);
+            insert_time += MPI_Wtime() - start_insert_time;
 
+
+            start_gen_time = MPI_Wtime();
             vector<T> new_individual(ea->get_number_parameters(), 0);
             ea->new_individual(individual_position, new_individual);
+            gen_time += MPI_Wtime() - start_gen_time;
 
             MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
@@ -110,7 +117,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
         if (!ea->is_running()) {
             cout << endl;
-            cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds, time spent probing: " << probe_time << " seconds." << endl;
+            cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds, time spent probing: " << probe_time << "s , time spent generating individuals: " << gen_time << "s, insert time: " << insert_time << "s. " << endl;
             cout << endl;
 
             //The termination conditions for the search have been met
