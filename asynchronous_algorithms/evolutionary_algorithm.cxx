@@ -92,6 +92,11 @@ EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--maximum_reported", false, maximum_reported)) {
         cerr << "Argument '--maximum_reported' not specified, could run forever. Hit control-C to quit." << endl;
     }
+
+    wrap_radians = argument_exists(arguments, "wrap_radians");
+    if (!wrap_radians) {
+        cerr << "Argument '--wrap_radians' not found, parameters with a min bound of -2pi and a max bound of 2pi will not wrap around the bounds." << endl;
+    }
 }
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<string> &arguments

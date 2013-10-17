@@ -45,6 +45,8 @@ class EvolutionaryAlgorithm {
         uint32_t maximum_reported;
         uint32_t individuals_reported;
 
+        bool wrap_radians;
+
         uint32_t number_parameters;
         std::vector<double> min_bound;
         std::vector<double> max_bound;

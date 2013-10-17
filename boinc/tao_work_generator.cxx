@@ -80,7 +80,8 @@ int make_job(string search_name,
              string result_xml_filename,
              vector<string> input_filenames,
              string command_line_options,
-             string extra_xml) {
+             string extra_xml,
+             uint32_t search_id) {
 
     DB_WORKUNIT wu;
     char name[256], path[MAXPATHLEN];
@@ -103,6 +104,8 @@ int make_job(string search_name,
     wu.max_error_results = REPLICATION_FACTOR*4;
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
+
+    wu.batch = search_id;
 
     try {
         wu.rsc_fpops_est    = parse_xml<double>(extra_xml, "rsc_fpops_est");
@@ -179,8 +182,6 @@ int make_jobs(uint32_t number_jobs) {
     if (unfinished_searches.size() == 0) return 0;
     uint64_t portion = (uint64_t)number_jobs / unfinished_searches.size();
 
-    log_messages.printf(MSG_DEBUG, "ALMOST FOR LOOP\n");
-
     log_messages.printf(MSG_DEBUG, "Generating %u total jobs for %lu unfinished searches.\n", number_jobs, unfinished_searches.size());
 
     /**
@@ -241,7 +242,8 @@ int make_jobs(uint32_t number_jobs) {
                               workunit_information.get_result_xml_filename(),
                               workunit_information.get_input_filenames(),
                               new_command_line.str(),
-                              new_extra_xml.str()
+                              new_extra_xml.str(),
+                              unfinished_searches[i]->get_id()
                              );
 
             if (retval) return retval;

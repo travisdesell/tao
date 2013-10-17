@@ -161,8 +161,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
         return;
     }
 
-    double r1 = (*random_number_generator)();  //TODO: use a better random number generator
-    double r2 = (*random_number_generator)();  //TODO: use a better random number generator
+    double r1 = (*random_number_generator)();
+    double r2 = (*random_number_generator)();
 //    cout << "r1: " << r1 << endl;
 //    cout << "r2: " << r2 << endl;
 
@@ -182,15 +182,28 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 
         velocities[id][j] = modified_velocity + global_pull + local_pull;
 
-        //Enforce bounds
-        if (particles[id][j] + velocities[id][j] > max_bound[j]) {
-            velocities[id][j] = max_bound[j] - particles[id][j];
-            particles[id][j] = max_bound[j];
-        } else if (particles[id][j] + velocities[id][j] < min_bound[j]) {
-            velocities[id][j] = particles[id][j] - min_bound[j];
-            particles[id][j] = min_bound[j];
+        if (wrap_radians && (fabs(max_bound[j] - (2 * M_PI)) < 0.00001) && (fabs(min_bound[j] - (-2 * M_PI)) < 0.00001) ) {
+            double next_position = particles[id][j] + velocities[id][j];
+//            cout << "\tbounding radian start: " << next_position << endl;
+
+            while (next_position > max_bound[j]) next_position -= (2 * M_PI);
+            while (next_position < min_bound[j]) next_position += (2 * M_PI);
+
+//            cout << "\tbounding radian end:   " << next_position << endl;
+
+            particles[id][j] = next_position;
+
         } else {
-            particles[id][j] += velocities[id][j];
+            //Enforce bounds
+            if (particles[id][j] + velocities[id][j] > max_bound[j]) {
+                velocities[id][j] = max_bound[j] - particles[id][j];
+                particles[id][j] = max_bound[j];
+            } else if (particles[id][j] + velocities[id][j] < min_bound[j]) {
+                velocities[id][j] = particles[id][j] - min_bound[j];
+                particles[id][j] = min_bound[j];
+            } else {
+                particles[id][j] += velocities[id][j];
+            }
         }
 
 //        cout << "velocity   [" << j << "]: " << velocities[id][j] << endl;
@@ -218,7 +231,7 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 //        for (uint32_t i = 0; i < velocities.size(); i++) velocities[id] = parameters[i] - local_bests[i];   //Rewind the velocity
         local_bests[id].assign(parameters.begin(), parameters.end());
 
-//        cout.precision(15);
+//        cout.precision(10);
 //        cout <<  current_iteration << ":" << id << " - LOCAL: " << fitness << " " << vector_to_string(parameters) << endl;
 
         if (log_file != NULL) {
@@ -235,8 +248,8 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         global_best.assign(parameters.begin(), parameters.end());
 
         if (log_file == NULL) {
-            cout.precision(15);
-            cout << "[" << setw(5) << ((time(NULL) - start_time) / individuals_reported) << "/s]" << individuals_reported << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(global_best) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+            cout.precision(10);
+            cout << current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
         }
     }
 

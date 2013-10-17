@@ -1,7 +1,39 @@
+This is the Toolkit for Asynchronous Optimization (TAO).
+
+TAO is a set of optimization techniques for use on volunteer computing systems (and is used by the MilkyWay@Home project), as well as high performance computing systems, as well as single process/thread systems.  It also provides database functionality for storing the progress of long running searches, and for checkpointing. When the information about optimization searches is stored in the database, it can also be viewed via a web interface (see the php directory).
+
+TAO is used by multiple projects, which are also hosted on GitHub, and they provide good examples for using this software toolkit:
+    Optimization for Breast Tomography - https://github.com/travisdesell/tomography
+    Optimization for Hidden Markov Chain Clustering of Cancer Patients - https://github.com/travisdesell/hmmc_clustering
+    MilkyWay@Home's server code (which provdes an example of using this on a volunteer computing system) - https://github.com/Milkyway-at-home/milkyway_server
+
+There is also some simple example code for using TAO with and without a database:
+    https://github.com/travisdesell/tao/blob/master/examples/standard_benchmarks.cxx
+    https://github.com/travisdesell/tao/blob/master/examples/standard_benchmarks_db.cxx
+
+
 To build:
 
 git submodule init
 git submodule update
+
+(check out the tao submodule)
+cd tao
+git submodule init
+git submodule update
+git checkout master
+
+cd undvc_common
+git submodule init
+git submodule update
+git checkout master
+
+(check out the bootstrap submodule -- only needed if you're using the php webpages)
+cd ../../php/bootstrap
+git submodule init
+git submodule update
+git checkout master
+
 
 mkdir build
 cd build
@@ -15,6 +47,7 @@ undvc_common (make in a similar fashion)
 
 TODO:
     * clean up constructors (use set methods)
-    * comments & documentation
+    * more detailed comments & documentation
 
 BUGS:
+    * none currently known
