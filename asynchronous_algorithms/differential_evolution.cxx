@@ -232,7 +232,10 @@ void
 DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &parameters) throw (string) {
     id = current_individual;
     current_individual++;
-    if (current_individual >= population_size) current_individual = 0;
+    if (current_individual >= population_size) {
+        current_individual = 0;
+        current_iteration++;
+    }
 
     if (initialized_individuals < population_size) { //The search has not been fully initalized so keep generating random individuals
         Recombination::random_within(min_bound, max_bound, parameters, random_number_generator);
@@ -366,7 +369,6 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             if (log_file == NULL) {
                 cout.precision(10);
                 cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
-                cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
             }
         }
 
@@ -442,7 +444,8 @@ DifferentialEvolution::iterate(double (*objective_function)(const std::vector<do
             insert_individual(id, parameters, fitness, seed);
         }
 
-        current_iteration++;
+        //This is now updated in the 'new_individual' function
+//        current_iteration++;
     }
 }
 

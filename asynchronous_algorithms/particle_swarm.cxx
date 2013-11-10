@@ -143,7 +143,10 @@ void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (string) {
     id = current_individual;
     current_individual++;
-    if (current_individual >= population_size) current_individual = 0;
+    if (current_individual >= population_size) {
+        current_individual = 0;
+        current_iteration++;
+    }
 
     //We haven't initialied all the particles so generate a random one
     if (initialized_individuals < particles.size()) {
@@ -308,7 +311,8 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, cons
             insert_individual(id, parameters, fitness, seed);
         }
 
-        current_iteration++;
+        //This is now updated in the 'new_individual' function.
+//        current_iteration++;
     }
 }
 

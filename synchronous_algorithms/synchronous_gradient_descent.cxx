@@ -171,8 +171,8 @@ void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*o
     get_argument_vector<double>(arguments, "--starting_point", true, starting_point);
     get_argument_vector<double>(arguments, "--step_size", true, step_size);
 
-    LineSearch lien_search(objective_function, arguments);
-    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size);
+    LineSearch line_search(objective_function, arguments);
+    synchronous_conjugate_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
 }
 
 void synchronous_conjugate_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
