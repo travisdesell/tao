@@ -93,6 +93,14 @@ EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
         cerr << "Argument '--maximum_reported' not specified, could run forever. Hit control-C to quit." << endl;
     }
 
+    string log_filename;
+    if (!get_argument(arguments, "--log_file", false, log_filename)) {
+        cerr << "Argument '--log_filename' not specified, output will only go to standard output." << endl;
+    } else {
+        this-> log_file = new ofstream(log_filename.c_str());
+    }
+
+
     wrap_radians = argument_exists(arguments, "wrap_radians");
     if (!wrap_radians) {
         cerr << "Argument '--wrap_radians' not found, parameters with a min bound of -2pi and a max bound of 2pi will not wrap around the bounds." << endl;

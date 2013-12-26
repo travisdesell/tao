@@ -77,7 +77,8 @@ class EvolutionaryAlgorithm {
 
         bool is_running() {
             return (maximum_reported == 0 || individuals_reported < maximum_reported) &&
-                   (maximum_created ==  0 || individuals_created  < maximum_created);
+                   (maximum_created ==  0 || individuals_created  < maximum_created) &&
+                   (maximum_iterations == 0 || current_iteration < maximum_iterations);
 
         }
 

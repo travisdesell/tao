@@ -237,11 +237,13 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
 //        cout.precision(10);
 //        cout <<  current_iteration << ":" << id << " - LOCAL: " << fitness << " " << vector_to_string(parameters) << endl;
 
+        /*
         if (log_file != NULL) {
             double best, average, median, worst;
             calculate_fitness_statistics(local_best_fitnesses, best, average, median, worst);
             (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << endl;
         }
+        */
 
         modified = true;
     }
@@ -253,6 +255,10 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         if (log_file == NULL) {
             cout.precision(10);
             cout << current_iteration << ":" << setw(4) << id << " - GLOBAL: " << setw(-20) << fitness << " " << setw(-60) << vector_to_string(parameters) << ", velocity: " << setw(-60) << vector_to_string(velocities[id]) << endl;
+        } else {
+            double best, average, median, worst;
+            calculate_fitness_statistics(local_best_fitnesses, best, average, median, worst);
+            (*log_file) << individuals_reported << " -- b: " << best << ", a: " << average << ", m: " << median << ", w: " << worst << ", " << vector_to_string(parameters) << endl;
         }
     }
 
