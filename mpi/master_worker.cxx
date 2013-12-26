@@ -49,6 +49,9 @@ void master(EvolutionaryAlgorithmsType *ea) {
     double insert_time = 0, start_insert_time;
 
     int last_printed_iteration = 1;
+    bool finished = false;
+    double previous_best_fitness = -std::numeric_limits<double>::max();
+    int unchanged_fitnesses = 0;
 
     while (true) {
         //Wait on a message from any worker
@@ -115,6 +118,17 @@ void master(EvolutionaryAlgorithmsType *ea) {
             if ((ea->get_current_iteration() % 100 == 0) && ea->get_current_iteration() != last_printed_iteration) {
                 last_printed_iteration = ea->get_current_iteration();
 
+                if (previous_best_fitness == ea->get_global_best_fitness()) {
+                    unchanged_fitnesses++;
+
+                    if (unchanged_fitnesses >= 10) {
+                        finished = true;
+                    }
+                } else {
+                    previous_best_fitness = ea->get_global_best_fitness();
+                    unchanged_fitnesses = 0;
+                }
+
                 cout.precision(10);
                 cout <<  ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
             }
@@ -125,7 +139,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
             exit(1);
         }
 
-        if (!ea->is_running()) {
+        if (!ea->is_running() || finished) {
             cout << endl;
             cout << "[master      ] completed in " << (MPI_Wtime() - start_time) << " seconds, time spent probing: " << probe_time << "s , time spent generating individuals: " << gen_time << "s, insert time: " << insert_time << "s. " << endl;
             cout << endl;
@@ -145,6 +159,10 @@ void master(EvolutionaryAlgorithmsType *ea) {
 //                cout << "[worker " << setw(5) << rank << "] min_processing_time: " << min_processing_time << ", max_processing_time: " << max_processing_time << endl;
 //                cout << "[worker " << setw(5) << rank << "] min_communication_time: " << min_communication_time << ", max_communication_time: " << max_communication_time << endl;
             }
+
+            cout.precision(10);
+            cout <<  ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
+
             return;
         }
     }
