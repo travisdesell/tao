@@ -48,6 +48,8 @@ void master(EvolutionaryAlgorithmsType *ea) {
     double gen_time = 0, start_gen_time;
     double insert_time = 0, start_insert_time;
 
+    int last_printed_iteration = 1;
+
     while (true) {
         //Wait on a message from any worker
 
@@ -101,11 +103,6 @@ void master(EvolutionaryAlgorithmsType *ea) {
             ea->insert_individual(individual_position, received_individual, fitness);
             insert_time += MPI_Wtime() - start_insert_time;
 
-            if (ea->get_current_iteration() % 500 == 0) {
-                cout.precision(10);
-                cout <<  ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
-            }
-
             start_gen_time = MPI_Wtime();
             vector<T> new_individual(ea->get_number_parameters(), 0);
             ea->new_individual(individual_position, new_individual);
@@ -114,6 +111,14 @@ void master(EvolutionaryAlgorithmsType *ea) {
             MPI_Send(&new_individual[0], number_parameters, MPI_DATATYPE, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             MPI_Send(&individual_position, 1, MPI_INT, source, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD);
             //            cout << "[master       ] sent individual to " << source << endl;
+
+            if ((ea->get_current_iteration() % 100 == 0) && ea->get_current_iteration() != last_printed_iteration) {
+                last_printed_iteration = ea->get_current_iteration();
+
+                cout.precision(10);
+                cout <<  ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
+            }
+
         } else {
             cerr << "[master      ] Unknown tag '" << tag << "' received from MPI_Probe on file '" << __FILE__ << "', line " << __LINE__ << endl;
             MPI_Finalize();
