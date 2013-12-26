@@ -65,6 +65,7 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
 
     individuals_created = 0;
     individuals_reported = 0;
+    current_iteration = 0;
 
     too_many_duplicates = false;
 
@@ -74,9 +75,9 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
 bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {
     //Make sure the individual generated isn't in the population
     bool same;
-    for (int i = 0; i < population.size(); i++) {
+    for (unsigned int i = 0; i < population.size(); i++) {
         same = true;
-        for (int j = 0; j < encoding.size(); j++) {
+        for (unsigned int j = 0; j < encoding.size(); j++) {
             if (population[i]->encoding[j] != encoding[j]) {
                 same = false;
                 break;
@@ -89,6 +90,7 @@ bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {
 
 void GeneticAlgorithm::new_individual(uint32_t &individual_position, vector<int> &individual) {
     individuals_created++;
+    if (individuals_created % population_size == 0) current_iteration++;
 
     individual_position = 0;    //we can ignore the position
 

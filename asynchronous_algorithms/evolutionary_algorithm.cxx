@@ -62,6 +62,8 @@ EvolutionaryAlgorithm::initialize() {
     Recombination::check_bounds(min_bound, max_bound);
     number_parameters = min_bound.size();
 
+    quiet = false;
+
     current_iteration = 0;
     individuals_created = 0;
     individuals_reported = 0;
@@ -76,6 +78,11 @@ EvolutionaryAlgorithm::initialize() {
 
 void
 EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
+    if (argument_exists(arguments, "--quiet")) {
+        cerr << "Argument '--quiet' found, running in quiet mode." << endl;
+        quiet = true;
+    }
+
     if (!get_argument(arguments, "--population_size", false, population_size)) {
         cerr << "Argument '--population_size' not specified, using default of 200." << endl;
         population_size = 200;

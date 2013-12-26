@@ -32,6 +32,8 @@ class GeneticAlgorithm {
         int individuals_created;
         int maximum_created;
         int maximum_reported;
+        int current_iteration;
+        int maximum_iteration;
 
         bool too_many_duplicates;
 
@@ -57,6 +59,18 @@ class GeneticAlgorithm {
         crossover_type crossover;
 
     public:
+        int get_current_iteration() {
+            return current_iteration;
+        }
+
+        double get_global_best_fitness() {
+            return population[0]->fitness;
+        }
+
+        vector<int> get_global_best() {
+            return vector<int>(population[0]->encoding);
+        }
+
         int get_number_parameters()   { return encoding_length; }
 
         GeneticAlgorithm(const vector<string> &arguments,

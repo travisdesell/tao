@@ -367,8 +367,10 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             global_best_fitness = fitness;
 
             if (log_file == NULL) {
-                cout.precision(10);
-                cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
+                if (!quiet) {
+                    cout.precision(10);
+                    cout <<  current_iteration << ":" << id << " - GLOBAL: " << global_best_fitness << " " << vector_to_string(parameters) << endl;
+                }
             } else {
                 double best, average, median, worst;
                 calculate_fitness_statistics(fitnesses, best, average, median, worst);

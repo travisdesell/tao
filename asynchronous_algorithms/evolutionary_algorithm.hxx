@@ -56,6 +56,7 @@ class EvolutionaryAlgorithm {
         uint32_t population_size;
         std::vector<uint32_t> seeds;
 
+        bool quiet;
         double start_time;
 
         //For random number generation
