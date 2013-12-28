@@ -161,7 +161,10 @@ void master(EvolutionaryAlgorithmsType *ea) {
             }
 
             cout.precision(10);
-            cout <<  ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
+            cout << ea->get_current_iteration() << ":" << ea->get_global_best_fitness() << " " << vector_to_string( ea->get_global_best() ) << endl;
+            cout << ea->get_current_iteration() << endl;
+            cout << vector_to_string( ea->get_global_best() ) << endl;
+            cout << ea->get_global_best_fitness() << endl;
 
             return;
         }
