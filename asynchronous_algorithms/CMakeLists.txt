@@ -5,6 +5,7 @@ target_link_libraries(asynchronous_algorithms undvc_common tao_util)
 
 if (MYSQL_FOUND)
     include_directories(${MYSQL_INCLUDE_DIR})
+    include_directories(${MYSQL_INCLUDE_DIR}/mysql)
 
     add_library(db_asynchronous_algorithms particle_swarm_db differential_evolution_db asynchronous_newton_method_db)
     target_link_libraries(db_asynchronous_algorithms undvc_common tao_util ${MYSQL_LIBRARIES})
