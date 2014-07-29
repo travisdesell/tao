@@ -37,7 +37,7 @@ using namespace std;
 
 void
 AsynchronousNewtonMethodDB::check_name(string name) throw (string) {
-    if (!name.substr(0,4).compare("anm_") == 0) {
+    if (name.substr(0,4).compare("anm_") != 0) {
         ostringstream err_msg;
         err_msg << "Improper name for AsynchronousNewtonMethodDB '" << name << "' must start with 'anm_'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw err_msg.str();

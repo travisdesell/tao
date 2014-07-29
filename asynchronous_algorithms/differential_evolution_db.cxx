@@ -40,7 +40,7 @@ using namespace std;
 
 void
 DifferentialEvolutionDB::check_name(string name) throw (string) {
-    if (!name.substr(0,3).compare("de_") == 0) {
+    if (name.substr(0,3).compare("de_") != 0) {
         ostringstream err_msg;
         err_msg << "Improper name for DifferentialEvolutionDB '" << name << "' must start with 'de_'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw err_msg.str();

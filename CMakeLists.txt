@@ -8,16 +8,36 @@ set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -msse3")
 
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/undvc_common/cmake/Modules/")
+include_directories(${PROJECT_SOURCE_DIR})
+#message("project source dir = ${PROJECT_SOURCE_DIR}")
+
+#This will look for the undvc_common library, which should be in the
+#same directory as TAO. It should be compiled in the ../undvc_common/build
+#directory
+FIND_PATH(UNDVC_COMMON_INCLUDE_DIR file_io.hxx
+    ../undvc_common         #add addiitonal paths here if undvc_common is in a different directory
+    )
+MESSAGE(STATUS "UNDVC_COMMON include directory: ${UNDVC_COMMON_INCLUDE_DIR}")
+
+FIND_LIBRARY(UNDVC_COMMON_LIBRARY
+    NAMES undvc_common
+    PATHS ../undvc_common/build         #add additional paths here if undvc_common is in a different directory
+                                        #or if it has been build in a different directory
+    PATH_SUFFIXES lib
+    )
+MESSAGE(STATUS "UNDVC_COMMON library: ${UNDVC_COMMON_LIBRARY}")
+
+include_directories(${UNDVC_COMMON_INCLUDE_DIR})
+
+#UNDVC_COMMON has the FindBOINC.cmake and FindMYSQL.cmake files
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UNDVC_COMMON_INCLUDE_DIR}/cmake/Modules/")
 
 find_package(BOINC)
 find_package(MySQL)
 find_package(Boost REQUIRED COMPONENTS system)
 
-include_directories(${PROJECT_SOURCE_DIR})
-include_directories(undvc_common)
 
-add_subdirectory(undvc_common)
+
 add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(util)
@@ -29,5 +49,10 @@ link_directories(${Boost_LIBRARY_DIRS})
 if (BOINC_SERVER_FOUND AND MYSQL_FOUND)
     add_subdirectory(boinc)
 else (BOINC_SERVER_FOUND AND MYSQL_FOUND)
-    message(STATUS "Either BOINC libraries (found = ${BOINC_SERVER_FOUND}) or MYSQL libraries (found = ${MYSQL_FOUND}) missing, not compiling boinc subdirectory.")
+    if (BOINC_SERVER_FOUND)
+        message(WARNING "MYSQL libraries missing, not compiling boinc subdirectory.")
+    endif (BOINC_SERVER_FOUND)
+    if (MYSQL_FOUND)
+        message(WARNING "BOINC libraries missing, not compiling boinc subdirectory.")
+    endif (MYSQL_FOUND)
 endif (BOINC_SERVER_FOUND AND MYSQL_FOUND)

@@ -40,7 +40,7 @@ using namespace std;
 
 void
 ParticleSwarmDB::check_name(string name) throw (string) {
-    if (!name.substr(0,3).compare("ps_") == 0) {
+    if (name.substr(0,3).compare("ps_") != 0) {
         ostringstream err_msg;
         err_msg << "Improper name for ParticleSwarmDB '" << name << "' must start with 'ps_'. Thrown on " << __FILE__ << ":" << __LINE__;
         throw err_msg.str();
