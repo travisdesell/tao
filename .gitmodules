@@ -1,6 +1,6 @@
 [submodule "undvc_common"]
 	path = undvc_common
-	url = git@github.com:travisdesell/undvc_common.git
+	url = git://github.com/travisdesell/undvc_common.git
 [submodule "php/bootstrap"]
 	path = php/bootstrap
-	url = ssh://git@github.com/twitter/bootstrap.git
+	url = git://github.com/twitter/bootstrap.git
