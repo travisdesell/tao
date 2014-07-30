@@ -29,7 +29,7 @@
 
 #include "util/recombination.hxx"
 
-#include "undvc_common/arguments.hxx"
+#include "arguments.hxx"    //from undvc_common
 
 #include "boost/random.hpp"
 #include "boost/generator_iterator.hpp"

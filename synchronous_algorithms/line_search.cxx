@@ -18,8 +18,9 @@
 //#include "util/regression.hxx"
 #include "util/recombination.hxx"
 
-#include "undvc_common/arguments.hxx"
-#include "undvc_common/vector_io.hxx"
+//from undvc_common
+#include "arguments.hxx"
+#include "vector_io.hxx"
 
 using std::string;
 using std::ostringstream;

@@ -8,7 +8,7 @@
 
 #include "util/matrix.hxx"
 
-#include "undvc_common/vector_io.hxx"
+#include "vector_io.hxx"
 
 using std::cout;
 using std::endl;

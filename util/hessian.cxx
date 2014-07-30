@@ -10,7 +10,7 @@
 //#include <boost/numeric/ublas/lu.hpp>
 //#include <boost/numeric/ublas/io.hpp>
 
-#include "undvc_common/vector_io.hxx"
+#include "vector_io.hxx"
 
 using std::vector;
 using std::cout;

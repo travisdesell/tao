@@ -32,7 +32,7 @@
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 
 //from undvc_common
-#include "undvc_common/arguments.hxx"
+#include "arguments.hxx"
 
 /**
  *  Define a type for our objective function so we

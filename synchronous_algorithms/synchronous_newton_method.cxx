@@ -15,8 +15,9 @@
 #include "util/newton_step.hxx"
 #include "synchronous_algorithms/line_search.hxx"
 
-#include "undvc_common/vector_io.hxx"
-#include "undvc_common/arguments.hxx"
+//from undvc_common
+#include "vector_io.hxx"
+#include "arguments.hxx"
 
 using namespace std;
 

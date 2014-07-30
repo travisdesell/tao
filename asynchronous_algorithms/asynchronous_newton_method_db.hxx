@@ -30,8 +30,8 @@
 #include "util/statistics.hxx"
 
 //From undvc_common
-#include "undvc_common/vector_io.hxx"
-#include "undvc_common/arguments.hxx"
+#include "vector_io.hxx"
+#include "arguments.hxx"
 
 //From Boost
 #include "boost/random.hpp"

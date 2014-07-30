@@ -32,8 +32,8 @@
 #include "util/hessian.hxx"
 
 //From undvc_common
-#include "undvc_common/vector_io.hxx"
-#include "undvc_common/arguments.hxx"
+#include "vector_io.hxx"
+#include "arguments.hxx"
 
 
 using namespace std;
