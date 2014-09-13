@@ -37,6 +37,7 @@ find_package(MySQL)
 find_package(Boost REQUIRED COMPONENTS system)
 
 
+add_subdirectory(neural_networks)
 add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(util)
