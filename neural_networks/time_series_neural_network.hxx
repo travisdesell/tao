@@ -37,7 +37,7 @@ class TimeSeriesNeuralNetwork {
     public:
         TimeSeriesNeuralNetwork(int target_parameter);
 
-        TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e);
+        TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e, vector<Edge> re);
 
         ~TimeSeriesNeuralNetwork();
 

@@ -26,7 +26,7 @@ TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(int tp) : target_parameter(tp) 
 }
 
 
-TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e) : target_parameter(tp), edges(e) {
+TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e, vector<Edge> re) : target_parameter(tp), edges(e), recurrent_edges(re) {
 
     set_time_series_data(tsd, tsr, tsc);
     initialize_nodes(nhl, npl);
@@ -39,25 +39,25 @@ int TimeSeriesNeuralNetwork::get_n_edges() {
 void TimeSeriesNeuralNetwork::initialize_nodes(int nhl, int npl) {
     n_hidden_layers = nhl;
     nodes_per_layer = npl;
-    n_layers = 2 + (n_hidden_layers * 2) + 1;
+    n_layers = 1 + (n_hidden_layers * 2) + 1;
 
     //allocate and initailize the nodes
     nodes = new double*[n_layers];
 
     //allocate and initialze the input layer
-    nodes[0] = new double[time_series_columns]; //input nodes are == the number of time series columns
-    nodes[1] = new double[time_series_columns]; //input nodes are == the number of time series columns
+    nodes[0] = new double[time_series_columns + 1]; //input nodes are == the number of time series columns + 1 for bias
     for (int j = 0; j < time_series_columns; j++) {
         nodes[0][j] = 0.0;
-        nodes[1][j] = 0.0;
     }
+    nodes[0][time_series_columns] = 1.0;    //bias node
 
     //allocate and initialize the hidden layer nodes
-    for (int i = 2; i < (n_layers - 1); i++) {
-        nodes[i] = new double[nodes_per_layer];
+    for (int i = 1; i < (n_layers - 1); i++) {
+        nodes[i] = new double[nodes_per_layer + 1]; // +1 for bias
         for (int j = 0; j < nodes_per_layer; j++) {
             nodes[i][j] = 0.0;
         }
+        nodes[i][nodes_per_layer] = 1.0;    //bias node
     }
 
     //allocate and initialize the output layer
@@ -97,12 +97,11 @@ TimeSeriesNeuralNetwork::~TimeSeriesNeuralNetwork() {
 void TimeSeriesNeuralNetwork::reset() {
     for (int j = 0; j < time_series_columns; j++) {
         nodes[0][j] = 0.0;
-        nodes[1][j] = 0.0;
     }
 
-    for (int i = 2; i < n_layers - 1; i++) {
+    for (int i = 1; i < n_layers - 1; i++) {
         for (int j = 0; j < nodes_per_layer; j++) {
-            nodes[i][j] = 0;
+            nodes[i][j] = 0.0;
         }
     }
 
@@ -114,11 +113,13 @@ void TimeSeriesNeuralNetwork::reset_non_recurrent() {
         nodes[0][j] = 0.0;
     }
 
-    for (int i = 2; i < n_layers; i += 2) {
+    for (int i = 2; i < n_layers - 1; i += 2) {
         for (int j = 0; j < nodes_per_layer; j++) {
-            nodes[i][j] = 0;
+            nodes[i][j] = 0,0;
         }
     }
+
+    nodes[n_layers - 1][0] = 0.0;
 }
 
 double TimeSeriesNeuralNetwork::evaluate() {
@@ -137,6 +138,8 @@ double TimeSeriesNeuralNetwork::evaluate() {
         for (int i = 0; i < edges.size(); i++) {
             Edge e = edges.at(i);
             nodes[e.dst_layer][e.dst_node] += nodes[e.src_layer][e.src_node] * e.weight;
+
+//            cerr << e << " : node: " << nodes[e.dst_layer][e.dst_node] << endl;
         }
 
         for (int i = 0; i < recurrent_edges.size(); i++) {
@@ -144,16 +147,13 @@ double TimeSeriesNeuralNetwork::evaluate() {
             nodes[e.dst_layer][e.dst_node] = nodes[e.src_layer][e.src_node];
         }
 
-//        cerr << "prediction: " << nodes[n_layers - 1][0] << ", actual: " << time_series_data[ts_row + 1][target_parameter] << endl;
-
         //update the mean average error
         //might need to deal with summation errors here
+        //might want to add activation function here
         mean_average_error += fabs(nodes[n_layers - 1][0] - time_series_data[ts_row + 1][target_parameter]);
     }
 
     mean_average_error /= (time_series_rows - 1);
-
-//    cerr << "MAE: " << mean_average_error << endl;
 
     return -mean_average_error;
 }
