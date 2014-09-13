@@ -32,6 +32,7 @@ class TimeSeriesNeuralNetwork {
         double **nodes;
 
         vector<Edge> edges;
+        vector<Edge> recurrent_edges;
 
     public:
         TimeSeriesNeuralNetwork(int target_parameter);

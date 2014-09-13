@@ -136,14 +136,12 @@ double TimeSeriesNeuralNetwork::evaluate() {
         //calculate the neural network to the output node
         for (int i = 0; i < edges.size(); i++) {
             Edge e = edges.at(i);
-//            cerr << "applying edge: " << e << endl;
-//            cerr << "nodes[" << e.src_layer << "][" << e.src_node << "]: " << nodes[e.src_layer][e.src_node] << endl;
-
             nodes[e.dst_layer][e.dst_node] += nodes[e.src_layer][e.src_node] * e.weight;
+        }
 
-//            cerr << "nodes[" << e.dst_layer << "][" << e.dst_node << "]: " << nodes[e.dst_layer][e.dst_node] << endl;
-
-            //TODO: APPLY THE NN OPERATOR HERE, TANH?
+        for (int i = 0; i < recurrent_edges.size(); i++) {
+            Edge e = recurrent_edges.at(i);
+            nodes[e.dst_layer][e.dst_node] = nodes[e.src_layer][e.src_node];
         }
 
 //        cerr << "prediction: " << nodes[n_layers - 1][0] << ", actual: " << time_series_data[ts_row + 1][target_parameter] << endl;
@@ -200,10 +198,14 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
 
     //read n_hidden_layers
     getline( nn_file, s );
+    while (nn_file.good() && 0 != s.compare("#hidden layers")) getline( nn_file, s );
+    getline( nn_file, s );
     int nhl = atoi(s.c_str());
 
     //read nodes_per_layer
     getline( nn_file, s );
+    while (nn_file.good() && 0 != s.compare("#nodes per layer")) getline( nn_file, s );
+    getline( nn_file, s );    
     int npl = atoi(s.c_str());
 
     initialize_nodes(nhl, npl);
@@ -212,7 +214,10 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
     edges.clear();
 
     getline( nn_file, s );
-    while (nn_file.good()) {
+    while (nn_file.good() && 0 != s.compare("#feed forward edges")) getline( nn_file, s );
+
+    getline( nn_file, s );
+    while (nn_file.good() && 0 != s.compare("")) {
 
         char_separator<char> sep(" ", "");
         tokenizer<char_separator<char> > tok(s, sep);
@@ -224,7 +229,32 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         int src_node  = atoi((*(++i)).c_str());
         int dst_node  = atoi((*(++i)).c_str());
 
+        cerr << "pushing back edge: " << src_layer << " " << dst_layer << " " << src_node << " " << dst_node << endl;
         edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
+        getline( nn_file, s );
+    }
+
+    getline( nn_file, s );
+
+    while (nn_file.good() && 0 != s.compare("#recurrent edges")) {
+        getline( nn_file, s );
+    }
+
+    getline( nn_file, s );
+    while (nn_file.good() && 0 != s.compare("")) {
+
+        char_separator<char> sep(" ", "");
+        tokenizer<char_separator<char> > tok(s, sep);
+
+        tokenizer< char_separator<char> >::iterator i = tok.begin(); 
+
+        int src_layer = atoi((*i).c_str());
+        int dst_layer = atoi((*(++i)).c_str());
+        int src_node  = atoi((*(++i)).c_str());
+        int dst_node  = atoi((*(++i)).c_str());
+
+        cerr << "pushing back recurrent edge: " << src_layer << " " << dst_layer << " " << src_node << " " << dst_node << endl;
+        recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
         getline( nn_file, s );
     }
 }
