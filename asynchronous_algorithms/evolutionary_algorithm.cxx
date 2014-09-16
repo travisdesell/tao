@@ -79,30 +79,31 @@ EvolutionaryAlgorithm::initialize() {
 void
 EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
     if (argument_exists(arguments, "--quiet")) {
-        cerr << "Argument '--quiet' found, running in quiet mode." << endl;
         quiet = true;
+    } else {
+        cerr << "Argument '--quiet' not found, running in verbose mode." << endl;
     }
 
     if (!get_argument(arguments, "--population_size", false, population_size)) {
-        cerr << "Argument '--population_size' not specified, using default of 200." << endl;
+        if (!quiet) cerr << "Argument '--population_size' not specified, using default of 200." << endl;
         population_size = 200;
     }
 
     if (!get_argument(arguments, "--maximum_iterations", false, maximum_iterations)) {
-        cerr << "Argument '--maximum_iterations' not specified, could run forever. Hit control-C to quit." << endl;
+        if (!quiet) cerr << "Argument '--maximum_iterations' not specified, could run forever. Hit control-C to quit." << endl;
     }
 
     if (!get_argument(arguments, "--maximum_created", false, maximum_created)) {
-        cerr << "Argument '--maximum_created' not specified, could run forever. Hit control-C to quit." << endl;
+        if (!quiet) cerr << "Argument '--maximum_created' not specified, could run forever. Hit control-C to quit." << endl;
     }
 
     if (!get_argument(arguments, "--maximum_reported", false, maximum_reported)) {
-        cerr << "Argument '--maximum_reported' not specified, could run forever. Hit control-C to quit." << endl;
+        if (!quiet) cerr << "Argument '--maximum_reported' not specified, could run forever. Hit control-C to quit." << endl;
     }
 
     string log_filename;
     if (!get_argument(arguments, "--log_file", false, log_filename)) {
-        cerr << "Argument '--log_filename' not specified, output will only go to standard output." << endl;
+        if (!quiet) cerr << "Argument '--log_filename' not specified, output will only go to standard output." << endl;
     } else {
         this-> log_file = new ofstream(log_filename.c_str());
     }
@@ -110,7 +111,7 @@ EvolutionaryAlgorithm::parse_arguments(const vector<string> &arguments) {
 
     wrap_radians = argument_exists(arguments, "wrap_radians");
     if (!wrap_radians) {
-        cerr << "Argument '--wrap_radians' not found, parameters with a min bound of -2pi and a max bound of 2pi will not wrap around the bounds." << endl;
+        if (!quiet) cerr << "Argument '--wrap_radians' not found, parameters with a min bound of -2pi and a max bound of 2pi will not wrap around the bounds." << endl;
     }
 }
 

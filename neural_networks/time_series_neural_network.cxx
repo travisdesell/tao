@@ -20,8 +20,6 @@ using boost::char_separator;
 #include "time_series_neural_network.hxx"
 
 
-//NEED TO ADD BIAS
-
 TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(int tp) : target_parameter(tp) {
 }
 
@@ -188,6 +186,15 @@ void TimeSeriesNeuralNetwork::read_weights_from_file(string weights_filename) {
     }
 }
 
+void TimeSeriesNeuralNetwork::set_edges(const vector<Edge> &e, const vector<Edge> &re) {
+
+    edges.clear();
+    edges = e;
+
+    recurrent_edges.clear();
+    recurrent_edges = re;
+}
+
 void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
     ifstream nn_file( nn_filename.c_str() );
     if (!nn_file.is_open()) {
@@ -229,7 +236,6 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         int src_node  = atoi((*(++i)).c_str());
         int dst_node  = atoi((*(++i)).c_str());
 
-        cerr << "pushing back edge: " << src_layer << " " << dst_layer << " " << src_node << " " << dst_node << endl;
         edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
         getline( nn_file, s );
     }
@@ -253,7 +259,6 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         int src_node  = atoi((*(++i)).c_str());
         int dst_node  = atoi((*(++i)).c_str());
 
-        cerr << "pushing back recurrent edge: " << src_layer << " " << dst_layer << " " << src_node << " " << dst_node << endl;
         recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
         getline( nn_file, s );
     }

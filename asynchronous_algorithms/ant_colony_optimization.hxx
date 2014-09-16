@@ -3,206 +3,81 @@
 
 #include <cmath>
 #include <vector>
-#include <utility>
 
 #include "stdint.h"
 
-using std::pair;
+#include "neural_networks/edge.hxx"
+
 using std::vector;
 
-class AntColonyOptimization {
-    protected:
-        const static double PHEROMONE_DEGRADATION_RATE;
 
-        uint32_t input_layer_size;
-        uint32_t hidden_layer_size;
-        uint32_t hidden_layers;
-        uint32_t output_layer_size;
-
-        double *to_input_pheromones;                    //input_layer_size
-        double **input_to_hidden_pheromones;            //input_layer_size x hidden_layer_size
-        double ***hidden_to_hidden_pheromones;          //hidden_layers x hidden_layer_size x hidden_layer_size
-        double **hidden_to_recurrent_pheromones;        //hidden_layers x hidden_layer_size
-        double ***recurrent_to_hidden_pheromones;      //hidden_layers x hidden_layer_size x hidden_layer_size
-        double **hidden_to_output_pheromones;           //hidden_layer_size x output_layer_size
-
-
+class ACO_Node {
     public:
-        AntColonyOptimization(  const uint32_t input_layer_size,
-                                const uint32_t hidden_layer_size,
-                                const uint32_t hidden_layers,
-                                const uint32_t output_layer_size ) {
+        //the layer and node of this node in the nerual network
+        int layer;
+        int node;
 
-            to_input_pheromones = new double[input_layer_size];
-            for (uint32_t i = 0; i < input_layer_size; i++) {
-                to_input_pheromones[i] = 1.0;
-            }
+        //connections to the other nodes this can connect to
+        vector<double>   pheromones;
+        vector<ACO_Node*> targets;
 
-            input_to_hidden_pheromones = new double*[input_layer_size];
+        ACO_Node(int l, int n);
+        ~ACO_Node();
 
-            for (uint32_t i = 0; i < input_layer_size; i++) {
-                input_to_hidden_pheromones[i] = new double[hidden_layer_size];
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    input_to_hidden_pheromones[i][j] = 1.0;
-                }
-            }
+        void add_target(ACO_Node* aco_node);
+};
 
-            hidden_to_hidden_pheromones = new double**[hidden_layers];
-            recurrent_to_hidden_pheromones = new double**[hidden_layers];
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                hidden_to_hidden_pheromones[i] = new double*[hidden_layer_size];
-                recurrent_to_hidden_pheromones[i] = new double*[hidden_layer_size];
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    hidden_to_hidden_pheromones[i][j] = new double[hidden_layer_size];
-                    recurrent_to_hidden_pheromones[i][j] = new double[hidden_layer_size];
-                    for (uint32_t k = 0; k < hidden_layer_size; k++) {
-                        hidden_to_hidden_pheromones[i][j][k] = 1.0;
-                        recurrent_to_hidden_pheromones[i][j][k] = 1.0;
-                    }
-                }
-            }
+class ACOIndividual {
+    public:
+        double fitness;
+        vector<Edge> edges;
+        vector<Edge> recurrent_edges;
 
-            hidden_to_recurrent_pheromones = new double*[hidden_layers];
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                hidden_to_recurrent_pheromones[i] = new double[hidden_layer_size];
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    hidden_to_recurrent_pheromones[i][j] = 1.0;
-                }
-            }
+        ACOIndividual(double f, vector<Edge> e, vector<Edge> re);
+};
 
-            hidden_to_output_pheromones = new double*[hidden_layer_size];
-            for (uint32_t i = 0; i < hidden_layer_size; i++) {
-                hidden_to_output_pheromones[i] = new double[output_layer_size];
-                for (uint32_t j = 0; j < output_layer_size; j++) {
-                    hidden_to_output_pheromones[i][j] = 1.0;
-                }
-            }
-        }
-
-        ~AntColonyOptimization() {
-            delete[] to_input_pheromones;
-
-            for (uint32_t i = 0; i < input_layer_size; i++) {
-                delete[] input_to_hidden_pheromones[i];
-            }
-            delete[] input_to_hidden_pheromones;
-
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    delete[] hidden_to_hidden_pheromones[i][j];
-                    delete[] recurrent_to_hidden_pheromones[i][j];
-                }
-                delete[] hidden_to_hidden_pheromones[i];
-                delete[] recurrent_to_hidden_pheromones[i];
-            }
-            delete[] hidden_to_hidden_pheromones;
-            delete[] recurrent_to_hidden_pheromones;
-
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                delete[] hidden_to_recurrent_pheromones[i];
-            }
-            delete[] hidden_to_recurrent_pheromones;
-
-            for (uint32_t i = 0; i < hidden_layer_size; i++) {
-                delete[] hidden_to_output_pheromones[i];
-            }
-            delete[] hidden_to_output_pheromones;
-        }
-
-        vector<Edge>* get_ant_paths(int number_of_ants) {
-            vector<Edge> *paths = new vector<Edge>();
-            vector<int> positions(number_of_ants, 0);
-            double sum = 0.0;
-
-            //calculate sum of pheromones to the input layer
-            for (int i = 0; i < input_layer_size; i++) {
-                sum += to_input_pheromones[i];
-            }
-
-            //path to input node
-            for (int i = 0; i < number_of_ants; i++) {
-                double rand_num = mt_random() * sum;
-
-                for (int j = 0; j < input_layer_size; j++) {
-                    if (rand_num < to_input_pheromones[j]) {
-                        paths->push_back( Edge(0, j, false) );
-                        positions[i] = j;
-                        break;
-                    } else {
-                        rand_num -= to_input_pheromones[j];
-                    }
-                }
-
-            }
-
-            //path to first hidden node
-            for (int i = 0; i < number_of_ants; i++) {
-                sum = 0.0;
-                for (int j = 0; j < hidden_layer_size; j++) {
-                    sum += input_to_hidden_pheromones[positions[i]][j];
-                }
-
-                double rand_num = mt_random() * sum;
-
-                for (int j = 0; j < hidden_layer_size; j++) {
-                    if (rand_num < input_to_hidden_pheromones[positions[i]][j]) {
-                        paths->push_back( Edge(positions[i], j, false) );
-                        positions[i] = j;
-                        break;
-                    } else {
-                        rand_num -= input_to_hidden_pheromones[positions[i]][j];
-                    }
-                }
-            }
-
-            //paths from hidden to hidden or hidden to recurrent nodes
-            for (int i = 0; i < number_of_ants; i++) {
-                for (int k = 0; k < hidden_layers; k++) {
-                    double rand_num = mt_random() * sum;
-
-                }
-            }
-
-
-            return NULL;
-
-        }
-
-        void add_ant_paths(vector< pair<int, int> > *ant_paths) {
-        }
-
-        void decrease_pheromones() {
-            for (uint32_t i = 0; i < input_layer_size; i++) {
-                to_input_pheromones[i] = fmax(1.0, to_input_pheromones[i] * PHEROMONE_DEGRADATION_RATE);
-            }
-
-            for (uint32_t i = 0; i < input_layer_size; i++) {
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    input_to_hidden_pheromones[i][j] = fmax(1.0, input_to_hidden_pheromones[i][j] * PHEROMONE_DEGRADATION_RATE);
-                }
-            }
-
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    for (uint32_t k = 0; k < hidden_layer_size; k++) {
-                        hidden_to_hidden_pheromones[i][j][k] = fmax(1.0, hidden_to_hidden_pheromones[i][j][k] * PHEROMONE_DEGRADATION_RATE);
-                        recurrent_to_hidden_pheromones[i][j][k] = fmax(1.0, recurrent_to_hidden_pheromones[i][j][k] * PHEROMONE_DEGRADATION_RATE);
-                    }
-                }
-            }
-
-            for (uint32_t i = 0; i < hidden_layers; i++) {
-                for (uint32_t j = 0; j < hidden_layer_size; j++) {
-                    hidden_to_recurrent_pheromones[i][j] = fmax(1.0, hidden_to_recurrent_pheromones[i][j] * PHEROMONE_DEGRADATION_RATE);
-                }
-            }
-
-            for (uint32_t i = 0; i < hidden_layer_size; i++) {
-                for (uint32_t j = 0; j < output_layer_size; j++) {
-                    hidden_to_output_pheromones[i][j] = fmax(1.0, hidden_to_output_pheromones[i][j] * PHEROMONE_DEGRADATION_RATE);
-                }
-            }
+class CompareACOIndividual {
+    public:
+        bool operator()(ACOIndividual *i1, ACOIndividual *i2) {
+            return i1->fitness > i2->fitness;
         }
 };
+
+
+
+class AntColony {
+    protected:
+        const static double PHEROMONE_DEGRADATION_RATE;
+        const static double PHEROMONE_MINIMUM;
+        const static double PHEROMONE_MAXIMUM;
+
+        int number_of_ants;
+        int n_layers;
+        uint32_t input_layer_size;
+        uint32_t hidden_layer_size;
+        uint32_t n_hidden_layers;
+
+        ACO_Node* pre_input;
+        vector< vector< ACO_Node* > > neurons;
+
+        int max_edge_population_size;
+        vector<ACOIndividual*> edge_population;
+
+    public:
+        AntColony(int noa, int meps, int ils, int hls, int nhl);
+        ~AntColony();
+
+        void get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges);
+
+        void add_ant_paths_v(const vector<Edge> &edges);
+        void add_ant_paths(double fitness, const vector<Edge> &edges, const vector<Edge> &recurrent_edges);
+
+        void decrease_pheromones();
+
+        friend void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
+};
+
+
+void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
 
 #endif

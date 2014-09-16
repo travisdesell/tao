@@ -60,22 +60,22 @@ ParticleSwarm::initialize() {
 void
 ParticleSwarm::parse_arguments(const vector<string> &arguments) {
     if (!get_argument(arguments, "--inertia", false, inertia)) {
-        cerr << "Argument '--inertia <F>' not found, using default of 0.75." << endl;
+        if (!quiet) cerr << "Argument '--inertia <F>' not found, using default of 0.75." << endl;
         inertia = 0.75;
     }
 
     if (!get_argument(arguments, "--global_best_weight", false, global_best_weight)) {
-        cerr << "Argument '--global_best_weight <F>' not found, using default of 1.5." << endl;
+        if (!quiet) cerr << "Argument '--global_best_weight <F>' not found, using default of 1.5." << endl;
         global_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--local_best_weight", false, local_best_weight)) {
-        cerr << "Argument '--local_best_weight <F>' not found, using default of 1.5." << endl;
+        if (!quiet) cerr << "Argument '--local_best_weight <F>' not found, using default of 1.5." << endl;
         local_best_weight = 1.5;
     }
 
     if (!get_argument(arguments, "--initial_velocity_scale", false, initial_velocity_scale)) {
-        cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.25." << endl;
+        if (!quiet) cerr << "Argument '--initial_velocity_scale <F>' not found, using default of 0.25." << endl;
         initial_velocity_scale = 0.25;
     }
 }
@@ -276,12 +276,14 @@ ParticleSwarm::would_insert(uint32_t id, double fitness) {
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) throw (string) {
-    cout << "Initialized partilce swarm." << endl;
-    cout << "   maximum_iterations: " << maximum_iterations << endl;
-    cout << "   current_iteration:  " << current_iteration << endl;
-    cout << "   inertia:            " << inertia << endl;
-    cout << "   global_best_weight: " << global_best_weight << endl;
-    cout << "   local_best_weight:  " << local_best_weight << endl;
+    if (!quiet) {
+        cout << "Initialized partilce swarm." << endl;
+        cout << "   maximum_iterations: " << maximum_iterations << endl;
+        cout << "   current_iteration:  " << current_iteration << endl;
+        cout << "   inertia:            " << inertia << endl;
+        cout << "   global_best_weight: " << global_best_weight << endl;
+        cout << "   local_best_weight:  " << local_best_weight << endl;
+    }
 
     uint32_t id;
     vector<double> parameters(number_parameters, 0);
@@ -300,12 +302,14 @@ ParticleSwarm::iterate(double (*objective_function)(const vector<double> &)) thr
 
 void
 ParticleSwarm::iterate(double (*objective_function)(const vector<double> &, const uint32_t)) throw (string) {
-    cout << "Initialized particle swarm." << endl;
-    cout << "   maximum_iterations: " << maximum_iterations << endl;
-    cout << "   current_iteration:  " << current_iteration << endl;
-    cout << "   inertia:            " << inertia << endl;
-    cout << "   global_best_weight: " << global_best_weight << endl;
-    cout << "   local_best_weight:  " << local_best_weight << endl;
+    if (!quiet) {
+        cout << "Initialized particle swarm." << endl;
+        cout << "   maximum_iterations: " << maximum_iterations << endl;
+        cout << "   current_iteration:  " << current_iteration << endl;
+        cout << "   inertia:            " << inertia << endl;
+        cout << "   global_best_weight: " << global_best_weight << endl;
+        cout << "   local_best_weight:  " << local_best_weight << endl;
+    }
 
     uint32_t id;
     uint32_t seed;

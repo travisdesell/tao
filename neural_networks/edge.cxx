@@ -19,7 +19,7 @@ using boost::char_separator;
 #include "edge.hxx"
 
 ostream& operator<< (ostream& out, Edge &edge) {
-    out << "[sl: " << edge.src_layer << ", dl: " << edge.dst_layer << ", sn: " << edge.src_node << ", dn: " << edge.dst_node << ", w: " << edge.weight << "]";
+    out << "[sl: " << edge.src_layer << ", sn: " << edge.src_node << ", dl: " << edge.dst_layer << ", dn: " << edge.dst_node << ", w: " << edge.weight << "]";
 
     return out;
 }
