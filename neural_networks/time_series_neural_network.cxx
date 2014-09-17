@@ -113,7 +113,7 @@ void TimeSeriesNeuralNetwork::reset_non_recurrent() {
 
     for (int i = 2; i < n_layers - 1; i += 2) {
         for (int j = 0; j < nodes_per_layer; j++) {
-            nodes[i][j] = 0,0;
+            nodes[i][j] = 0.0;
         }
     }
 
