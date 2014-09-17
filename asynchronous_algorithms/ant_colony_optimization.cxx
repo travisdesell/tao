@@ -119,6 +119,18 @@ AntColony::~AntColony() {
     }
 }
 
+int AntColony::get_edge_population_size() {
+    return edge_population.size();
+}
+
+double AntColony::get_best_fitness() {
+    return edge_population.front()->fitness;
+}
+
+double AntColony::get_worst_fitness() {
+    return edge_population.back()->fitness;
+}
+
 void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges) {
     edges.clear();
     recurrent_edges.clear();
@@ -290,7 +302,6 @@ void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, doub
         cout << endl;
         */
 
-
         /*
         cout << "#recurrent edges" << endl;
         for (int j = 0; j < recurrent_edges.size(); j++) {
@@ -299,9 +310,7 @@ void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, doub
         cout << endl;
         */
 
-
         double fitness = objective_function(edges, recurrent_edges);
-
 
         //if fitness improves population, add ant paths to the
         //population, removing worst.

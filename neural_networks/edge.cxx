@@ -24,3 +24,9 @@ ostream& operator<< (ostream& out, Edge &edge) {
     return out;
 }
 
+ostream& operator<< (ostream& out, const Edge &edge) {
+    out << "[sl: " << edge.src_layer << ", sn: " << edge.src_node << ", dl: " << edge.dst_layer << ", dn: " << edge.dst_node << ", w: " << edge.weight << "]";
+
+    return out;
+}
+

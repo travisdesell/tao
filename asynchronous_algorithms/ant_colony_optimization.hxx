@@ -67,6 +67,10 @@ class AntColony {
         AntColony(int noa, int meps, int ils, int hls, int nhl);
         ~AntColony();
 
+        double get_best_fitness();
+        double get_worst_fitness();
+        int get_edge_population_size();
+
         void get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges);
 
         void add_ant_paths_v(const vector<Edge> &edges);
