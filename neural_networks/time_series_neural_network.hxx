@@ -46,6 +46,7 @@ class TimeSeriesNeuralNetwork {
         void reset();
         void reset_non_recurrent();
         double evaluate();
+        double objective_function();
         double objective_function(const vector<double> &parameters);
 
         void set_time_series_data(double **tsd, int tsr, int tsc);

@@ -18,6 +18,11 @@ using boost::char_separator;
 
 #include "edge.hxx"
 
+Edge::Edge(int sl, int dl, int sn, int dn) : src_layer(sl), dst_layer(dl), src_node(sn), dst_node(dn), weight(0.0) {}
+
+Edge::Edge(int sl, int dl, int sn, int dn, double w) : src_layer(sl), dst_layer(dl), src_node(sn), dst_node(dn), weight(w) {}
+
+
 ostream& operator<< (ostream& out, Edge &edge) {
     out << "[sl: " << edge.src_layer << ", sn: " << edge.src_node << ", dl: " << edge.dst_layer << ", dn: " << edge.dst_node << ", w: " << edge.weight << "]";
 

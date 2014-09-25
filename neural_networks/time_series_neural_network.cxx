@@ -21,10 +21,12 @@ using boost::char_separator;
 
 
 TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(int tp) : target_parameter(tp) {
+    nodes = NULL;
 }
 
 
 TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e, vector<Edge> re) : target_parameter(tp), edges(e), recurrent_edges(re) {
+    nodes = NULL;
 
     set_time_series_data(tsd, tsr, tsc);
     initialize_nodes(nhl, npl);
@@ -35,6 +37,15 @@ int TimeSeriesNeuralNetwork::get_n_edges() {
 }
 
 void TimeSeriesNeuralNetwork::initialize_nodes(int nhl, int npl) {
+    if (nodes != NULL) {
+        //if we're reinitializing, we need to delete the
+        //previously allocated nodes
+        for (int i = 0; i < n_layers; i++) {
+            delete[] nodes[i];
+        }
+        delete[] nodes;
+    }
+
     n_hidden_layers = nhl;
     nodes_per_layer = npl;
     n_layers = 1 + (n_hidden_layers * 2) + 1;
@@ -154,6 +165,11 @@ double TimeSeriesNeuralNetwork::evaluate() {
     mean_average_error /= (time_series_rows - 1);
 
     return -mean_average_error;
+}
+
+double TimeSeriesNeuralNetwork::objective_function() {
+    reset();
+    return evaluate();
 }
 
 double TimeSeriesNeuralNetwork::objective_function(const vector<double> &parameters) {
