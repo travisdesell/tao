@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include <limits>
+
 #include <iostream>
 using std::cerr;
 using std::cout;
@@ -50,10 +52,10 @@ ostream& operator<< (ostream& out, const NEATGene *gene) {
     return out;
 }
 
-NEATIndividual::NEATIndividual() : fitness(0), species(-1) {
+NEATIndividual::NEATIndividual() : fitness(0), species(-1), champion_iterations(0) {
 }
 
-NEATIndividual::NEATIndividual(NEATIndividual *parent) : fitness(parent->fitness), species(parent->species), node_genes(parent->node_genes) {
+NEATIndividual::NEATIndividual(NEATIndividual *parent) : fitness(parent->fitness), species(parent->species), champion_iterations(parent->champion_iterations), node_genes(parent->node_genes) {
     for (int i = 0; i < parent->connection_genes.size(); i++) {
         connection_genes.push_back(new NEATGene(parent->connection_genes[i]));
     }
@@ -129,6 +131,7 @@ void NEATIndividual::set_node_genes() {
 void print_individual(ostream &out, const NEATIndividual *individual) {
     out << "INDIVIDUAL - fitness: " << individual->fitness
         << ", species: " << individual->species
+        << ", champion iterations: " << individual->champion_iterations
         << ", node_genes: (";
     for (int i = 0; i < individual->node_genes.size(); i++) {
         out << " " << individual->node_genes[i];
@@ -145,14 +148,14 @@ ostream& operator<< (ostream& out, const NEATIndividual *individual) {
 }
 
 
-NEAT::NEAT(double ew, double dw, double ww, double ct, double norm, double mwcr, double wmr, double anmr, double almr, double icr, double rwmr, double uwmr, double up, double eibpd, int ps) : last_innovation(0), excess_weight(ew), disjoint_weight(dw), weight_weight(ww), compatibility_threshold(ct), normalization(norm), mutation_without_crossover_rate(mwcr), weight_mutation_rate(wmr), add_node_mutation_rate(anmr), add_link_mutation_rate(almr), interspecies_crossover_rate(icr), random_weight_mutation_rate(rwmr), uniform_weight_mutation_rate(uwmr), uniform_perturbation(up), enable_if_both_parents_disabled(eibpd), population_size(ps) {
+NEAT::NEAT(double ew, double dw, double ww, double ct, double norm, double mwcr, double wmr, double anmr, double almr, double icr, double cwar, double rwmr, double uwmr, double up, double eibpd, int ps) : last_innovation(0), excess_weight(ew), disjoint_weight(dw), weight_weight(ww), compatibility_threshold(ct), normalization(norm), mutation_without_crossover_rate(mwcr), weight_mutation_rate(wmr), add_node_mutation_rate(anmr), add_link_mutation_rate(almr), interspecies_crossover_rate(icr), crossover_weight_average_rate(cwar), random_weight_mutation_rate(rwmr), uniform_weight_mutation_rate(uwmr), uniform_perturbation(up), enable_if_both_parents_disabled(eibpd), population_size(ps) {
 }
 
 NEATNode::NEATNode(int i, int l, int n) : id(i), layer(l), node(n) {
 }
 
 NEATIndividual* NEAT::mutate_add_link(NEATIndividual *parent) {
-    cout << "ADDING LINK!" << endl;
+//    cout << "ADDING LINK!" << endl;
     NEATIndividual *result = new NEATIndividual(parent);
 
     //WHAT IF LAYER HAS NO NODES?
@@ -187,14 +190,14 @@ NEATIndividual* NEAT::mutate_add_link(NEATIndividual *parent) {
 
         result->add_connection_gene(new_connection);
     } else {
-        cout << "LINK ALREADY EXISTS!" << endl;
+//        cout << "LINK ALREADY EXISTS!" << endl;
     }
 
     return result;
 }
 
 NEATIndividual* NEAT::mutate_add_node(NEATIndividual *parent) {
-    cout << "ADDING NODE!!" << endl;
+//    cout << "ADDING NODE!!" << endl;
     //add a new node in between the nodes of the conncetion
     //disable the parent
     //first child gets a weight of 1.0, second gets the parent's weight
@@ -207,14 +210,13 @@ NEATIndividual* NEAT::mutate_add_node(NEATIndividual *parent) {
     }
     connection_to_split->enabled = false;
 
-    //TODO: NEED TO GO through all_nodes and update their layers
     NEATNode* input_node = all_nodes[connection_to_split->input_node];
     NEATNode* output_node = all_nodes[connection_to_split->output_node];
 
     NEATNode* new_node;
 
     if (output_node->layer - input_node->layer < 2) {
-        cout << "no middle layer, adding new layers" << endl;
+//        cout << "no middle layer, adding new layers" << endl;
         //no layer between output and input layer, need to add one
         all_nodes_by_layer.insert(all_nodes_by_layer.begin() + input_node->layer + 1, vector<NEATNode*>());
         all_nodes_by_layer.insert(all_nodes_by_layer.begin() + input_node->layer + 2, vector<NEATNode*>());
@@ -224,7 +226,7 @@ NEATIndividual* NEAT::mutate_add_node(NEATIndividual *parent) {
         all_nodes_by_layer[input_node->layer + 2].push_back(new_node);
 
     } else {
-        cout << "middle layer, not adding new layers" << endl;
+//        cout << "middle layer, not adding new layers" << endl;
         // there is a layer between output and input, don't need to add one
         // add it in the row after the input node
         new_node = new NEATNode(all_nodes.size(), input_node->layer + 2, all_nodes_by_layer[input_node->layer+2].size());
@@ -232,7 +234,7 @@ NEATIndividual* NEAT::mutate_add_node(NEATIndividual *parent) {
         all_nodes_by_layer[input_node->layer+2].push_back(new_node);
     }
 
-    cout << "updating all nodes by layer" << endl;
+//    cout << "updating all nodes by layer" << endl;
     for (int i = 0; i < all_nodes_by_layer.size(); i++) {
         for (int j = 0; j < all_nodes_by_layer[i].size(); j++) {
             all_nodes_by_layer[i][j]->layer = i;
@@ -240,14 +242,16 @@ NEATIndividual* NEAT::mutate_add_node(NEATIndividual *parent) {
         }
     }
 
-    cout << "making new genes" << endl;
+//    cout << "making new genes" << endl;
 
     NEATGene *first = new NEATGene(true, 1.0, connection_to_split->input_node, new_node->id, innovations);
     NEATGene *second = new NEATGene(true, connection_to_split->weight, new_node->id, connection_to_split->output_node, innovations);
 
+    /*
     cout << "NEW GENES:" << endl;
     cout << "\t" << first << endl;
     cout << "\t" << second << endl;
+    */
 
     result->add_connection_gene(first);
     result->add_connection_gene(second);
@@ -318,9 +322,13 @@ NEATIndividual* NEAT::crossover(NEATIndividual *p1, NEATIndividual *p2) {
                 } else {
                     new_individual->add_connection_gene( p2->connection_genes[j] );
                 }
-                if (drand48() < 0.4) {
+                if (drand48() < crossover_weight_average_rate) {
                     //make the weight the average 40% of the time
-                    new_individual->connection_genes.back()->weight = (p1->connection_genes[i]->weight + p2->connection_genes[j]->weight) / 2.0;
+                    double p1_weight = p1->connection_genes[i]->weight;
+                    double p2_weight = p2->connection_genes[j]->weight;
+                    double average = (p1_weight + p2_weight) / 2.0;
+
+                    new_individual->connection_genes.back()->weight = average;
                 }
                 i++;
                 j++;
@@ -435,7 +443,7 @@ void NEAT::assign_species() {
                 compatibility += (disjoint_weight * disjoint_count) / normalization;
                 compatibility += weight_weight * avg_weight_difference;
 
-                cout << "compatibility: " << compatibility << ", representitive n_genes: " << representative->connection_genes.size() << ", population[" << i << "] n_genes: " << population[i]->connection_genes.size() << ", excess weight: " << excess_weight << ", excess count: " << excess_count << ", disjoint weight: " << disjoint_weight << ", disjoint count: " << disjoint_count << ", weight weight: " << weight_weight << ", avg_weigh_difference: " << avg_weight_difference << endl;
+//                cout << "compatibility: " << compatibility << ", representitive n_genes: " << representative->connection_genes.size() << ", population[" << i << "] n_genes: " << population[i]->connection_genes.size() << ", excess weight: " << excess_weight << ", excess count: " << excess_count << ", disjoint weight: " << disjoint_weight << ", disjoint count: " << disjoint_count << ", weight weight: " << weight_weight << ", avg_weigh_difference: " << avg_weight_difference << endl;
 
                 if (compatibility < compatibility_threshold) {
                     species[j].push_back(population[i]);
@@ -534,14 +542,63 @@ void NEAT::initialize_population(int n_input_nodes, int n_output_nodes) {
 void NEAT::next_population() {
     vector< NEATIndividual* > next_population;
 
+    vector<int> stagnant_species;
+    int max_stagnation = 50;
+
+    //directly copy over champions from species with at least N individuals
     for (int k = 0; k < population_size; k++) {
         if (is_champion(population[k])) {
-            next_population.push_back(new NEATIndividual(population[k]));
-            cout << "champion: " << population[k] << endl;
+            if (population[k]->champion_iterations >= max_stagnation) {
+                stagnant_species.push_back(population[k]->species);
+                continue;
+            }
+            NEATIndividual *copy = new NEATIndividual(population[k]);
+            copy->champion_iterations++;
+            next_population.push_back(copy);
+//            cout << "champion: " << copy << endl;
+        } else {
+            population[k]->champion_iterations = 0;
         }
     }
 
+    //remove stagnant species from population
+    for (int i = 0; i < stagnant_species.size(); i++) {
+        cout << "removing species: " << stagnant_species[i] << endl;
+
+        vector< NEATIndividual* >::iterator it = population.begin();
+
+        while (it != population.end()) {
+            if ( (*it)->species == stagnant_species[i] ) {
+                population.erase(it);
+            } else {
+                it++;
+            }
+        }
+
+        cout << "population.size(): " << population.size() << endl;
+    }
+
+    if (species.size() > 10) compatibility_threshold = 2.3;
+    if (species.size() < 10) compatibility_threshold = 1.7;
+    if (species.size() == 10) compatibility_threshold = 2.0;
+
     while (next_population.size() < population_size) {
+        //options:
+        //  mutation without crossover 25%
+        //  mutate weights      80% per genome
+        //      uniform         90%
+        //      random          10%
+        //  mutate add node      1%
+        //  mutate add link     10%
+        //
+        //
+        //  crossover           75% ???
+        //      interspecies    5%
+        //      intraspecies    95%
+        //
+        //      40% average of parent weights
+        //      otherwise from most fit parent (or random from parent if fitnesses equal)
+
         double randval = drand48();
         if (randval < mutation_without_crossover_rate) {
             NEATIndividual *parent = population[drand48() * population.size()];
@@ -549,17 +606,13 @@ void NEAT::next_population() {
             randval = drand48();
             if (randval < weight_mutation_rate) {
                 next_population.push_back( mutate_weights(parent) );
-            }
-
-            randval = drand48();
-            if (randval < add_node_mutation_rate) {
+            } else if (randval < add_node_mutation_rate + weight_mutation_rate) {
                 next_population.push_back( mutate_add_node(parent) );
-            }
-
-            randval = drand48();
-            if (randval < add_link_mutation_rate) {
+            } else if (randval < add_link_mutation_rate + add_node_mutation_rate + weight_mutation_rate) {
                 next_population.push_back( mutate_add_link(parent) );
-            } 
+            } else {
+                //??????
+            }
 
         } else {    //perform crossover
             randval = drand48();
@@ -590,42 +643,57 @@ void NEAT::iterate(int max_iterations, int n_input_nodes, int n_output_nodes, do
 
     initialize_population(n_input_nodes, n_output_nodes);
 
+    double min_fitness, max_fitness, avg_fitness;
+    min_fitness = std::numeric_limits<double>::max();
+    max_fitness = -std::numeric_limits<double>::max();
+    avg_fitness = 0;
+
     for (int j = 0; j < population.size(); j++) {
         population[j]->get_edges(n_input_nodes, n_output_nodes, n_hidden_layers, nodes_per_layer, all_nodes, all_nodes_by_layer, edges, recurrent_edges);
         population[j]->fitness = objective_function(n_hidden_layers, nodes_per_layer, edges, recurrent_edges);
+
+        if (min_fitness > population[j]->fitness) min_fitness = population[j]->fitness;
+        if (max_fitness < population[j]->fitness) max_fitness = population[j]->fitness;
+        avg_fitness += population[j]->fitness;
     }
+    avg_fitness /= population.size();
 
     for (int i = 0; i < max_iterations; i++) {
+        cout << "ITERATION " << i << " -- min: " << min_fitness << ", avg: " << avg_fitness << ", max: " << max_fitness << endl;
+
         /*
         for (int j = 0; j < population.size(); j++) {
             cout << population[j] << endl;
         }
         */
-        cout << "[innovations:" << endl;
+        cout << "\t[innovations:" << innovations.size() << "]" << endl;
+        /*
         for (int i = 0; i < innovations.size(); i++) {
             cout << "\t" << i << " - " << innovations[i] << endl;
         }
-        cout << "]" << endl;
-
-
-        cout << "**********" << endl;
-        cout << "ITERATION " << i << ": " << endl;
-        cout << "**********" << endl;
+        */
 
         assign_species();
-        cout << "assigned species, n_species: " << species.size() << ", sizes:";
+        cout << "\tassigned species, n_species: " << species.size() << ", sizes:";
         for (int j = 0; j < species.size(); j++) {
-            cout << " " << species[j].size();
+            cout << " " << species[j].size() << " (n_genes: " << species[j][0]->connection_genes.size() << ")";
         }
         cout << endl;
 
         next_population();
-        cout << "next population." << endl;
 
+        min_fitness = std::numeric_limits<double>::max();
+        max_fitness = -std::numeric_limits<double>::max();
+        avg_fitness = 0;
         for (int j = 0; j < population.size(); j++) {
             population[j]->get_edges(n_input_nodes, n_output_nodes, n_hidden_layers, nodes_per_layer, all_nodes, all_nodes_by_layer, edges, recurrent_edges);
             population[j]->fitness = objective_function(n_hidden_layers, nodes_per_layer, edges, recurrent_edges);
+
+            if (min_fitness > population[j]->fitness) min_fitness = population[j]->fitness;
+            if (max_fitness < population[j]->fitness) max_fitness = population[j]->fitness;
+            avg_fitness += population[j]->fitness;
         }
+        avg_fitness /= population.size();
     }
 }
 

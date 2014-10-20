@@ -23,7 +23,7 @@ void get_gradient(double (*objective_function)(const std::vector<double> &), con
 		point_copy[i] = p_i;
 
 		gradient[i] = (e1 - e2)/(step[i] + step[i]);
-        cout << "\t\tgradient[" << i << "] " << gradient[i] << ", (" << e1 << " - " << e2 << ")/(2.0 * " << step[i] << ")" << endl;
+//        cout << "\t\tgradient[" << i << "] " << gradient[i] << ", (" << e1 << " - " << e2 << ")/(2.0 * " << step[i] << ")" << endl;
 	}
 }
 

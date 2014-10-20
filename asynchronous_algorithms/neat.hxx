@@ -42,6 +42,7 @@ class NEATIndividual {
     public:
         double fitness;
         int species;
+        int champion_iterations;
         vector<int> node_genes;
         vector< NEATGene* > connection_genes;
 
@@ -72,6 +73,7 @@ class NEAT {
         double add_node_mutation_rate; 
         double add_link_mutation_rate; 
         double interspecies_crossover_rate;
+        double crossover_weight_average_rate;
 
         double random_weight_mutation_rate;
         double uniform_weight_mutation_rate;
@@ -107,7 +109,7 @@ class NEAT {
          *          -- champion of each species with more than 5 networks copied
          */
 
-        NEAT(double ew, double dw, double ww, double ct, double norm, double mwcr, double wmr, double anmr, double almr, double icr, double rwmr, double uwmr, double up, double eibpd, int ps);
+        NEAT(double ew, double dw, double ww, double ct, double norm, double mwcr, double wmr, double anmr, double almr, double icr, double cwar, double rwmr, double uwmr, double up, double eibpd, int ps);
 
         NEATIndividual* mutate_add_link(NEATIndividual *parent);
         NEATIndividual* mutate_add_node(NEATIndividual *parent);

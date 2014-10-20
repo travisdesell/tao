@@ -14,15 +14,20 @@
 
 using std::vector;
 
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search) {
+bool quiet = false;
+
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, LineSearch &line_search, vector<double> &final_parameters, double &final_fitness) {
     uint32_t max_iterations = 0;
+
+    if (argument_exists(arguments, "--gd_quiet")) quiet = true;
+
     if ( !get_argument(arguments, "--max_iterations", false, max_iterations) ) {
-        cerr << "Argument '--max_iterations <i>' not found, synchronous conjugate gradient descent could potentially run forever." << endl;
+        if (!quiet) cerr << "Argument '--max_iterations <i>' not found, synchronous conjugate gradient descent could potentially run forever." << endl;
     }
 
     double min_improvement = 1e-5;
     if ( !get_argument(arguments, "--min_improvement", false, min_improvement) ) {
-        cerr << "Argument ''--min_improvement <f>' not found, using default of " << min_improvement << endl;
+        if (!quiet) cerr << "Argument ''--min_improvement <f>' not found, using default of " << min_improvement << endl;
     }
 
     vector<double> point(starting_point);
@@ -33,7 +38,7 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
     double previous_fitness = current_fitness;
 
     for (uint32_t i = 0; max_iterations == 0 || i < max_iterations; i++) {
-        cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
+        if (!quiet) cout << "iteration " << i << " -- fitness : [point] -- " << current_fitness << " : " << vector_to_string(point) << endl;
 
         get_gradient(objective_function, point, step_size, gradient);
 
@@ -50,19 +55,22 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
             }
         }
 
-        cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
+        if (!quiet) cout << "\tnew fitness : [point] -- " << current_fitness << " : " << vector_to_string(new_point) << endl;
 
         point.assign(new_point.begin(), new_point.end());
 
+        final_parameters.assign(new_point.begin(), new_point.end());
+        final_fitness = current_fitness;
+
         if (fabs(current_fitness - previous_fitness) < min_improvement) {
-            cout << "Search terminating because (current fitness (" << current_fitness << ") - previous fitness (" << previous_fitness << ") == " << fabs(current_fitness - previous_fitness) << ") < minimum improvement (" << min_improvement << ")" << endl;
+            if (!quiet) cout << "Search terminating because (current fitness (" << current_fitness << ") - previous fitness (" << previous_fitness << ") == " << fabs(current_fitness - previous_fitness) << ") < minimum improvement (" << min_improvement << ")" << endl;
             break;
         }
         previous_fitness = current_fitness;
     }
 }
 
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &)) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), vector<double> &final_parameters, double &final_fitness) {
     vector<double> starting_point;
     vector<double> step_size;
 
@@ -70,17 +78,17 @@ void synchronous_gradient_descent(vector<string> arguments, double (*objective_f
     get_argument_vector<double>(arguments, "--step_size", true, step_size);
 
     LineSearch line_search(objective_function, arguments);
-    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search, final_parameters, final_fitness);
 }
 
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &starting_point, const vector<double> &step_size, vector<double> &final_parameters, double &final_fitness) {
     LineSearch line_search(objective_function, arguments);
-    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search, final_parameters, final_fitness);
 }
 
-void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &starting_point, const vector<double> &step_size) {
+void synchronous_gradient_descent(vector<string> arguments, double (*objective_function)(const std::vector<double> &), const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &starting_point, const vector<double> &step_size, vector<double> &final_parameters, double &final_fitness) {
     LineSearch line_search(objective_function, min_bound, max_bound, arguments);
-    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search);
+    synchronous_gradient_descent(arguments, objective_function, starting_point, step_size, line_search, final_parameters, final_fitness);
 }
 
 

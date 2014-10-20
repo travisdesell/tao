@@ -53,32 +53,38 @@ ostream& operator<< (ostream& stream, LineSearchException &lse) {
     return stream;
 }
 
+bool ls_quiet = false;
+
 void LineSearch::parse_arguments(const vector<string> &arguments) {
+    if (argument_exists(arguments, "--gd_quiet")) {
+        ls_quiet = true;
+    }
+
     if (!get_argument(arguments, "--loop1_max", false, LOOP1_MAX)) {
-        cerr << "Argument '--loop1_max' not found, using default of 300 maximum iterations for loop 1 of the line search." << endl;
+        if (!ls_quiet) cerr << "Argument '--loop1_max' not found, using default of 300 maximum iterations for loop 1 of the line search." << endl;
         LOOP1_MAX = 300;
     }
 
     if (!get_argument(arguments, "--loop2_max", false, LOOP2_MAX)) {
-        cerr << "Argument '--loop2_max' not found, using default of 300 maximum iterations for loop 2 of the line search." << endl;
+        if (!ls_quiet) cerr << "Argument '--loop2_max' not found, using default of 300 maximum iterations for loop 2 of the line search." << endl;
         LOOP2_MAX = 300;
     }
 
     if (!get_argument(arguments, "--nquad", false, NQUAD)) {
-        cerr << "Argument '--nquad <i>' not found, using default of 4 iterations for loop 3 of the line search." << endl;
+        if (!ls_quiet) cerr << "Argument '--nquad <i>' not found, using default of 4 iterations for loop 3 of the line search." << endl;
 
         NQUAD = 4;
     }
 
     if (!get_argument(arguments, "--tol", false, tol)) {
-        cerr << "Argument '--tol <d>' not found, using default of 1e-6 for tolerance of dstar in loop 3 of the line search." << endl;
+        if (!ls_quiet) cerr << "Argument '--tol <d>' not found, using default of 1e-6 for tolerance of dstar in loop 3 of the line search." << endl;
         tol = 1e-6;
     }
 
     threshold_specified = get_argument_vector(arguments, "--min_threshold", false, min_threshold);
 
     if (!threshold_specified) {
-        cerr << "Argument '--min_threshold <d1, d2 .. dn>' not found. line search will not quit if the input direction is very small." << endl;
+        if (!ls_quiet) cerr << "Argument '--min_threshold <d1, d2 .. dn>' not found. line search will not quit if the input direction is very small." << endl;
     }
 }
 
@@ -88,7 +94,7 @@ LineSearch::LineSearch(double (*objective_function)(const vector<double> &), vec
 
     using_bounds = true;
     if (!get_argument_vector(arguments, "--min_bound", false, min_bound) || !get_argument_vector(arguments, "--max_bound", false, max_bound)) {
-        cerr << "Arguments '--min_bound <d1 .. dn>' and '--max_bound <d1 .. dn>' not found. line search will not be bounded." << endl;
+        if (!ls_quiet) cerr << "Arguments '--min_bound <d1 .. dn>' and '--max_bound <d1 .. dn>' not found. line search will not be bounded." << endl;
         using_bounds = false;
     }
 
@@ -139,9 +145,9 @@ double LineSearch::evaluate_step(const vector<double> &point, const double step,
 
 void LineSearch::line_search(const vector<double> &point, double initial_fitness, const vector<double> &direction, vector <double> &new_point, double &new_fitness) throw (LineSearchException*) {
     if (threshold_specified && gradient_below_threshold(direction, min_threshold)) {
-        cerr << "\tDirection dropped below threshold:" << endl;
-        cerr << "\tdirection:  " << vector_to_string(direction) << endl;
-        cerr << "\tthreshold: " << vector_to_string(min_threshold) << endl;
+        if (!ls_quiet) cerr << "\tDirection dropped below threshold:" << endl;
+        if (!ls_quiet) cerr << "\tdirection:  " << vector_to_string(direction) << endl;
+        if (!ls_quiet) cerr << "\tthreshold: " << vector_to_string(min_threshold) << endl;
 
         throw new LineSearchException(LineSearchException::DIRECTION_BELOW_THRESHOLD, "direction dropped below threshold");
     }
@@ -152,8 +158,8 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
 
     vector<double> current_point(point);
 
-    cout << "\tline search starting at fitness: " << initial_fitness << endl;
-    cout << "\tinitial_point: " << vector_to_string(current_point) << endl;
+    if (!ls_quiet) cout << "\tline search starting at fitness: " << initial_fitness << endl;
+    if (!ls_quiet) cout << "\tinitial_point: " << vector_to_string(current_point) << endl;
 
     /********
         *    Find f1 < f2
@@ -164,7 +170,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     double f2 = evaluate_step(point, step, direction, current_point);
     evaluations_done = 1;
 
-    cout << "\t\tloop 1, evaluations: " << evaluations_done << ", step: " << step << ", fitness: " << f2 << endl;
+    if (!ls_quiet) cout << "\t\tloop 1, evaluations: " << evaluations_done << ", step: " << step << ", fitness: " << f2 << endl;
 
     if (f1 > f2) {
         double temp;
@@ -188,7 +194,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     double f3 = evaluate_step(point, d3 * step, direction, current_point);
     evaluations_done++;
 
-    cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
+    if (!ls_quiet) cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
 
     uint32_t eval_count = 0;
     while (f3 >= (f2 + tol) && !isnan(f1) && !isnan(f2) && !isnan(f3) && eval_count < LOOP2_MAX) {
@@ -203,7 +209,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         evaluations_done++;
         eval_count++;
 
-        cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
+        if (!ls_quiet) cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
 
         if ( using_bounds && Recombination::out_of_bounds(min_bound, max_bound, current_point) ) {
             new_point.resize(point.size(), 0.0);
@@ -235,15 +241,17 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     /********
         *    Find minimum
      ********/
-    cout << "\t\tNeed d1 < d2 < d3" << endl;
-    cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
-    cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
-    cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
+    if (!ls_quiet) {
+        cout << "\t\tNeed d1 < d2 < d3" << endl;
+        cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
+        cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
+        cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
+    }
 
     if (d1 < d2 && d2 < d3) {
         //Do nothing, this is the order we want things in.
     } else if (d1 > d2 && d2 > d3) {
-        cout << "\t\tswapping d1, d3 (and f1, f3), so d1, d2, d3 are in the correct order." << endl;
+        if (!ls_quiet) cout << "\t\tswapping d1, d3 (and f1, f3), so d1, d2, d3 are in the correct order." << endl;
         //Swap d1, d3 (and f1, f3) so they are in order
         double temp;
         temp = d3;
@@ -254,13 +262,16 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         f3 = f1;
         f1 = temp;
     } else {
-        cerr <<  "ERROR: before 3rd phase of line search, d1, d2 and d3 were not in order." << endl; //This should never happen
+        if (!ls_quiet) cerr <<  "ERROR: before 3rd phase of line search, d1, d2 and d3 were not in order." << endl; //This should never happen
         exit(1);
     }
-    cout << "\t\tShould be d1 < d2 < d3:" << endl;
-    cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
-    cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
-    cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
+
+    if (!ls_quiet) {
+        cout << "\t\tShould be d1 < d2 < d3:" << endl;
+        cout << "\t\t\td1:    " << d1 << ", f1: " << f1 << endl;
+        cout << "\t\t\td2:    " << d2 << ", f2: " << f2 << endl;
+        cout << "\t\t\td3:    " << d3 << ", f3: " << f3 << endl;
+    }
 
     double fs = 0.0;
     for (uint32_t i = 0; i < NQUAD; i++) {
@@ -279,7 +290,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         else if (dstar > d2 - tol && dstar <= d2) dstar = d2 - tol;
 
         if (isnan(dstar) || isinf(dstar)) {
-            cout << "\t\tterminating loop 3 because dstar is NAN or INF" << endl;
+            if (!ls_quiet) cout << "\t\tterminating loop 3 because dstar is NAN or INF" << endl;
             break;
         }
 
@@ -287,7 +298,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         fs = evaluate_step(point, dstar * step, direction, current_point);
         evaluations_done++;
 
-        cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << fs << ", dstar: " << dstar << endl;
+        if (!ls_quiet) cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << fs << ", dstar: " << dstar << endl;
 
         if ( using_bounds && Recombination::out_of_bounds(min_bound, max_bound, current_point) ) {
             new_point.resize(point.size(), 0.0);
@@ -325,16 +336,18 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
             }
         }
 
-        cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << f2 << "(f2 instead of fs -- should be minimum)" << endl;
-        cout << "\t\t\td1:    " << d1    << ", f1: " << f1 << endl;
-        cout << "\t\t\td2:    " << d2    << ", f2: " << f2 << endl;
-        cout << "\t\t\td3:    " << d3    << ", f3: " << f3 << endl;
-        cout << "\t\t\tdstar: " << dstar << ", fs: " << fs << endl;
+        if (!ls_quiet) {
+            cout << "\t\tloop 3, evaluations: " << evaluations_done << ", step: " << (dstar * step) << ", fitness: " << f2 << "(f2 instead of fs -- should be minimum)" << endl;
+            cout << "\t\t\td1:    " << d1    << ", f1: " << f1 << endl;
+            cout << "\t\t\td2:    " << d2    << ", f2: " << f2 << endl;
+            cout << "\t\t\td3:    " << d3    << ", f3: " << f3 << endl;
+            cout << "\t\t\tdstar: " << dstar << ", fs: " << fs << endl;
+        }
 
         if (fabs(f1 - f2) < tol && fabs(f2 - f3) < tol && fabs(f1 - f3) < tol) {
 //            ostringstream err_msg;
 //            err_msg << "f1 - f2, f2 - f3, f1 - f3 all less than tolerance (" << tol << ") search finished.";
-            cout << "\t\tterminating loop 3 because f1 - f2, f2 - f3 and f1 - f3 all less than tolerance(" << tol << ")." << endl;
+            if (!ls_quiet) cout << "\t\tterminating loop 3 because f1 - f2, f2 - f3 and f1 - f3 all less than tolerance(" << tol << ")." << endl;
             break;
         }
     }

@@ -11,29 +11,19 @@ There is also some simple example code for using TAO with and without a database
     https://github.com/travisdesell/tao/blob/master/examples/standard_benchmarks.cxx
     https://github.com/travisdesell/tao/blob/master/examples/standard_benchmarks_db.cxx
 
+TAO also requires the UNDVC_COMMON code repository (which needs to be checked out and built within the same directory as tao), you can get it here:
+    https://github.com/travisdesell/undvc_common
 
-To build:
+To build (make sure UNDVC_COMMON is checked out and built):
 
 git submodule init
 git submodule update
-
-(check out the tao submodule)
-cd tao
-git submodule init
-git submodule update
-git checkout master
-
-cd undvc_common
-git submodule init
-git submodule update
-git checkout master
 
 (check out the bootstrap submodule -- only needed if you're using the php webpages)
 cd ../../php/bootstrap
 git submodule init
 git submodule update
 git checkout master
-
 
 mkdir build
 cd build
