@@ -39,7 +39,7 @@ class Edge {
 
 try {
     //BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/test_networks/fully_connected_elman_h1_n4.txt"));
-    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/200_3"));
+    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/40_2"));
 
     try {
         String line = br.readLine();
@@ -66,9 +66,10 @@ try {
           for (int j = 0; j < possible_nodes[i].length; j++) {
             possible_nodes[i][j] = 0;
           }
-          if ((i % 2) != 1) {  //no bias node on recurrent layers
-            possible_nodes[i][ possible_nodes[i].length - 1] = 1;
-          }
+
+//          if ((i % 2) != 1) {  //no bias node on recurrent layers
+//            possible_nodes[i][ possible_nodes[i].length - 1] = 1;
+//          }
         }
 
         output_layer = possible_nodes.length - 1;
@@ -77,36 +78,7 @@ try {
 
         line = br.readLine();
         while (!line.equals("")) {
-            System.out.println("line: '" + line + "'");
-
-            String[] splits = line.split(" ");
-            for (String s : splits) System.out.println(s);
-            System.out.println("splits.length: " + splits.length);
-
-            int src_layer = Integer.parseInt(splits[0]);
-            int dst_layer = Integer.parseInt(splits[1]);
-            int src_node = Integer.parseInt(splits[2]);
-            int dst_node = Integer.parseInt(splits[3]);
-            double weight = 0;
-            if (splits.length >= 5) weight = Double.parseDouble(splits[4]);
-
-            System.out.println("setting possible nodes");
-
-            possible_nodes[src_layer][src_node] = 1;
-            possible_nodes[dst_layer][dst_node] = 1;
-
-            System.out.println("adding edge");
-            edges.add( new Edge(src_layer, dst_layer, src_node, dst_node, weight) );
-
-            System.out.println("read edge: " + src_layer + " " + dst_layer + " " + src_node + " " + dst_node + " " + weight);
-
-            line = br.readLine();
-        }
-
-        line = br.readLine();
-        line = br.readLine();
-        while (line != null && !line.equals("")) {
-            System.out.println("line: '" + line + "'");
+//            System.out.println("line: '" + line + "'");
 
             String[] splits = line.split(" ");
             //for (String s : splits) System.out.println(s);
@@ -121,9 +93,32 @@ try {
             possible_nodes[src_layer][src_node] = 1;
             possible_nodes[dst_layer][dst_node] = 1;
 
-            System.out.println("adding edge");
             edges.add( new Edge(src_layer, dst_layer, src_node, dst_node, weight) );
 
+            System.out.println("read edge: " + src_layer + " " + dst_layer + " " + src_node + " " + dst_node + " " + weight);
+
+            line = br.readLine();
+        }
+
+        line = br.readLine();
+        line = br.readLine();
+        while (line != null && !line.equals("")) {
+//            System.out.println("line: '" + line + "'");
+
+            String[] splits = line.split(" ");
+            //for (String s : splits) System.out.println(s);
+
+            int src_layer = Integer.parseInt(splits[0]);
+            int dst_layer = Integer.parseInt(splits[1]);
+            int src_node = Integer.parseInt(splits[2]);
+            int dst_node = Integer.parseInt(splits[3]);
+            double weight = 0;
+            if (splits.length >= 5) weight = Double.parseDouble(splits[4]);
+
+            possible_nodes[src_layer][src_node] = 1;
+            possible_nodes[dst_layer][dst_node] = 1;
+
+            edges.add( new Edge(src_layer, dst_layer, src_node, dst_node, weight) );
 
             System.out.println("read recurrent edge: " + src_layer + " " + dst_layer + " " + src_node + " " + dst_node + " " + weight);
 
@@ -181,7 +176,7 @@ try {
           int dst_y = edges.get(i).dst_node;
           double weight = edges.get(i).weight;
 
-          System.out.println("\tdrawing link from: [" + src_x + "][" + src_y + "] to [" + dst_x + "][" + dst_y + "]");
+          System.out.println("\tdrawing link from: [" + src_x + "][" + src_y + "] to [" + dst_x + "][" + dst_y + "] with weight: " + weight);
 
           int start_x = (src_x * neuron_distance) + neuron_distance;
           int start_y = (src_y * neuron_distance) + neuron_distance;
@@ -198,7 +193,15 @@ try {
             end_y += (9 * neuron_distance);
           }
 
-          stroke(50);
+//          if (weight == 0) {
+//            stroke(50);
+//          } else {
+          if (weight < 0.00001) {
+            continue;
+          }
+          stroke(max(0, 255 - Math.abs((int)(weight * 200.0)) ));
+//          }
+
           if (src_x % 2 == 1) {
             int mid_x1 = start_x + (3 * neuron_distance);
             int mid_x2 = start_x + (3 * neuron_distance);
