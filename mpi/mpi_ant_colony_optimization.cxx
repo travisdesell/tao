@@ -35,6 +35,23 @@ void array_to_edges(vector<Edge> &edges, int array_size, int* edges_array) {
     }
 }
 
+double* weights_to_array(const vector<Edge> &edges) {
+    double *weights_array = new double[edges.size()];
+    for (int i = 0; i < edges.size(); i++) {
+        weights_array[i] = edges[i].weight;
+    }
+    return weights_array;
+}
+
+void array_to_weights(vector<Edge> &edges, int array_size, double* weights_array) {
+    for (int i = 0; i < array_size; i++) {
+        edges[i].weight = weights_array[i];
+    }
+}
+
+
+
+
 void receive_edges(int source, vector<Edge> &edges, vector<Edge> &recurrent_edges) {
     MPI_Status status;
     int array_size;
@@ -45,28 +62,55 @@ void receive_edges(int source, vector<Edge> &edges, vector<Edge> &recurrent_edge
     array_to_edges(edges, array_size, edges_array);
 
     MPI_Recv(&array_size, 1, MPI_INT, source, EDGES_SIZE_MSG, MPI_COMM_WORLD, &status);
+    double *edge_weights_array = new double[array_size];
+    //if (source != 0) cout << "farmer recieved " << array_size << " edges" << endl;
+    MPI_Recv(edge_weights_array, array_size, MPI_DOUBLE, source, EDGES_ARRAY_MSG, MPI_COMM_WORLD, &status);
+    array_to_weights(edges, array_size, edge_weights_array);
+
+    MPI_Recv(&array_size, 1, MPI_INT, source, EDGES_SIZE_MSG, MPI_COMM_WORLD, &status);
     int *recurrent_edges_array = new int[array_size];
     MPI_Recv(recurrent_edges_array, array_size, MPI_INT, source, EDGES_ARRAY_MSG, MPI_COMM_WORLD, &status);
     array_to_edges(recurrent_edges, array_size, recurrent_edges_array);
 
+    MPI_Recv(&array_size, 1, MPI_INT, source, EDGES_SIZE_MSG, MPI_COMM_WORLD, &status);
+    double *recurrent_edge_weights_array = new double[array_size];
+    //if (source != 0) cout << "farmer recieved " << array_size << " recurrent edges" << endl;
+    MPI_Recv(recurrent_edge_weights_array, array_size, MPI_DOUBLE, source, EDGES_ARRAY_MSG, MPI_COMM_WORLD, &status);
+    array_to_weights(recurrent_edges, array_size, recurrent_edge_weights_array);
+
     delete [] edges_array;
+    delete [] edge_weights_array;
     delete [] recurrent_edges_array;
+    delete [] recurrent_edge_weights_array;
 }
 
 void send_edges(int target, const vector<Edge> &edges, const vector<Edge> &recurrent_edges) {
         int *edges_array = edges_to_array(edges);
+        double *edge_weights_array = weights_to_array(edges);
+
         int *recurrent_edges_array = edges_to_array(recurrent_edges);
+        double *recurrent_edge_weights_array = weights_to_array(recurrent_edges);
 
         int edges_size = edges.size() * 4;
         MPI_Send(&edges_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
         MPI_Send(edges_array, edges_size, MPI_INT, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
 
+        int edge_weights_size = edges.size();
+        MPI_Send(&edge_weights_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
+        MPI_Send(edge_weights_array, edge_weights_size, MPI_DOUBLE, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
+
         int recurrent_edges_size = recurrent_edges.size() * 4;
         MPI_Send(&recurrent_edges_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
         MPI_Send(recurrent_edges_array, recurrent_edges_size, MPI_INT, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
 
+        int recurrent_edge_weights_size = recurrent_edges.size();
+        MPI_Send(&recurrent_edge_weights_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
+        MPI_Send(recurrent_edge_weights_array, recurrent_edge_weights_size, MPI_DOUBLE, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
+
         delete [] edges_array;
+        delete [] edge_weights_array;
         delete [] recurrent_edges_array;
+        delete [] recurrent_edge_weights_array;
 }
 
 void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
@@ -96,9 +140,24 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
         //receive edges from a worker
         receive_edges(source, edges, recurrent_edges);
 
+        /*
+        cout << "received edges: " << endl;
+        for (int i = 0; i < edges.size(); i++) {
+            cout << edges[i] << endl;
+        }
+        cout << "received recurrent edges: " << endl;
+        for (int i = 0; i < recurrent_edges.size(); i++) {
+            cout << recurrent_edges[i] << endl;
+        }
+        */
+
         ant_colony.add_ant_paths(fitness, edges, recurrent_edges);
 
         cout << "iteration: " << iteration << "/" << maximum_iterations << ", new fitness: " << fitness << ", pop size: " << ant_colony.get_edge_population_size() << ", max pop fitness: " << ant_colony.get_best_fitness() << ", min pop fitness: " << ant_colony.get_worst_fitness() << endl;
+
+        if (iteration > 0 && (iteration % 10) == 0) {
+            ant_colony.write_population(iteration);
+        }
 
         //send another set of edges to the worker
         send_edges(source, edges, recurrent_edges);
@@ -106,7 +165,7 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
     }
 }
 
-void ant_colony_worker(int rank, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges)) {
+void ant_colony_worker(int rank, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges)) {
     vector<Edge> edges;
     vector<Edge> recurrent_edges;
 
@@ -118,7 +177,7 @@ void ant_colony_worker(int rank, double (*objective_function)(const vector<Edge>
         //evaluate its fitness
         double fitness = objective_function(edges, recurrent_edges);
 
-        cout << "[worker " << rank << "] calculated fitness: " << fitness << endl;
+        //cout << "[worker " << rank << "] calculated fitness: " << fitness << endl;
 
         //report the fitness
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0, FITNESS_MSG, MPI_COMM_WORLD);
@@ -126,7 +185,7 @@ void ant_colony_worker(int rank, double (*objective_function)(const vector<Edge>
     }
 }
 
-void ant_colony_optimization_mpi(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges)) {
+void ant_colony_optimization_mpi(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges)) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

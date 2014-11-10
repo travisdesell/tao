@@ -13,7 +13,8 @@ class Edge {
 
         double weight;
 
-        Edge(int sl, int dl, int sn, int dn) : src_layer(sl), dst_layer(dl), src_node(sn), dst_node(dn), weight(0.0) {}
+        Edge(int sl, int dl, int sn, int dn);
+        Edge(int sl, int dl, int sn, int dn, double w);
 
         friend ostream& operator<< (ostream& out, Edge& edge);
         friend ostream& operator<< (ostream& out, const Edge& edge);

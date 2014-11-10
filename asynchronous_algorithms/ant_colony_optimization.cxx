@@ -1,9 +1,18 @@
 #include <algorithm>
 using std::lower_bound;
 
+#include <fstream>
+using std::ofstream;
+
 #include <iostream>
 using std::cout;
 using std::endl;
+
+#include <sstream>
+using std::ostringstream;
+
+#include <string>
+using std::string;
 
 #include "asynchronous_algorithms/ant_colony_optimization.hxx"
 
@@ -321,5 +330,46 @@ void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, doub
         ant_colony.add_ant_paths(fitness, edges, recurrent_edges);
 
         cout << "iteration: " << i << "/" << maximum_iterations << ", new fitness: " << fitness << ", pop size: " << ant_colony.edge_population.size() << ", max pop fitness: " << ant_colony.edge_population.front()->fitness << ", min pop fitness: " << ant_colony.edge_population.back()->fitness << endl;
+    }
+}
+
+void AntColony::set_output_directory(string od) {
+    output_directory = od;
+}
+
+void AntColony::write_population(int current_iteration) {
+    
+    for (int i = 0; i < edge_population.size(); i++) {
+        ostringstream oss;
+        oss << output_directory << "/" << current_iteration << "_" << i;
+
+        ofstream outfile( oss.str().c_str() );
+
+        outfile << "#hidden layers" << endl;
+        outfile << n_hidden_layers << endl << endl;
+
+        outfile << "#nodes per layer" << endl;
+        outfile << hidden_layer_size << endl << endl;
+
+        outfile << "#feed forward edges" << endl;
+        for (int j = 0; j < edge_population[i]->edges.size(); j++) {
+            outfile << edge_population[i]->edges[j].src_layer << " "
+                    << edge_population[i]->edges[j].dst_layer << " "
+                    << edge_population[i]->edges[j].src_node << " "
+                    << edge_population[i]->edges[j].dst_node << " "
+                    << edge_population[i]->edges[j].weight << endl;
+        }
+        outfile << endl;
+
+        outfile << "#recurrent edges" << endl;
+        for (int j = 0; j < edge_population[i]->recurrent_edges.size(); j++) {
+            outfile << edge_population[i]->recurrent_edges[j].src_layer << " "
+                    << edge_population[i]->recurrent_edges[j].dst_layer << " "
+                    << edge_population[i]->recurrent_edges[j].src_node << " "
+                    << edge_population[i]->recurrent_edges[j].dst_node << " "
+                    << edge_population[i]->recurrent_edges[j].weight << endl;
+        }
+
+        outfile.close();
     }
 }

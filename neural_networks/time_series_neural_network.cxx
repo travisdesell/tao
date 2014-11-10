@@ -21,20 +21,31 @@ using boost::char_separator;
 
 
 TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(int tp) : target_parameter(tp) {
+    nodes = NULL;
 }
 
 
 TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc, int tp, int nhl, int npl, vector<Edge> e, vector<Edge> re) : target_parameter(tp), edges(e), recurrent_edges(re) {
+    nodes = NULL;
 
     set_time_series_data(tsd, tsr, tsc);
     initialize_nodes(nhl, npl);
 }
 
 int TimeSeriesNeuralNetwork::get_n_edges() {
-    return edges.size();
+    return edges.size() + recurrent_edges.size();
 }
 
 void TimeSeriesNeuralNetwork::initialize_nodes(int nhl, int npl) {
+    if (nodes != NULL) {
+        //if we're reinitializing, we need to delete the
+        //previously allocated nodes
+        for (int i = 0; i < n_layers; i++) {
+            delete[] nodes[i];
+        }
+        delete[] nodes;
+    }
+
     n_hidden_layers = nhl;
     nodes_per_layer = npl;
     n_layers = 1 + (n_hidden_layers * 2) + 1;
@@ -137,30 +148,55 @@ double TimeSeriesNeuralNetwork::evaluate() {
             Edge e = edges.at(i);
             nodes[e.dst_layer][e.dst_node] += nodes[e.src_layer][e.src_node] * e.weight;
 
-//            cerr << e << " : node: " << nodes[e.dst_layer][e.dst_node] << endl;
+            //cerr << e << " : node: " << nodes[e.dst_layer][e.dst_node] << endl;
         }
 
         for (int i = 0; i < recurrent_edges.size(); i++) {
             Edge e = recurrent_edges.at(i);
             nodes[e.dst_layer][e.dst_node] = nodes[e.src_layer][e.src_node];
+
+            if (nodes[e.dst_layer][e.dst_node] > 2) nodes[e.dst_layer][e.dst_node] = 2.0;
+            if (nodes[e.dst_layer][e.dst_node] < -2) nodes[e.dst_layer][e.dst_node] = -2.0;
         }
+
+        //cerr << "comparing output node: " << nodes[n_layers-1][0] << " to actual value: " << time_series_data[ts_row + 1][target_parameter] << endl;
 
         //update the mean average error
         //might need to deal with summation errors here
         //might want to add activation function here
         mean_average_error += fabs(nodes[n_layers - 1][0] - time_series_data[ts_row + 1][target_parameter]);
+
     }
+//    cerr << "MAE: " << mean_average_error << endl;
 
     mean_average_error /= (time_series_rows - 1);
 
     return -mean_average_error;
 }
 
+double TimeSeriesNeuralNetwork::objective_function() {
+    reset();
+    return evaluate();
+}
+
 double TimeSeriesNeuralNetwork::objective_function(const vector<double> &parameters) {
     reset();
 
-    for (int i = 0; i < parameters.size(); i++) {
-        edges[i].weight = parameters[i];
+    if (edges.size() + recurrent_edges.size() != parameters.size()) {
+        cerr << "Error [" << __FILE__ << ":" << __LINE__ << "]: edges.size (" << edges.size() << ") + recurrent_edges.size (" << recurrent_edges.size() << ") != parameters.size (" << parameters.size() << ")" << endl;
+
+        exit(1);
+    }
+
+    int current = 0;
+    for (int i = 0; i < edges.size(); i++) {
+        edges[i].weight = parameters[current];
+        current++;
+    }
+
+    for (int i = 0; i < recurrent_edges.size(); i++) {
+        recurrent_edges[i].weight = parameters[current];
+        current++;
     }
 
     return evaluate();
@@ -168,7 +204,9 @@ double TimeSeriesNeuralNetwork::objective_function(const vector<double> &paramet
 
 /**
  *  weights filename is one weight per line
+ *  TODO: is not reading recurrent edges
  */
+/*
 void TimeSeriesNeuralNetwork::read_weights_from_file(string weights_filename) {
     ifstream weights_file( weights_filename.c_str() );
     if (!weights_file.is_open()) {
@@ -185,6 +223,7 @@ void TimeSeriesNeuralNetwork::read_weights_from_file(string weights_filename) {
         getline( weights_file, s );
     }
 }
+*/
 
 void TimeSeriesNeuralNetwork::set_edges(const vector<Edge> &e, const vector<Edge> &re) {
 
@@ -235,8 +274,14 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         int dst_layer = atoi((*(++i)).c_str());
         int src_node  = atoi((*(++i)).c_str());
         int dst_node  = atoi((*(++i)).c_str());
+        double weight = 0;
+        
+        if (i != tok.end()) {
+            weight = atof((*(++i)).c_str());
+        }
 
-        edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
+        edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));
+
         getline( nn_file, s );
     }
 
@@ -258,8 +303,13 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         int dst_layer = atoi((*(++i)).c_str());
         int src_node  = atoi((*(++i)).c_str());
         int dst_node  = atoi((*(++i)).c_str());
+        double weight = 0;
+        
+        if (i != tok.end()) {
+            weight = atof((*(++i)).c_str());
+        }
 
-        recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
+        recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));
         getline( nn_file, s );
     }
 }

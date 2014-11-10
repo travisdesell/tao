@@ -2,13 +2,16 @@
 #define TAO_ANT_COLONY_OPTIMIZATION_H
 
 #include <cmath>
+
 #include <vector>
+using std::vector;
+
+#include <string>
+using std::string;
 
 #include "stdint.h"
 
 #include "neural_networks/edge.hxx"
-
-using std::vector;
 
 
 class ACO_Node {
@@ -51,6 +54,8 @@ class AntColony {
         const static double PHEROMONE_MINIMUM;
         const static double PHEROMONE_MAXIMUM;
 
+        string output_directory;
+
         int number_of_ants;
         int n_layers;
         uint32_t input_layer_size;
@@ -77,6 +82,9 @@ class AntColony {
         void add_ant_paths(double fitness, const vector<Edge> &edges, const vector<Edge> &recurrent_edges);
 
         void decrease_pheromones();
+
+        void set_output_directory(string output_directory);
+        void write_population(int current_iteration);
 
         friend void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
 };
