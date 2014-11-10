@@ -52,6 +52,7 @@ class TimeSeriesNeuralNetwork {
         void set_time_series_data(double **tsd, int tsr, int tsc);
         void initialize_nodes(int nhl, int npl);
         void set_edges(const vector<Edge> &e, const vector<Edge> &re);
+        //void read_weights_from_file(string weights_filename);
         void read_nn_from_file(string nn_filename);
 };
 

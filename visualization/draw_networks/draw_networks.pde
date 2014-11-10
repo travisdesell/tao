@@ -39,7 +39,7 @@ class Edge {
 
 try {
     //BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/test_networks/fully_connected_elman_h1_n4.txt"));
-    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/40_2"));
+    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/100_1"));
 
     try {
         String line = br.readLine();
@@ -196,7 +196,7 @@ try {
 //          if (weight == 0) {
 //            stroke(50);
 //          } else {
-          if (weight < 0.00001) {
+          if (weight < 0.00001 && weight > -0.00001) {
             continue;
           }
           stroke(max(0, 255 - Math.abs((int)(weight * 200.0)) ));

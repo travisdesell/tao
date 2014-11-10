@@ -148,8 +148,7 @@ double TimeSeriesNeuralNetwork::evaluate() {
             Edge e = edges.at(i);
             nodes[e.dst_layer][e.dst_node] += nodes[e.src_layer][e.src_node] * e.weight;
 
-
-            cerr << e << " : node: " << nodes[e.dst_layer][e.dst_node] << endl;
+            //cerr << e << " : node: " << nodes[e.dst_layer][e.dst_node] << endl;
         }
 
         for (int i = 0; i < recurrent_edges.size(); i++) {
@@ -160,13 +159,15 @@ double TimeSeriesNeuralNetwork::evaluate() {
             if (nodes[e.dst_layer][e.dst_node] < -2) nodes[e.dst_layer][e.dst_node] = -2.0;
         }
 
-        cerr << "comparing output node: " << nodes[n_layers-1][0] << " to actual value: " << time_series_data[ts_row + 1][target_parameter] << endl;
+        //cerr << "comparing output node: " << nodes[n_layers-1][0] << " to actual value: " << time_series_data[ts_row + 1][target_parameter] << endl;
 
         //update the mean average error
         //might need to deal with summation errors here
         //might want to add activation function here
         mean_average_error += fabs(nodes[n_layers - 1][0] - time_series_data[ts_row + 1][target_parameter]);
+
     }
+//    cerr << "MAE: " << mean_average_error << endl;
 
     mean_average_error /= (time_series_rows - 1);
 
@@ -278,9 +279,9 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         if (i != tok.end()) {
             weight = atof((*(++i)).c_str());
         }
-        std::cout << "read weight: " << weight << endl;
 
-        edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node));
+        edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));
+
         getline( nn_file, s );
     }
 
@@ -307,8 +308,6 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         if (i != tok.end()) {
             weight = atof((*(++i)).c_str());
         }
-        std::cout << "read weight: " << weight << endl;
-
 
         recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));
         getline( nn_file, s );
