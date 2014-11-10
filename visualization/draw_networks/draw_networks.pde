@@ -3,7 +3,7 @@ import java.io.FileReader;
 
 import java.util.ArrayList;
 
-int output_layer = 7;
+int output_layer;
 
 int height =1200;
 int width = 1000;
@@ -24,130 +24,207 @@ int current_y = 20;
 
 int max_pheromone = 10;
 
+class Edge {
+  int src_layer, dst_layer, src_node, dst_node;
+  double weight;
+
+  public Edge(int src_layer, int dst_layer, int src_node, int dst_node, double weight) {
+    this.src_layer = src_layer;
+    this.dst_layer = dst_layer;
+    this.src_node = src_node;
+    this.dst_node = dst_node;
+    this.weight = weight;
+  }
+}
+
 try {
-    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/tao/visualization/single_nn_8.txt"));
-    //BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/tao/visualization/aco_output_nhl_3_npl_8_ants_16"));
+    //BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/test_networks/fully_connected_elman_h1_n4.txt"));
+    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/200_3"));
 
     try {
-        StringBuilder sb = new StringBuilder();
-        String line = "";
+        String line = br.readLine();
+        line = br.readLine();
 
-        int src_x = 0, src_y = 0, dst_x = 0, dst_y = 0;
+        int n_hidden_layers = Integer.parseInt(line);
 
-        while (line != null) {
-            line = br.readLine();
+        line = br.readLine();
+        line = br.readLine();
+        line = br.readLine();
+        int nodes_per_layer = Integer.parseInt(line);
+        nodes_per_layer += 1; // for bias nodes
+
+        System.out.println("n_hidden_layers: " + n_hidden_layers);
+        System.out.println("nodes_per_layer: " + nodes_per_layer);
+
+        line = br.readLine();
+        line = br.readLine();
+
+
+        int[][] possible_nodes = new int[(n_hidden_layers * 2) + 2][];
+        for (int i = 0; i < possible_nodes.length; i++) {
+          possible_nodes[i] = new int[nodes_per_layer];
+          for (int j = 0; j < possible_nodes[i].length; j++) {
+            possible_nodes[i][j] = 0;
+          }
+          if ((i % 2) != 1) {  //no bias node on recurrent layers
+            possible_nodes[i][ possible_nodes[i].length - 1] = 1;
+          }
+        }
+
+        output_layer = possible_nodes.length - 1;
+
+        ArrayList<Edge> edges = new ArrayList<Edge>();
+
+        line = br.readLine();
+        while (!line.equals("")) {
             System.out.println("line: '" + line + "'");
 
-            if (line.equals("")) {
-                continue;
-            } else if (line.charAt(0) == 'f') {
-                continue;
-            } else if (line.charAt(0) == 'i') {
-                continue;
-            } else if (line.charAt(0) == '[') {
-                continue;
-            } else if (line.equals("#pheromones")) {
-                continue;
-            }
+            String[] splits = line.split(" ");
+            for (String s : splits) System.out.println(s);
+            System.out.println("splits.length: " + splits.length);
 
-            if (line.charAt(0) == '#') {
-                String[] splits = line.split("[#\\[\\]:]");
-                //for (String s : splits) System.out.println(s);
-                src_x = Integer.parseInt(splits[2]);
-                src_y = Integer.parseInt(splits[4]);
+            int src_layer = Integer.parseInt(splits[0]);
+            int dst_layer = Integer.parseInt(splits[1]);
+            int src_node = Integer.parseInt(splits[2]);
+            int dst_node = Integer.parseInt(splits[3]);
+            double weight = 0;
+            if (splits.length >= 5) weight = Double.parseDouble(splits[4]);
 
-                System.out.println("drawing neuron: " + src_x  + ", " + src_y);
+            System.out.println("setting possible nodes");
 
-                current_x = (src_x * neuron_distance) + neuron_distance;
-                current_y = (src_y * neuron_distance) + neuron_distance;
+            possible_nodes[src_layer][src_node] = 1;
+            possible_nodes[dst_layer][dst_node] = 1;
 
-                if (src_x % 2 == 1 && src_x != output_layer) {
-                  current_x += neuron_distance;
-                  current_y += (9 * neuron_distance);
-                }
+            System.out.println("adding edge");
+            edges.add( new Edge(src_layer, dst_layer, src_node, dst_node, weight) );
 
-                stroke(0);
+            System.out.println("read edge: " + src_layer + " " + dst_layer + " " + src_node + " " + dst_node + " " + weight);
 
-                if (src_x == 0) {
-                  fill(50, 50, 200);
-                } else if (src_x == output_layer) {
-                  fill(50, 200, 50);
-                } else if (src_x % 2 == 1) {
-                  fill(200, 200, 128);
-                } else {
-                  fill(128, 200, 200);
-                }
+            line = br.readLine();
+        }
 
-                ellipse(current_x, current_y, neuron_width, neuron_height);
+        line = br.readLine();
+        line = br.readLine();
+        while (line != null && !line.equals("")) {
+            System.out.println("line: '" + line + "'");
 
+            String[] splits = line.split(" ");
+            //for (String s : splits) System.out.println(s);
+
+            int src_layer = Integer.parseInt(splits[0]);
+            int dst_layer = Integer.parseInt(splits[1]);
+            int src_node = Integer.parseInt(splits[2]);
+            int dst_node = Integer.parseInt(splits[3]);
+            double weight = 0;
+            if (splits.length >= 5) weight = Double.parseDouble(splits[4]);
+
+            possible_nodes[src_layer][src_node] = 1;
+            possible_nodes[dst_layer][dst_node] = 1;
+
+            System.out.println("adding edge");
+            edges.add( new Edge(src_layer, dst_layer, src_node, dst_node, weight) );
+
+
+            System.out.println("read recurrent edge: " + src_layer + " " + dst_layer + " " + src_node + " " + dst_node + " " + weight);
+
+            line = br.readLine();
+        }
+
+        System.out.println("Possible Nodes:");
+
+        for (int i = 0; i < possible_nodes.length; i++) {
+          for (int j = 0; j < possible_nodes[i].length; j++) {
+            System.out.print(" " + possible_nodes[i][j]);
+          }
+          System.out.println();
+        }
+
+        for (int i = 0; i < possible_nodes.length; i++) {
+          for (int j = 0; j < possible_nodes[i].length; j++) {
+            if (possible_nodes[i][j] == 0) continue;
+
+            stroke(0);
+
+            int src_x = i;
+            int src_y = j;
+
+            System.out.println("drawing neuron: " + src_x  + ", " + src_y);
+
+            current_x = (src_x * neuron_distance) + neuron_distance;
+            current_y = (src_y * neuron_distance) + neuron_distance;
+
+            if (src_x % 2 == 1 && src_x != output_layer) {
+              current_x += neuron_distance;
+              current_y += (9 * neuron_distance);
+            }   
+
+            if (src_y == possible_nodes[src_x].length - 1) {
+              fill(200, 50, 50);
+            } else if (src_x == 0) {
+              fill(50, 50, 200);
+            } else if (src_x == output_layer) {
+              fill(50, 200, 50);
+            } else if (src_x % 2 == 1) {
+              fill(200, 200, 128);
             } else {
-                String[] splits = line.split("[#\\[\\]:]");
-                //for (String s : splits) System.out.println(s);
-                dst_x = Integer.parseInt(splits[1]);
-                dst_y = Integer.parseInt(splits[3]);
-                double pheromone = Double.parseDouble(splits[5]);
+              fill(128, 200, 200);
+            }   
 
-                System.out.println("\tdrawing link from: [" + src_x + "][" + src_y + "] to [" + dst_x + "][" + dst_y + "]");
+            ellipse(current_x, current_y, neuron_width, neuron_height);
+          }
+        }
 
-                int start_x = (src_x * neuron_distance) + neuron_distance;
-                int start_y = (src_y * neuron_distance) + neuron_distance;
-                int end_x = (dst_x * neuron_distance) + neuron_distance;
-                int end_y = (dst_y * neuron_distance) + neuron_distance;
+        for (int i = 0; i < edges.size(); i++) {
+          int src_x = edges.get(i).src_layer;
+          int src_y = edges.get(i).src_node;
+          int dst_x = edges.get(i).dst_layer;
+          int dst_y = edges.get(i).dst_node;
+          double weight = edges.get(i).weight;
 
-                if (src_x % 2 == 1 && src_x != output_layer) {
-                  start_x += neuron_distance;
-                  start_y += (9 * neuron_distance);
-                }
+          System.out.println("\tdrawing link from: [" + src_x + "][" + src_y + "] to [" + dst_x + "][" + dst_y + "]");
 
-                if (dst_x % 2 == 1 && dst_x != output_layer) {
-                  end_x += neuron_distance;
-                  end_y += (9 * neuron_distance);
-                }
+          int start_x = (src_x * neuron_distance) + neuron_distance;
+          int start_y = (src_y * neuron_distance) + neuron_distance;
+          int end_x = (dst_x * neuron_distance) + neuron_distance;
+          int end_y = (dst_y * neuron_distance) + neuron_distance;
 
-                if (pheromone > 2) {
-                    stroke((int)(255 - ((pheromone / max_pheromone) * 255)));
+          if (src_x % 2 == 1 && src_x != output_layer) {
+            start_x += neuron_distance;
+            start_y += (9 * neuron_distance);
+          }
 
-                    if (src_x % 2 == 1) {
-                      int mid_x1 = start_x + (3 * neuron_distance);
-                      int mid_x2 = start_x + (3 * neuron_distance);
-                      //int mid_y1 = Math.abs(start_y - end_y) / 2;
-                      //int mid_y2 = Math.abs(start_y - end_y) / 2;
-                      int mid_y1 = end_y;
-                      int mid_y2 = start_y;
+          if (dst_x % 2 == 1 && dst_x != output_layer) {
+            end_x += neuron_distance;
+            end_y += (9 * neuron_distance);
+          }
 
-                      //curve(start_x, start_y, mid_x1, mid_y1, mid_x2, mid_y2, end_x, end_y);
-                      noFill();
-                      curve(mid_x1, mid_y1, start_x, start_y, end_x, end_y, mid_x2, mid_y2);
+          stroke(50);
+          if (src_x % 2 == 1) {
+            int mid_x1 = start_x + (3 * neuron_distance);
+            int mid_x2 = start_x + (3 * neuron_distance);
+            //int mid_y1 = Math.abs(start_y - end_y) / 2;
+            //int mid_y2 = Math.abs(start_y - end_y) / 2;
+            int mid_y1 = end_y;
+            int mid_y2 = start_y;
 
-                    } else if (dst_x % 2 == 1 && dst_x != output_layer) {
-                      int mid_x1 = start_x - (3 * neuron_distance);
-                      int mid_x2 = start_x - (3 * neuron_distance);
-                      //int mid_y1 = Math.abs(start_y - end_y) / 2;
-                      //int mid_y2 = Math.abs(start_y - end_y) / 2;
-                      int mid_y1 = end_y;
-                      int mid_y2 = start_y;
+            //curve(start_x, start_y, mid_x1, mid_y1, mid_x2, mid_y2, end_x, end_y);
+            noFill();
+            curve(mid_x1, mid_y1, start_x, start_y, end_x, end_y, mid_x2, mid_y2);
 
-                      noFill();
-                      curve(mid_x1, mid_y1, start_x, start_y, end_x, end_y, mid_x2, mid_y2);
+          } else if (dst_x % 2 == 1 && dst_x != output_layer) {
+            int mid_x1 = start_x - (3 * neuron_distance);
+            int mid_x2 = start_x - (3 * neuron_distance);
+            //int mid_y1 = Math.abs(start_y - end_y) / 2;
+            //int mid_y2 = Math.abs(start_y - end_y) / 2;
+            int mid_y1 = end_y;
+            int mid_y2 = start_y;
 
-                    } else {
-                      line(start_x, start_y, end_x, end_y);
-                    }
+            noFill();
+            curve(mid_x1, mid_y1, start_x, start_y, end_x, end_y, mid_x2, mid_y2);
 
-                    /*
-                    pushMatrix();
-                      translate(end_x, end_y);
-                      float a = atan2(start_x-end_x, start_y-end_y);
-                      rotate(a);
-                      line(0, 0, -4, -4);
-                      line(0, 0, 4, -4);
-                    popMatrix();
-                    */
-
-                }
-            }
-
-            System.out.println(line);
+          } else {
+            line(start_x, start_y, end_x, end_y);
+          }
         }
 
     } finally {

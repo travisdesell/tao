@@ -353,7 +353,8 @@ void AntColony::write_population(int current_iteration) {
             outfile << edge_population[i]->edges[j].src_layer << " "
                     << edge_population[i]->edges[j].dst_layer << " "
                     << edge_population[i]->edges[j].src_node << " "
-                    << edge_population[i]->edges[j].dst_node << endl;
+                    << edge_population[i]->edges[j].dst_node << " "
+                    << edge_population[i]->edges[j].weight << endl;
         }
         outfile << endl;
 
@@ -362,7 +363,8 @@ void AntColony::write_population(int current_iteration) {
             outfile << edge_population[i]->recurrent_edges[j].src_layer << " "
                     << edge_population[i]->recurrent_edges[j].dst_layer << " "
                     << edge_population[i]->recurrent_edges[j].src_node << " "
-                    << edge_population[i]->recurrent_edges[j].dst_node << endl;
+                    << edge_population[i]->recurrent_edges[j].dst_node << " "
+                    << edge_population[i]->recurrent_edges[j].weight << endl;
         }
 
         outfile.close();
