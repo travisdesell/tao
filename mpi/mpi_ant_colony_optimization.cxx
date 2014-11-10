@@ -100,6 +100,10 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
 
         cout << "iteration: " << iteration << "/" << maximum_iterations << ", new fitness: " << fitness << ", pop size: " << ant_colony.get_edge_population_size() << ", max pop fitness: " << ant_colony.get_best_fitness() << ", min pop fitness: " << ant_colony.get_worst_fitness() << endl;
 
+        if (iteration > 0 && (iteration % 100) == 0) {
+            ant_colony.write_population(iteration);
+        }
+
         //send another set of edges to the worker
         send_edges(source, edges, recurrent_edges);
         iteration++;
@@ -118,7 +122,7 @@ void ant_colony_worker(int rank, double (*objective_function)(const vector<Edge>
         //evaluate its fitness
         double fitness = objective_function(edges, recurrent_edges);
 
-        cout << "[worker " << rank << "] calculated fitness: " << fitness << endl;
+//        cout << "[worker " << rank << "] calculated fitness: " << fitness << endl;
 
         //report the fitness
         MPI_Send(&fitness, 1, MPI_DOUBLE, 0, FITNESS_MSG, MPI_COMM_WORLD);
