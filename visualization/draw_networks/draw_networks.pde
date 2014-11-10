@@ -39,7 +39,7 @@ class Edge {
 
 try {
     //BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/test_networks/fully_connected_elman_h1_n4.txt"));
-    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/100_1"));
+    BufferedReader br = new BufferedReader(new FileReader("/Users/deselt/Code/flight_analysis/aco_output/aco_nhl_3_npl_8_ants_16_roll/900_0"));
 
     try {
         String line = br.readLine();
