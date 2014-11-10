@@ -33,7 +33,7 @@ TimeSeriesNeuralNetwork::TimeSeriesNeuralNetwork(double **tsd, int tsr, int tsc,
 }
 
 int TimeSeriesNeuralNetwork::get_n_edges() {
-    return edges.size() + recurrent_edges.size();
+    return edges.size();    //dont need to add recurrent edges as their weights are always 1
 }
 
 void TimeSeriesNeuralNetwork::initialize_nodes(int nhl, int npl) {
@@ -182,8 +182,8 @@ double TimeSeriesNeuralNetwork::objective_function() {
 double TimeSeriesNeuralNetwork::objective_function(const vector<double> &parameters) {
     reset();
 
-    if (edges.size() + recurrent_edges.size() != parameters.size()) {
-        cerr << "Error [" << __FILE__ << ":" << __LINE__ << "]: edges.size (" << edges.size() << ") + recurrent_edges.size (" << recurrent_edges.size() << ") != parameters.size (" << parameters.size() << ")" << endl;
+    if (edges.size() != parameters.size()) {
+        cerr << "Error [" << __FILE__ << ":" << __LINE__ << "]: edges.size (" << edges.size() << ") != parameters.size (" << parameters.size() << ")" << endl;
 
         exit(1);
     }
@@ -195,8 +195,7 @@ double TimeSeriesNeuralNetwork::objective_function(const vector<double> &paramet
     }
 
     for (int i = 0; i < recurrent_edges.size(); i++) {
-        recurrent_edges[i].weight = parameters[current];
-        current++;
+        recurrent_edges[i].weight = 1.0;
     }
 
     return evaluate();

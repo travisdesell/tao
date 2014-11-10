@@ -17,9 +17,9 @@ using std::string;
 #include "asynchronous_algorithms/ant_colony_optimization.hxx"
 
 
-const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.95;
+const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.75;
 const double AntColony::PHEROMONE_MINIMUM = 1.0;
-const double AntColony::PHEROMONE_MAXIMUM = 10.0;
+const double AntColony::PHEROMONE_MAXIMUM = 20.0;
 
 ACO_Node::ACO_Node(int l, int n) : layer(l), node(n) {
 }
@@ -260,6 +260,7 @@ void AntColony::add_ant_paths(double fitness, const vector<Edge> &edges, const v
         if (edge_population.size() >= max_edge_population_size) {
             add_ant_paths_v(edges);
             add_ant_paths_v(recurrent_edges);
+            cout << "decreasing pheromones!" << endl;
             decrease_pheromones();
         }
 
