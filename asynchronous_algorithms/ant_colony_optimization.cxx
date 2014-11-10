@@ -1,3 +1,6 @@
+#include <algorithm>
+using std::lower_bound;
+
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -242,7 +245,7 @@ void AntColony::add_ant_paths(double fitness, const vector<Edge> &edges, const v
     ACOIndividual *aco_individual = new ACOIndividual(fitness, edges, recurrent_edges);
 
     if (edge_population.size() < max_edge_population_size || fitness > (*edge_population.back()).fitness) {
-        vector<ACOIndividual*>::iterator it = std::lower_bound( edge_population.begin(), edge_population.end(), aco_individual, CompareACOIndividual() ); // find proper position in descending order
+        vector<ACOIndividual*>::iterator it = lower_bound( edge_population.begin(), edge_population.end(), aco_individual, CompareACOIndividual() ); // find proper position in descending order
         edge_population.insert(it, aco_individual);
 
         if (edge_population.size() >= max_edge_population_size) {
