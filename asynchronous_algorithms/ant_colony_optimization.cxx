@@ -14,7 +14,7 @@ using std::string;
 #include "asynchronous_algorithms/ant_colony_optimization.hxx"
 
 
-const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.75;
+const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.90;
 const double AntColony::PHEROMONE_MINIMUM = 1.0;
 const double AntColony::PHEROMONE_MAXIMUM = 20.0;
 
@@ -32,10 +32,18 @@ void ACO_Node::add_target(ACO_Node* aco_node) {
     targets.push_back(aco_node);
 }
 
+//might want to not initialize all pheromones to 1.0
+void ACO_Node::add_target(ACO_Node* aco_node, double pheromone) {
+    pheromones.push_back(pheromone);
+    targets.push_back(aco_node);
+}
+
 ACOIndividual::ACOIndividual(double f, vector<Edge> e, vector<Edge> re) : fitness(f), edges(e), recurrent_edges(re) {
 }
 
 AntColony::AntColony(int noa, int meps, int ils, int hls, int nhl) : number_of_ants(noa), input_layer_size(ils), hidden_layer_size(hls), n_hidden_layers(nhl), max_edge_population_size(meps) {
+    use_compression = false;
+
     n_layers = 1 + (n_hidden_layers * 2) + 1;
 
     pre_input = new ACO_Node(-1, 0);
@@ -89,6 +97,7 @@ AntColony::AntColony(int noa, int meps, int ils, int hls, int nhl) : number_of_a
                     for (int k = 0; k < neurons[i+2].size(); k++) {
                         //cout << "connecting neurons[" << i << "][" << j << "] to neurons[" << i+2 << "][" << k << "]" << endl;
                         neurons[i][j]->add_target(neurons[i+2][k]);
+//                        neurons[i][j]->add_target(neurons[i+2][k], neurons[i+2].size());
                     }
                 }
 
@@ -128,6 +137,10 @@ AntColony::~AntColony() {
     }
 }
 
+void AntColony::set_compression(bool uc) {
+    use_compression = uc;
+}
+
 int AntColony::get_edge_population_size() {
     return edge_population.size();
 }
@@ -139,6 +152,44 @@ double AntColony::get_best_fitness() {
 double AntColony::get_worst_fitness() {
     return edge_population.back()->fitness;
 }
+
+void AntColony::compress(vector<Edge> &edges, vector<Edge> &recurrent_edges) {
+    cout << "compressing edges:" << endl;
+    for (int i = 0; i < edges.size(); i++) {
+        cout << "    " << edges[i] << endl;
+    }
+
+    int **possible_nodes = new int*[2 + (n_hidden_layers * 2)];
+    for (int i = 0; i < 2 + (n_hidden_layers * 2); i++) {
+        possible_nodes[i] = new int[hidden_layer_size];
+        for (int j = 0; j < hidden_layer_size; j++) {
+            possible_nodes[i][j] = 0;
+        }
+    }
+
+    for (int i = 0; i < edges.size(); i++) {
+        possible_nodes[edges[i].src_layer][edges[i].src_node] = 1;
+        possible_nodes[edges[i].dst_layer][edges[i].dst_node] = 1;
+    }
+
+    for (int i = 0; i < recurrent_edges.size(); i++) {
+        possible_nodes[recurrent_edges[i].src_layer][recurrent_edges[i].src_node] = 1;
+        possible_nodes[recurrent_edges[i].dst_layer][recurrent_edges[i].dst_node] = 1;
+    }
+
+    cout << "possible nodes: " << endl;
+    for (int i = 0; i < (2 + (n_hidden_layers * 2)); i++) {
+        for (int j = 0; j < hidden_layer_size; j++) {
+            cout << " " << possible_nodes[i][j];
+        }
+        cout << endl;
+    }
+
+    /*
+     * TODO: finish compression function
+     */
+}
+
 
 void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges) {
     edges.clear();
@@ -152,6 +203,7 @@ void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges
 
     for (int ant = 0; ant < number_of_ants; ant++) {
         ACO_Node *current = pre_input;
+        vector<int> visited_recurrent_layers;
 
 //        cout << "adding edges for ant: " << ant << endl;
         //progress through the network until reaching the output node
@@ -160,13 +212,18 @@ void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges
 
             double sum_pheromones = 0.0;
             for (int i = 0; i < current->targets.size(); i++) {
+                //skip the recurrent layer if we've already been there.
+                if (std::find(visited_recurrent_layers.begin(), visited_recurrent_layers.end(), current->targets[i]->layer) != visited_recurrent_layers.end()) continue;
                 sum_pheromones += current->pheromones[i];
             }
 
             //select the target based on the pheromone distribution
             double rand = drand48() * sum_pheromones;
             for (int i = 0; i < current->targets.size(); i++) {
+
                 if (rand < current->pheromones[i]) {
+                    //skip the recurrent layer if we've already been there.
+                    if (std::find(visited_recurrent_layers.begin(), visited_recurrent_layers.end(), current->targets[i]->layer) != visited_recurrent_layers.end()) continue;
                     //create an edge and update the current ACO node
 
                     if (current->layer >= 0) {  //only add the edges from things after the pre-input node
@@ -176,6 +233,7 @@ void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges
                             edges_by_layer[current->layer].push_back(Edge(current->layer, current->targets[i]->layer, current->node, current->targets[i]->node));
                         } else { //recurrent layer
 //                            cout << "  adding recurrent edge: [" << current->layer << "][" << current->node << "] to [" << current->targets[i]->layer << "][" << current->targets[i]->node << "]" << endl;
+                            visited_recurrent_layers.push_back(current->targets[i]->layer);
                             recurrent_edges_by_layer[current->layer].push_back(Edge(current->layer, current->targets[i]->layer, current->node, current->targets[i]->node));
                         }
                     }
@@ -232,6 +290,9 @@ void AntColony::get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges
         }
     }
 
+    if (use_compression) {
+        compress(edges, recurrent_edges);
+    }
 }
 
 
