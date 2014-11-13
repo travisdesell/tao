@@ -28,6 +28,7 @@ class ACO_Node {
         ~ACO_Node();
 
         void add_target(ACO_Node* aco_node);
+        void add_target(ACO_Node* aco_node, double pheromone);
 };
 
 class ACOIndividual {
@@ -56,6 +57,7 @@ class AntColony {
 
         string output_directory;
 
+        bool use_compression;
         int number_of_ants;
         int n_layers;
         uint32_t input_layer_size;
@@ -76,6 +78,7 @@ class AntColony {
         double get_worst_fitness();
         int get_edge_population_size();
 
+        void compress(vector<Edge> &edges, vector<Edge> &recurrent_edges);
         void get_ant_paths(vector<Edge> &edges, vector<Edge> &recurrent_edges);
 
         void add_ant_paths_v(const vector<Edge> &edges);
@@ -83,11 +86,13 @@ class AntColony {
 
         void decrease_pheromones();
 
+        void set_compression(bool uc);
         void set_output_directory(string output_directory);
         void write_population(int current_iteration);
 
         friend void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
 };
+
 
 
 void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
