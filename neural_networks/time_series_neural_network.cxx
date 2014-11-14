@@ -188,10 +188,8 @@ double TimeSeriesNeuralNetwork::objective_function(const vector<double> &paramet
         exit(1);
     }
 
-    int current = 0;
     for (int i = 0; i < edges.size(); i++) {
-        edges[i].weight = parameters[current];
-        current++;
+        edges[i].weight = parameters[i];
     }
 
     for (int i = 0; i < recurrent_edges.size(); i++) {
