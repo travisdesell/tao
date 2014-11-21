@@ -6,7 +6,7 @@ set (TAO_VERSION_MINOR 0)
  
 set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -msse3")
 
-set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
+#set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
 include_directories(${PROJECT_SOURCE_DIR})
 #message("project source dir = ${PROJECT_SOURCE_DIR}")
@@ -29,12 +29,16 @@ MESSAGE(STATUS "UNDVC_COMMON library: ${UNDVC_COMMON_LIBRARY}")
 
 include_directories(${UNDVC_COMMON_INCLUDE_DIR})
 
-#UNDVC_COMMON has the FindBOINC.cmake and FindMYSQL.cmake files
+#UNDVC_COMMON has the FindOpenCV.cmake, FindBOINC.cmake and FindMYSQL.cmake files
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UNDVC_COMMON_INCLUDE_DIR}/cmake/Modules/")
+
+
+
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV COMPONENTS features2d nonfree flann imgproc highgui core)
 
 find_package(BOINC)
 find_package(MySQL)
-find_package(Boost REQUIRED COMPONENTS system)
 
 
 add_subdirectory(neural_networks)

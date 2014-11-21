@@ -51,10 +51,6 @@ class CompareACOIndividual {
 
 class AntColony {
     protected:
-        const static double PHEROMONE_DEGRADATION_RATE;
-        const static double PHEROMONE_MINIMUM;
-        const static double PHEROMONE_MAXIMUM;
-
         string output_directory;
 
         bool use_compression;
@@ -70,11 +66,18 @@ class AntColony {
         int max_edge_population_size;
         vector<ACOIndividual*> edge_population;
 
+        double PHEROMONE_DEGRADATION_RATE;
+        double PHEROMONE_MINIMUM;
+        double PHEROMONE_MAXIMUM;
+
+        int iteration;
+
     public:
-        AntColony(int noa, int meps, int ils, int hls, int nhl);
+        AntColony(int noa, int meps, int ils, int hls, int nhl, double pdr, double p_min, double p_max);
         ~AntColony();
 
         double get_best_fitness();
+        double get_avg_fitness();
         double get_worst_fitness();
         int get_edge_population_size();
 
@@ -86,9 +89,10 @@ class AntColony {
 
         void decrease_pheromones();
 
+        int get_iteration();
         void set_compression(bool uc);
         void set_output_directory(string output_directory);
-        void write_population(int current_iteration);
+        void write_population();
 
         friend void ant_colony_optimization(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(const vector<Edge> &edges, const vector<Edge> &recurrent_edges));
 };
