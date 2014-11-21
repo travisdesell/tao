@@ -3,6 +3,10 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
+#include <iomanip>
+using std::setw;
+using std::setprecision;
+
 #include <vector>
 using std::vector;
 
@@ -126,10 +130,10 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
         send_edges(i, edges, recurrent_edges);
     }
 
-    int iteration = 0;
-    bool finished = false;
-    while (!finished) {
-        cout << "farmer probing." << endl;
+//    cout << "#iteration f_evals new_fitness max_fitness avg_fitness min_fitness" << endl;
+    cout << "#" << setw(9) << "iteration" << setw(20) << "new_fitness" << setw(20) << "max_fitness" << setw(20) << "avg_fitness" << setw(20) << "min_fitness" << endl;
+    while (ant_colony.get_iteration() < maximum_iterations) {
+        //cout << "farmer probing." << endl;
         MPI_Status status;
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         int source = status.MPI_SOURCE;
@@ -153,16 +157,17 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
 
         ant_colony.add_ant_paths(fitness, edges, recurrent_edges);
 
-        cout << "iteration: " << iteration << "/" << maximum_iterations << ", new fitness: " << fitness << ", pop size: " << ant_colony.get_edge_population_size() << ", max pop fitness: " << ant_colony.get_best_fitness() << ", min pop fitness: " << ant_colony.get_worst_fitness() << endl;
+        cout << std::fixed << setw(10) << ant_colony.get_iteration() << setprecision(10) << setw(20) << fitness << setw(20) << ant_colony.get_best_fitness() << setw(20) << ant_colony.get_avg_fitness() << setw(20) << ant_colony.get_worst_fitness() << endl;
+//        cout << setw(10) << ant_colony.get_iteration() << setw(10) << evaluations_done << setw(10) << fitness << setw(1) << ant_colony.get_best_fitness() << setw(1) ant_colony.get_avg_fitness() << setw(10) << ant_colony.get_worst_fitness() << endl;
 
-        if (iteration > 0 && (iteration % 10) == 0) {
-            ant_colony.write_population(iteration);
+        if (ant_colony.get_iteration() > 0 && (ant_colony.get_iteration() % 10) == 0) {
+            ant_colony.write_population();
         }
 
         //send another set of edges to the worker
         send_edges(source, edges, recurrent_edges);
-        iteration++;
     }
+    MPI_Abort(MPI_COMM_WORLD, 0 /*Success*/);
 }
 
 void ant_colony_worker(int rank, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges)) {

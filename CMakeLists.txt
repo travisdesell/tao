@@ -29,8 +29,10 @@ MESSAGE(STATUS "UNDVC_COMMON library: ${UNDVC_COMMON_LIBRARY}")
 
 include_directories(${UNDVC_COMMON_INCLUDE_DIR})
 
-#UNDVC_COMMON has the FindBOINC.cmake and FindMYSQL.cmake files
+#UNDVC_COMMON has the FindOpenCV.cmake, FindBOINC.cmake and FindMYSQL.cmake files
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UNDVC_COMMON_INCLUDE_DIR}/cmake/Modules/")
+
+
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV COMPONENTS features2d nonfree flann imgproc highgui core)

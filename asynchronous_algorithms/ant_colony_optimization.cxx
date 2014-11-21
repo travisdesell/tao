@@ -14,9 +14,9 @@ using std::string;
 #include "asynchronous_algorithms/ant_colony_optimization.hxx"
 
 
-const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.90;
-const double AntColony::PHEROMONE_MINIMUM = 1.0;
-const double AntColony::PHEROMONE_MAXIMUM = 20.0;
+//const double AntColony::PHEROMONE_DEGRADATION_RATE = 0.90;
+//const double AntColony::PHEROMONE_MINIMUM = 1.0;
+//const double AntColony::PHEROMONE_MAXIMUM = 20.0;
 
 ACO_Node::ACO_Node(int l, int n) : layer(l), node(n) {
 }
@@ -41,7 +41,7 @@ void ACO_Node::add_target(ACO_Node* aco_node, double pheromone) {
 ACOIndividual::ACOIndividual(double f, vector<Edge> e, vector<Edge> re) : fitness(f), edges(e), recurrent_edges(re) {
 }
 
-AntColony::AntColony(int noa, int meps, int ils, int hls, int nhl) : number_of_ants(noa), input_layer_size(ils), hidden_layer_size(hls), n_hidden_layers(nhl), max_edge_population_size(meps) {
+AntColony::AntColony(int noa, int meps, int ils, int hls, int nhl, double pdr, double p_min, double p_max) : number_of_ants(noa), input_layer_size(ils), hidden_layer_size(hls), n_hidden_layers(nhl), max_edge_population_size(meps), PHEROMONE_DEGRADATION_RATE(pdr), PHEROMONE_MINIMUM(p_min), PHEROMONE_MAXIMUM(p_max), iteration(0) {
     use_compression = false;
 
     n_layers = 1 + (n_hidden_layers * 2) + 1;
@@ -137,6 +137,10 @@ AntColony::~AntColony() {
     }
 }
 
+int AntColony::get_iteration() {
+    return iteration;
+}
+
 void AntColony::set_compression(bool uc) {
     use_compression = uc;
 }
@@ -151,6 +155,15 @@ double AntColony::get_best_fitness() {
 
 double AntColony::get_worst_fitness() {
     return edge_population.back()->fitness;
+}
+
+double AntColony::get_avg_fitness() {
+    double avg = 0.0;
+    for (int i = 0; i < edge_population.size(); i++) {
+        avg += edge_population[i]->fitness;
+    }
+
+    return avg / edge_population.size();
 }
 
 void AntColony::compress(vector<Edge> &edges, vector<Edge> &recurrent_edges) {
@@ -310,6 +323,7 @@ void AntColony::add_ant_paths_v(const vector<Edge> &edges) {
 
 void AntColony::add_ant_paths(double fitness, const vector<Edge> &edges, const vector<Edge> &recurrent_edges) {
     ACOIndividual *aco_individual = new ACOIndividual(fitness, edges, recurrent_edges);
+    iteration++;
 
     if (edge_population.size() < max_edge_population_size || fitness > (*edge_population.back()).fitness) {
         vector<ACOIndividual*>::iterator it = std::lower_bound( edge_population.begin(), edge_population.end(), aco_individual, CompareACOIndividual() ); // find proper position in descending order
@@ -318,18 +332,27 @@ void AntColony::add_ant_paths(double fitness, const vector<Edge> &edges, const v
         if (edge_population.size() >= max_edge_population_size) {
             add_ant_paths_v(edges);
             add_ant_paths_v(recurrent_edges);
-            cout << "decreasing pheromones!" << endl;
+            //cout << "decreasing pheromones!" << endl;
             decrease_pheromones();
         }
 
-        cout << "#pheromones" << endl;
-        for (int i = 0; i < neurons.size(); i++) {
-            for (int j = 0; j < neurons[i].size(); j++) {
-                cout << "#neurons[" << i << "][" << j << "]:" << endl;
-                for (int k = 0; k < neurons[i][j]->targets.size(); k++) {
-                    cout << "  [" << neurons[i][j]->targets[k]->layer << "][" << neurons[i][j]->targets[k]->node << "]: " << neurons[i][j]->pheromones[k] << endl;
+        //NEED TO WRITE THIS TO A FILE
+        if (iteration % 10 == 0) {
+            ostringstream oss;
+            oss << output_directory << "/pheromones_" << iteration;
+            ofstream outfile( oss.str().c_str() );
+
+            outfile << n_hidden_layers << " " << hidden_layer_size << " " << PHEROMONE_MINIMUM << " " << PHEROMONE_MAXIMUM << endl;
+            outfile << "#pheromones" << endl;
+            for (int i = 0; i < neurons.size(); i++) {
+                for (int j = 0; j < neurons[i].size(); j++) {
+                    outfile << "#neurons " << i << " " << j << endl;
+                    for (int k = 0; k < neurons[i][j]->targets.size(); k++) {
+                        outfile << "  " << neurons[i][j]->targets[k]->layer << " " << neurons[i][j]->targets[k]->node << " " << neurons[i][j]->pheromones[k] << endl;
+                    }
                 }
             }
+            outfile.close();
         }
     }
 
@@ -347,6 +370,7 @@ void AntColony::decrease_pheromones() {
         for (int j = 0; j < neurons[i].size(); j++) {
             for (int k = 0; k < neurons[i][j]->targets.size(); k++) {
                 neurons[i][j]->pheromones[k] *= PHEROMONE_DEGRADATION_RATE;
+                //cout << "degrated neuron[" << i << "][" << j << "]->pheromones[" << k << "] to: " << neurons[i][j]->pheromones[k] << endl;
 
                 if (neurons[i][j]->pheromones[k] < PHEROMONE_MINIMUM) neurons[i][j]->pheromones[k] = PHEROMONE_MINIMUM;
                 if (neurons[i][j]->pheromones[k] > PHEROMONE_MAXIMUM) neurons[i][j]->pheromones[k] = PHEROMONE_MAXIMUM;
@@ -396,11 +420,11 @@ void AntColony::set_output_directory(string od) {
     output_directory = od;
 }
 
-void AntColony::write_population(int current_iteration) {
+void AntColony::write_population() {
     
     for (int i = 0; i < edge_population.size(); i++) {
         ostringstream oss;
-        oss << output_directory << "/" << current_iteration << "_" << i;
+        oss << output_directory << "/" << iteration << "_" << i;
 
         ofstream outfile( oss.str().c_str() );
 

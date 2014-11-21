@@ -82,6 +82,7 @@ double VisionNeuralNetwork::evaluate(Mat &image, int classification) {
         Edge &e = edges.at(i);
         nodes[e.dst_layer][e.dst_node] += e.weight * nodes[e.src_layer][e.src_node];
 
+        //TODO: implement bounding on node values.
         //TODO: implement different node types, ReLU, max pooling, etc.
     }
 
