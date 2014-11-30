@@ -143,7 +143,31 @@ void master(EvolutionaryAlgorithmsType *ea) {
         }
     }
 
-    MPI_Abort(MPI_COMM_WORLD, 0 /* success */);
+    for (int i = 1; i < max_rank; i++) {
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+        int source = status.MPI_SOURCE;
+
+        double fitness = 0;
+
+
+        //receive the individual the worker is sending.
+
+        //cout << "[master     ] receiving fitness." << endl;
+        MPI_Recv(&fitness, 1, MPI_DOUBLE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
+        //cout << "[master     ] receiving " << number_parameters << " parameters." << endl;
+        MPI_Recv(individual, number_parameters, MPI_DATATYPE, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
+        //cout << "[master     ] receiving position." << endl;
+        MPI_Recv(&individual_position, 1, MPI_INT, source, REPORT_FITNESS_TAG, MPI_COMM_WORLD, &status);
+
+        int terminate_message[1];
+        terminate_message[0] = 0;
+
+//        cout << "terminating worker: " << source << endl;
+        MPI_Send(terminate_message, 1, MPI_INT, source, TERMINATE_TAG, MPI_COMM_WORLD);
+    }
+
+    //MPI_Abort(MPI_COMM_WORLD, 0 /* success */);
 }
 
 template void master<DifferentialEvolutionMPI, double>(DifferentialEvolutionMPI *ea);
@@ -172,6 +196,14 @@ void worker(double (*objective_function)(const std::vector<T> &),
     //Loop forever calculating individual fitness
     while (true) {
         //cout << "[worker " << setw(5) << rank << "] waiting to receive individual" << endl;
+
+        MPI_Probe(0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (status.MPI_TAG == TERMINATE_TAG) {
+            int terminate_message[1];
+            MPI_Recv(terminate_message, 1, MPI_INT, 0, TERMINATE_TAG, MPI_COMM_WORLD, &status);
+            break;
+        }
+
         MPI_Recv(individual, number_parameters, MPI_DATATYPE, 0 /*master is rank 0*/, REQUEST_INDIVIDUALS_TAG, MPI_COMM_WORLD, &status);
 
         //cout << "[worker " << setw(5) << rank << "] receiving individual" << endl;
