@@ -1,6 +1,8 @@
 #include "edge.hxx"
 #include "vision_neural_network.hxx"
 
+#include <cstdlib>
+
 #include <cmath>
 
 #include <iostream>

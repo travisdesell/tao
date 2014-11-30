@@ -1,3 +1,6 @@
+#include <algorithm>
+using std::lower_bound;
+
 #include <cmath>
 
 #include <limits>

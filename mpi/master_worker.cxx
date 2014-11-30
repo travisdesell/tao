@@ -163,7 +163,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
         int terminate_message[1];
         terminate_message[0] = 0;
 
-//        cout << "terminating worker: " << source << endl;
+        cout << "terminating worker: " << source << endl;
         MPI_Send(terminate_message, 1, MPI_INT, source, TERMINATE_TAG, MPI_COMM_WORLD);
     }
 

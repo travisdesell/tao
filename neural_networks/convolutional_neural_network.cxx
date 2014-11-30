@@ -1,6 +1,7 @@
 #include "convolutional_neural_network.hxx"
 
 #include <cmath>
+#include <cstdlib>
 
 #include <iostream>
 using std::cerr;

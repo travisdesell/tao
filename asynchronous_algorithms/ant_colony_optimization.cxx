@@ -340,7 +340,7 @@ void AntColony::add_ant_paths(double fitness, const vector<Edge> &edges, const v
         }
 
         //NEED TO WRITE THIS TO A FILE
-        if (iteration % 10 == 0) {
+        if (iteration % 100 == 0) {
             ostringstream oss;
             oss << output_directory << "/pheromones_" << iteration;
             ofstream outfile( oss.str().c_str() );

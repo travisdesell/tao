@@ -160,7 +160,7 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
         cout << std::fixed << setw(10) << ant_colony.get_iteration() << setprecision(10) << setw(20) << fitness << setw(20) << ant_colony.get_best_fitness() << setw(20) << ant_colony.get_avg_fitness() << setw(20) << ant_colony.get_worst_fitness() << endl;
 //        cout << setw(10) << ant_colony.get_iteration() << setw(10) << evaluations_done << setw(10) << fitness << setw(1) << ant_colony.get_best_fitness() << setw(1) ant_colony.get_avg_fitness() << setw(10) << ant_colony.get_worst_fitness() << endl;
 
-        if (ant_colony.get_iteration() > 0 && (ant_colony.get_iteration() % 10) == 0) {
+        if (ant_colony.get_iteration() > 0 && (ant_colony.get_iteration() % 100) == 0) {
             ant_colony.write_population();
         }
 
