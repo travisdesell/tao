@@ -1,25 +1,21 @@
 #include "edge.hxx"
 #include "vision_neural_network.hxx"
 
-//OPENCV INCLUDES
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
+#include <cmath>
 
 #include <iostream>
 using std::cerr;
+using std::cout;
 using std::endl;
 
 #include <vector>
-using namespace cv;
+using std::vector;
 
 
-VisionNeuralNetwork::VisionNeuralNetwork(const std::vector<Mat> &_images, const vector<int> &_classifications, int _n_hidden_layers, int _nodes_per_layer) : images(_images), classifications(_classifications) {
-
-    image_size = images[0].rows * images[0].cols * 3;
+VisionNeuralNetwork::VisionNeuralNetwork(int _image_size, const vector<char*> &_images, const vector<int> &_classifications, int _n_hidden_layers, int _nodes_per_layer) : image_size(_image_size), images(_images), classifications(_classifications) {
 
     nodes = NULL;
-    initialize_nodes(n_hidden_layers, nodes_per_layer);
+    initialize_nodes(_n_hidden_layers, _nodes_per_layer);
 }
 
 void VisionNeuralNetwork::initialize_nodes(int _n_hidden_layers, int _nodes_per_layer) {
@@ -32,10 +28,13 @@ void VisionNeuralNetwork::initialize_nodes(int _n_hidden_layers, int _nodes_per_
         delete[] nodes;
     }
 
+    cout << "initializing nodes with n_hidden_layers: " << _n_hidden_layers << " and nodes_per_layer: " << _nodes_per_layer << endl;
+
     n_hidden_layers = _n_hidden_layers;
     nodes_per_layer = _nodes_per_layer + 1; //add an additional bias node
     n_layers = n_hidden_layers + 2;
 
+    cout << "initializing nodes with n_layer: " << n_layers << " and image_size: " << image_size << endl;
     nodes = new double*[n_layers];
     nodes[0] = new double[image_size + 1];  //add a bias node
 
@@ -44,6 +43,7 @@ void VisionNeuralNetwork::initialize_nodes(int _n_hidden_layers, int _nodes_per_
     }
 
     nodes[n_layers - 1] = new double[1];
+
     reset();
 
 }
@@ -64,16 +64,12 @@ void VisionNeuralNetwork::reset() {
     nodes[n_layers - 1][0] = 0.0;
 }
 
-double VisionNeuralNetwork::evaluate(Mat &image, int classification) {
+double VisionNeuralNetwork::evaluate(const char *image, int classification) {
     reset();
 
     //initialize the input layer
-    Vec3b pixel;
-    for (int i = 0; i < image_size; i += 3) {
-        pixel = image.at<Vec3b>(i % image.rows, i / image.rows);
-        nodes[0][i] = (float)pixel[0] / 255.0;
-        nodes[0][i + 1] = (float)pixel[1] / 255.0;
-        nodes[0][i + 2] = (float)pixel[2] / 255.0;
+    for (int i = 0; i < image_size; i++) {
+        nodes[0][i] = (float)image[i] / 255.0;
     }
 
     //run the input through the neural newtork
@@ -86,11 +82,7 @@ double VisionNeuralNetwork::evaluate(Mat &image, int classification) {
         //TODO: implement different node types, ReLU, max pooling, etc.
     }
 
-    double output = nodes[n_layers - 1][0];
-    output = fmin( 1.0, output);
-    output = fmax(-1.0, output);
-
-    return -(classification - output);
+    return fmin(1.0, nodes[n_layers - 1][0] * classification);
 }
 
 double VisionNeuralNetwork::evaluate() {
@@ -100,6 +92,8 @@ double VisionNeuralNetwork::evaluate() {
         result += evaluate(images[i], classifications[i]);
     }
 
+//    cout << "result: " << result << ", images.size(): " << images.size() << endl;
+
     return result;
 }
 
@@ -107,7 +101,7 @@ double VisionNeuralNetwork::objective_function() {
     return evaluate();
 }
 
-double VisionNeuralNetwork::objective_function(const std::vector<double> &parameters) {
+double VisionNeuralNetwork::objective_function(const vector<double> &parameters) {
     if (edges.size() != parameters.size()) {
         cerr << "Error [" << __FILE__ << ":" << __LINE__ << "]: edges.size (" << edges.size() << ") != parameters.size (" << parameters.size() << ")" << endl; 
         exit(1);
@@ -124,7 +118,7 @@ int VisionNeuralNetwork::get_n_edges() {
     return edges.size();
 }
 
-void VisionNeuralNetwork::set_edges(const std::vector<Edge> &e) {
+void VisionNeuralNetwork::set_edges(const vector<Edge> &e) {
     edges.clear();
     edges = e;
 }

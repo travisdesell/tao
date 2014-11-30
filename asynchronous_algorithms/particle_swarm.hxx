@@ -48,7 +48,10 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
         void initialize();
         void parse_arguments(const std::vector<std::string> &arguments);
 
+
     public:
+        void (*print_statistics)(const std::vector<double> &);
+
         std::vector< std::vector<double> > get_population() { return local_bests; }
         std::vector< double > get_population_fitness() { return local_best_fitnesses; }
 
@@ -100,6 +103,8 @@ class ParticleSwarm : public EvolutionaryAlgorithm {
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
         void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (std::string);      //this objective function requires a seed
+
+        void set_print_statistics(void (*_print_statistics)(const std::vector<double> &));
 
         virtual void get_individuals(std::vector<Individual> &individuals);
 };

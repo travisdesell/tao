@@ -51,6 +51,8 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
         void parse_arguments(const std::vector<std::string> &arguments);
 
     public:
+        void (*print_statistics)(const std::vector<double> &);
+
         double get_global_best_fitness() { return global_best_fitness; }
         std::vector<double> get_global_best() { return population[global_best_id]; }
 
@@ -116,6 +118,8 @@ class DifferentialEvolution : public EvolutionaryAlgorithm {
          */
         void iterate(double (*objective_function)(const std::vector<double> &)) throw (std::string);
         void iterate(double (*objective_function)(const std::vector<double> &, const uint32_t)) throw (std::string);    //this objective function also requires a seed
+
+        void set_print_statistics(void (*_print_statistics)(const std::vector<double> &));
 
         virtual void get_individuals(std::vector<Individual> &individuals);
 };

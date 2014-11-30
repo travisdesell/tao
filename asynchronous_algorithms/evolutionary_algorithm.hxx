@@ -69,6 +69,7 @@ class EvolutionaryAlgorithm {
         void initialize_rng();
         void parse_arguments(const std::vector<std::string> &arguments);
 
+
     public:
         uint32_t get_population_size()      { return population_size; }
         uint32_t get_current_individual()   { return current_individual; }

@@ -59,6 +59,8 @@ class GeneticAlgorithm {
         crossover_type crossover;
 
     public:
+        void (*print_statistics)(const std::vector<int> &);
+
         int get_current_iteration() {
             return current_iteration;
         }
@@ -85,6 +87,8 @@ class GeneticAlgorithm {
         void insert_individual(uint32_t individual_position, const vector<int> &encoding, double fitness);
         
         bool is_running();
+
+        void set_print_statistics(void (*_print_statistics)(const std::vector<int> &));
 };
 
 

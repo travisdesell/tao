@@ -55,6 +55,12 @@ ParticleSwarm::initialize() {
     current_individual = 0;
 
     start_time = time(NULL);
+    print_statistics = NULL;
+}
+
+void
+ParticleSwarm::set_print_statistics(void (*_print_statistics)(const std::vector<double> &)) {
+    print_statistics = _print_statistics;
 }
 
 void
