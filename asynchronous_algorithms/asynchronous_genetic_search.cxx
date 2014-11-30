@@ -18,6 +18,12 @@ using boost::variate_generator;
 using boost::mt19937;
 using boost::uniform_real;
 
+void
+GeneticAlgorithm::set_print_statistics(void (*_print_statistics)(const std::vector<int> &)) {
+    print_statistics = _print_statistics;
+}
+
+
 bool compare_individuals(const GeneticAlgorithmIndividual *i1, const GeneticAlgorithmIndividual *i2) {
     return i1->fitness > i2->fitness;
 }
@@ -71,6 +77,7 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
     too_many_duplicates = false;
 
     start_time = time(NULL);
+    print_statistics = NULL;
 }
 
 bool GeneticAlgorithm::is_duplicate(const vector<int> &encoding) {

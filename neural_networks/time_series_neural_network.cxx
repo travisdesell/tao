@@ -4,6 +4,7 @@
 using std::ifstream;
 
 #include <iostream>
+using std::cout;
 using std::cerr;
 using std::endl;
 
@@ -161,6 +162,7 @@ double TimeSeriesNeuralNetwork::evaluate() {
 
         //cerr << "comparing output node: " << nodes[n_layers-1][0] << " to actual value: " << time_series_data[ts_row + 1][target_parameter] << endl;
 
+        cout << nodes[n_layers - 1][0] << " " << time_series_data[ts_row + 1][target_parameter] << endl;
         //update the mean average error
         //might need to deal with summation errors here
         //might want to add activation function here
@@ -268,13 +270,21 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         tokenizer< char_separator<char> >::iterator i = tok.begin(); 
 
         int src_layer = atoi((*i).c_str());
-        int dst_layer = atoi((*(++i)).c_str());
-        int src_node  = atoi((*(++i)).c_str());
-        int dst_node  = atoi((*(++i)).c_str());
+        i++;
+
+        int dst_layer = atoi((*i).c_str());
+        i++;
+
+        int src_node  = atoi((*i).c_str());
+        i++;
+
+        int dst_node  = atoi((*i).c_str());
+        i++;
+
         double weight = 0;
-        
+
         if (i != tok.end()) {
-            weight = atof((*(++i)).c_str());
+            weight = atof((*i).c_str());
         }
 
         edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));
@@ -297,13 +307,21 @@ void TimeSeriesNeuralNetwork::read_nn_from_file(string nn_filename) {
         tokenizer< char_separator<char> >::iterator i = tok.begin(); 
 
         int src_layer = atoi((*i).c_str());
-        int dst_layer = atoi((*(++i)).c_str());
-        int src_node  = atoi((*(++i)).c_str());
-        int dst_node  = atoi((*(++i)).c_str());
+        i++;
+
+        int dst_layer = atoi((*i).c_str());
+        i++;
+
+        int src_node  = atoi((*i).c_str());
+        i++;
+
+        int dst_node  = atoi((*i).c_str());
+        i++;
+
         double weight = 0;
         
         if (i != tok.end()) {
-            weight = atof((*(++i)).c_str());
+            weight = atof((*i).c_str());
         }
 
         recurrent_edges.push_back(Edge(src_layer, dst_layer, src_node, dst_node, weight));

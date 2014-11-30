@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UNDVC_COMMON_INCLUDE_DIR}/cmake/Mo
 
 
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV COMPONENTS features2d nonfree flann imgproc highgui core)
+#find_package(OpenCV COMPONENTS features2d nonfree flann imgproc highgui core)
 
 find_package(BOINC)
 find_package(MySQL)

@@ -41,6 +41,12 @@ DifferentialEvolution::DifferentialEvolution() {
 }
 
 void
+DifferentialEvolution::set_print_statistics(void (*_print_statistics)(const std::vector<double> &)) {
+    print_statistics = _print_statistics;
+
+}
+
+void
 DifferentialEvolution::parse_arguments(const vector<string> &arguments) {
     string parent_selection_name, recombination_selection_name;
 
@@ -123,6 +129,8 @@ DifferentialEvolution::initialize() {
 
     population = vector< vector<double> >(population_size, vector<double>(number_parameters, 0.0));
     fitnesses = vector<double>(population_size, -numeric_limits<double>::max());
+
+    print_statistics = NULL;
 }
 
 DifferentialEvolution::DifferentialEvolution(const vector<string> &arguments) throw (string) : EvolutionaryAlgorithm(arguments) {

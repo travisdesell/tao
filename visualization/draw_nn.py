@@ -15,17 +15,10 @@ hidden_layers = 0
 nodes_per_layer = 0
 
 def is_output_node(n):
-    if (n[0] == hidden_layers * 2 + 1):
-        return 1
-    else:
-        return 0
+    return n[0] == hidden_layers * 2 + 1
 
 def is_recurrent_node(n):
-    if (not is_output_node(n) and n[0] % 2 == 1):
-        return 1
-    else:
-        return 0
-
+    return not is_output_node(n) and n[0] % 2 == 1
 
 with open(sys.argv[1]) as nn_file:
     n = 0
@@ -112,16 +105,17 @@ def draw_network(G,pos,ax,sg=None):
         c = None
         if (nodes[n][0] == hidden_layers * 2 + 2):  #this is the output node
             c = Circle(pos[n],radius=0.25,alpha=0.5, color='#540351')
-        elif (nodes[n][1] >= nodes_per_layer):
+        elif (nodes[n][1] >= nodes_per_layer):      #this is a recurrent node
             c = Circle(pos[n],radius=0.25,alpha=0.5, color='#B53BB1')
-        elif (nodes[n][0] == 0):
+        elif (nodes[n][0] == 0):                    #this is a input node
             c = Circle(pos[n],radius=0.25,alpha=0.5, color='#1420CD')
-        else:
+        else:                                       #this is a hidden node
             c = Circle(pos[n],radius=0.25,alpha=0.5, color='#339540')
 
         ax.add_patch(c)
-        G.node[n]['patch']=c
-        x,y=pos[n]
+        G.node[n]['patch'] = c
+        x,y = pos[n]
+
     seen={}
 
     for (u,v,d) in G.edges(data=True):
@@ -189,5 +183,5 @@ draw_network(U,pos,ax)
 ax.autoscale()
 plt.axis('equal')
 plt.axis('off')
-plt.savefig("nn.png")
+plt.savefig(sys.argv[2])
 #plt.show()

@@ -18,4 +18,7 @@ void worker(double (*objective_function)(const std::vector<T> &),
             int number_parameters,
             int max_queue_size);
 
+template<typename T>
+void set_print_statistics(double (*_print_statistics)(const std::vector<T> &));
+
 #endif
