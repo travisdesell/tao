@@ -11,6 +11,7 @@ class ConvolutionalNeuralNetwork {
     private:
         int image_x, image_y;
         bool rgb;
+        bool quiet;
 
         vector< vector< vector<char> > > images;
 
@@ -25,7 +26,7 @@ class ConvolutionalNeuralNetwork {
         vector<double> weights;
 
     public:
-        ConvolutionalNeuralNetwork(int _image_x, int _image_y, bool _rgb, const vector< vector< vector<char> > > &_images, const vector< pair<int, int> > &_layers, int _fc_size);
+        ConvolutionalNeuralNetwork(int _image_x, int _image_y, bool _rgb, bool _quiet, const vector< vector< vector<char> > > &_images, const vector< pair<int, int> > &_layers, int _fc_size);
 
 
         void initialize_nodes(const vector< pair<int, int> > &_layers, int _fc_size);
