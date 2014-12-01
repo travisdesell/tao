@@ -312,8 +312,8 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
 
             int out_layer = nodes.size() - 1;
             double max_prob = 0.0;
-            for (int i = 0; i < nodes[out_layer][0].size(); i++) {
-                if (max_prob < nodes[out_layer][0][i]) max_prob = nodes[out_layer][0][i];
+            for (int k = 0; i < nodes[out_layer][0].size(); k++) {
+                if (max_prob < nodes[out_layer][0][k]) max_prob = nodes[out_layer][0][k];
             }
 
             //i is the class, if the max prob is the one from that class it's a positive match
