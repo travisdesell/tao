@@ -312,7 +312,7 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
 
             int out_layer = nodes.size() - 1;
             double max_prob = 0.0;
-            for (int k = 0; i < nodes[out_layer][0].size(); k++) {
+            for (int k = 0; k < nodes[out_layer][0].size(); k++) {
                 if (max_prob < nodes[out_layer][0][k]) max_prob = nodes[out_layer][0][k];
             }
 
