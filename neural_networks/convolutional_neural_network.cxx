@@ -40,8 +40,8 @@ void ConvolutionalNeuralNetwork::initialize_nodes(const vector< pair<int, int> >
     }
 
     total_weights = 0;
-    //if (rgb) total_weights = 3;
-    if (rgb) total_weights = 15;
+    if (rgb) total_weights = 4;
+    //if (rgb) total_weights = 15;
 
     nodes.push_back( vector< vector<double> >(image_x, vector<double>(image_y)) );
     if (!quiet) cout << "created input layer " << (nodes.size() - 1) << " - " << nodes[nodes.size()-1].size() << "x" << nodes[nodes.size()-1][0].size() << endl;
@@ -112,11 +112,6 @@ void ConvolutionalNeuralNetwork::reset() {
     }
 }
 
-double convert(char val) {
-//    cout << "converting: " << (short)val << " to " << (double)((short)val + 128.0) / 255.0 << endl;
-    return (double)((short)val + 128.0) / 255.0;
-}
-
 double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int classification) {
     reset();
 
@@ -128,10 +123,11 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
     for (int i = 0; i < image_x; i++) {
         for (int j = 0; j < image_y; j++) {
             if (rgb) {
-                double r = convert(image[current]);
-                double g = convert(image[current + 1]);
-                double b = convert(image[current + 2]);
+                double r = image[current] / 256.0;
+                double g = image[current + 1] / 256.0;
+                double b = image[current + 2] / 256.0;
 
+                /*
                 color_hidden_layer[0]  = weights[0] * r;
                 color_hidden_layer[0] += weights[1] * g;
                 color_hidden_layer[0] += weights[2] * b;
@@ -164,6 +160,13 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                 nodes[0][i][j]  = weights[12] * color_hidden_layer[0];
                 nodes[0][i][j] += weights[13] * color_hidden_layer[1];
                 nodes[0][i][j] += weights[14] * color_hidden_layer[2];
+                */
+
+                nodes[0][i][j]  = weights[0] * r;
+                nodes[0][i][j] += weights[1] * g;
+                nodes[0][i][j] += weights[2] * b;
+                nodes[0][i][j] += weights[3];
+
 
                 nodes[0][i][j] = 1.0 / (1.0 + exp(nodes[0][i][j]));
                 //bias
@@ -185,8 +188,8 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
     }
 
     int current_weight = 0;
-//    if (rgb) current_weight = 3;
-    if (rgb) current_weight = 15;
+    if (rgb) current_weight = 4;
+    //if (rgb) current_weight = 15;
 
     int in_layer = 0, out_layer = 1;
 
@@ -215,6 +218,8 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
 
                 //if (nodes[out_layer][j][k] > 10.0) nodes[out_layer][j][k] = 10.0;
                 nodes[out_layer][j][k] = 1.0 / (1.0 + exp(nodes[out_layer][j][k]));
+                //nodes[out_layer][j][k] = fmax(0.0, nodes[out_layer][j][k]);
+                
                 //cout << "calculated nodes[" << out_layer << "][" << j << "][" << k << "]: " << nodes[out_layer][j][k] << endl;
             }
         }
