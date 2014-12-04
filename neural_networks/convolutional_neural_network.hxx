@@ -32,11 +32,14 @@ class ConvolutionalNeuralNetwork {
         void initialize_nodes(const vector< pair<int, int> > &_layers, int _fc_size);
  
         int get_n_edges();
+        void set_weights(const vector<double> &_weights);
 
         void reset();
 
+
         double objective_function(const vector<double> &parameters);
         double objective_function();
+        double get_output_class(int output_class);
 
         void print_statistics(const vector<double> &parameters);
 

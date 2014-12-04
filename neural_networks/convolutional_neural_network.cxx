@@ -115,7 +115,7 @@ void ConvolutionalNeuralNetwork::reset() {
 double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int classification) {
     reset();
 
-    double color_hidden_layer[3];
+    //double color_hidden_layer[3];
 
     //cout << "initializing input layer" << endl;
     //set input layer
@@ -325,11 +325,9 @@ double ConvolutionalNeuralNetwork::evaluate() {
 void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &parameters) {
     weights = vector<double>(parameters);
 
-    int true_positives = 0, true_negatives = 0;
-    vector<int> positive_misses;
-    vector<int> negative_misses;
-    vector<double> positive_probs;
-    vector<double> negative_probs;
+    vector<int> hit_counts(images.size());
+    vector< vector<int> > misses(images.size());
+    vector< vector<double> > miss_probs(images.size());
 
     for (int i = 0; i < images.size(); i++) {
         for (int j = 0; j < images[i].size(); j++) {
@@ -343,51 +341,24 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
 
             //i is the class, if the max prob is the one from that class it's a positive match
             if (max_prob == nodes[out_layer][0][i]) {
-                if (i == 0) {
-                    true_positives++;
-                } else {
-                    true_negatives++;
-                }
+                hit_counts[i]++;
             } else {
-                if (i == 0) {
-                    positive_misses.push_back(j);
-                    positive_probs.push_back(nodes[out_layer][0][i]);
-                } else {
-                    negative_misses.push_back(j);
-                    negative_probs.push_back(nodes[out_layer][0][i]);
-                }
+                misses[i].push_back(j);
+                miss_probs[i].push_back(nodes[out_layer][0][i]);
             }
-
-            /*
-            if (i == 0) {
-                if (evaluate(images[i][j], 1) > 0) {
-                    true_positives++;
-                } else {
-                    positive_misses.push_back(j);
-                }
-
-            } else {
-                if (evaluate(images[i][j], -1) > 0) {
-                    true_negatives++;
-                } else {
-                    negative_misses.push_back(j);
-                }
-            }
-            */
         }
     }
 
-    cout << "true positives: " << true_positives << "/" << images[0].size() << ", true negatives: " << true_negatives << "/" << images[1].size() << endl;
-
-    cout << "    positive misses:";
-    for (int i = 0; i < positive_misses.size(); i++) {
-        cout << " " << positive_misses[i] << "(" << positive_probs[i] << ")";
+    for (int i = 0; i < images.size(); i++) {
+        cout << "class " << i << " hits: " << hit_counts[i] << "/" << images[i].size() << endl;
     }
-    cout << endl;
 
-    cout << "    negative misses:";
-    for (int i = 0; i < negative_misses.size(); i++) {
-        cout << " " << negative_misses[i] << "(" << negative_probs[i] << ")";
+    for (int i = 0; i < images.size(); i++) {
+        cout << "class " << i << " misses: ";
+        for (int j = 0; j < misses[i].size(); j++) {
+            cout << " " << misses[i][j] << "(" << miss_probs[i][j] << ")";
+        }
+        cout << endl;
     }
     cout << endl;
 }
@@ -405,4 +376,12 @@ double ConvolutionalNeuralNetwork::objective_function(const vector<double> &para
 
 int ConvolutionalNeuralNetwork::get_n_edges() {
     return total_weights;
+}
+
+double ConvolutionalNeuralNetwork::get_output_class(int output_class) {
+    return nodes[nodes.size() - 1][0][output_class];
+}
+
+void ConvolutionalNeuralNetwork::set_weights(const vector<double> &_weights) {
+    weights = vector<double>(_weights);
 }
