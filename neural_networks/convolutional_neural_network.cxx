@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 #include <iostream>
 using std::cerr;
@@ -237,6 +238,7 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
             for (int k = 0; k < nodes[in_layer][j].size() / max_pool_size; k++) {
                 
                 //cout << "calculating nodes[" << out_layer << "][" << j << "][" << k << "]: " << endl;
+                nodes[out_layer][j][k] = -std::numeric_limits<double>::max();
                 for (int l = 0; l < max_pool_size; l++) {
                     for (int m = 0; m < max_pool_size; m++) {
                         double val = nodes[in_layer][(j * max_pool_size) + l][(k * max_pool_size) + m];
