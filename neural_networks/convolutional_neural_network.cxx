@@ -208,7 +208,7 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                 nodes[0][i][j] = image[current];
                 current++;
             }
-            //cout << "set nodes[0][" << i << "][" << j << "]: " << nodes[0][i][j] << ", rgb: " << rgb << endl;
+//            cout << "set nodes[0][" << i << "][" << j << "]: " << nodes[0][i][j] << ", rgb: " << rgb << endl;
         }
     }
 
@@ -338,11 +338,26 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
 double ConvolutionalNeuralNetwork::evaluate() {
     double result = 0.0;
 
+    int total = 0;
     for (int i = 0; i < images.size(); i++) {
         for (int j = 0; j < images[i].size(); j++) {
             double current = evaluate(images[i][j], i) / images[i].size();
+
+            int out_layer = nodes.size() - 1;
+            double max_prob = 0.0;
+            int max_class;
+            for (int k = 0; k < nodes[out_layer][0].size(); k++) {
+                if (max_prob < nodes[out_layer][0][k]) {
+                    max_prob = nodes[out_layer][0][k];
+                    max_class = k;
+                }
+            }
+
+            if (max_class == i) current += 0.25;
+
             result += current;
 
+            total++;
 //            cout << "CPU class[" << setw(5) << i << "], image[" << setw(5) << j << "] prob: " << setw(20) << current << endl;
             //if (i == 0) result += evaluate(images[i][j], 1) / images[i].size();
             //else result += evaluate(images[i][j], -1) / images[i].size();
@@ -351,7 +366,8 @@ double ConvolutionalNeuralNetwork::evaluate() {
 
 //    cout << "result: " << result << ", images.size(): " << images.size() << endl;
 
-    return result / images.size();
+    return result / total;
+//    return result / images.size();
 }
 
 void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &parameters) {
@@ -369,12 +385,16 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
 
             int out_layer = nodes.size() - 1;
             double max_prob = 0.0;
+            int max_class;
             for (int k = 0; k < nodes[out_layer][0].size(); k++) {
-                if (max_prob < nodes[out_layer][0][k]) max_prob = nodes[out_layer][0][k];
+                if (max_prob < nodes[out_layer][0][k]) {
+                    max_prob = nodes[out_layer][0][k];
+                    max_class = k;
+                }
             }
 
             //i is the class, if the max prob is the one from that class it's a positive match
-            if (max_prob == nodes[out_layer][0][i]) {
+            if (max_class == i) {
                 hit_counts[i]++;
             } else {
                 misses[i].push_back(j);
