@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <limits>
 
+#include <iomanip>
+using std::setw;
+
 #include <iostream>
 using std::cerr;
 using std::cout;
@@ -14,6 +17,23 @@ using std::pair;
 
 #include <vector>
 using std::vector;
+
+#ifdef __OPENCL__
+
+#include <cstdio>
+#include <cstring>
+#include <time.h>
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+#include "opencl_utils.hxx"
+
+#endif
+
 
 
 ConvolutionalNeuralNetwork::ConvolutionalNeuralNetwork(int _image_x, int _image_y, bool _rgb, bool _quiet, const vector< vector< vector<char> > > &_images, const vector< pair<int, int> > &_layers, int _fc_size) : image_x(_image_x), image_y(_image_y), rgb(_rgb), images(_images) {
@@ -44,7 +64,7 @@ void ConvolutionalNeuralNetwork::initialize_nodes(const vector< pair<int, int> >
     if (rgb) total_weights = 4;
     //if (rgb) total_weights = 15;
 
-    nodes.push_back( vector< vector<double> >(image_x, vector<double>(image_y)) );
+    nodes.push_back( vector< vector<float> >(image_x, vector<float>(image_y)) );
     if (!quiet) cout << "created input layer " << (nodes.size() - 1) << " - " << nodes[nodes.size()-1].size() << "x" << nodes[nodes.size()-1][0].size() << endl;
 
     int prev_x = image_x, prev_y = image_y;
@@ -61,7 +81,7 @@ void ConvolutionalNeuralNetwork::initialize_nodes(const vector< pair<int, int> >
 
         prev_x -= layers[i].first;
         prev_y -= layers[i].first;
-        nodes.push_back( vector< vector<double> >(prev_x, vector<double>(prev_y)) );
+        nodes.push_back( vector< vector<float> >(prev_x, vector<float>(prev_y)) );
         total_weights += (layers[i].first * layers[i].first); //convolutional layer weights
         total_weights += (prev_x * prev_y); //bias weights
 
@@ -82,19 +102,19 @@ void ConvolutionalNeuralNetwork::initialize_nodes(const vector< pair<int, int> >
         //total_weights += (layers[i].second * layers[i].second);
         //total_weights += (prev_x * prev_y);
 
-        nodes.push_back( vector< vector<double> >(prev_x, vector<double>(prev_y)) );
+        nodes.push_back( vector< vector<float> >(prev_x, vector<float>(prev_y)) );
         if (!quiet) cout << "created max pooling layer " << (nodes.size() - 1) << " - " << nodes[nodes.size()-1].size() << "x" << nodes[nodes.size()-1][0].size() << ", total_weights: " << total_weights<< endl;
     }
 
-    nodes.push_back( vector <vector<double> >(1, vector<double>(fc_size)) );        //fully connected layer
+    nodes.push_back( vector <vector<float> >(1, vector<float>(fc_size)) );        //fully connected layer
     total_weights += (prev_x * prev_y) * fc_size;
     total_weights += fc_size; //bias weights
     if (!quiet) cout << "created fully connected layer " << (nodes.size() - 1) << " - " << nodes[nodes.size()-1].size() << "x" << nodes[nodes.size()-1][0].size() << ", total_weights: " << total_weights << endl;
 
-    nodes.push_back( vector <vector<double> >(1, vector<double>(n_classes)) );  //output layer
+    nodes.push_back( vector <vector<float> >(1, vector<float>(n_classes)) );  //output layer
     total_weights += fc_size * n_classes;
     total_weights += n_classes; //bias weights
-    //nodes.push_back( vector <vector<double> >(1, vector<double>(1)) );  //output layer
+    //nodes.push_back( vector <vector<float> >(1, vector<float>(1)) );  //output layer
     //total_weights += fc_size;
     //total_weights += 1; //bias weight;
 
@@ -113,6 +133,10 @@ void ConvolutionalNeuralNetwork::reset() {
     }
 }
 
+ float activation_function(float value) {
+     return 1.0f / (1.0f + exp(-value));
+}
+
 double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int classification) {
     reset();
 
@@ -124,9 +148,9 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
     for (int i = 0; i < image_x; i++) {
         for (int j = 0; j < image_y; j++) {
             if (rgb) {
-                double r = image[current] / 256.0;
-                double g = image[current + 1] / 256.0;
-                double b = image[current + 2] / 256.0;
+                float r = image[current] / 256.0f;
+                float g = image[current + 1] / 256.0f;
+                float b = image[current + 2] / 256.0f;
 
                 /*
                 color_hidden_layer[0]  = weights[0] * r;
@@ -151,9 +175,9 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                 color_hidden_layer[2] += weights[11];
 
                 //apply sigmoid function
-                color_hidden_layer[0] = 1.0 /(1.0 + exp(color_hidden_layer[0]));
-                color_hidden_layer[1] = 1.0 /(1.0 + exp(color_hidden_layer[1]));
-                color_hidden_layer[2] = 1.0 /(1.0 + exp(color_hidden_layer[2]));
+                color_hidden_layer[0] = 1.0 /(1.0 + exp(-color_hidden_layer[0]));
+                color_hidden_layer[1] = 1.0 /(1.0 + exp(-color_hidden_layer[1]));
+                color_hidden_layer[2] = 1.0 /(1.0 + exp(-color_hidden_layer[2]));
                 //cout << "color_hidden_layer[0]: " << color_hidden_layer[0] << endl;
                 //cout << "color_hidden_layer[1]: " << color_hidden_layer[1] << endl;
                 //cout << "color_hidden_layer[2]: " << color_hidden_layer[2] << endl;
@@ -169,7 +193,7 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                 nodes[0][i][j] += weights[3];
 
 
-                nodes[0][i][j] = 1.0 / (1.0 + exp(nodes[0][i][j]));
+                nodes[0][i][j] = activation_function(nodes[0][i][j]);
                 //bias
 //                nodes[0][i][j] += weights[15];
                 current += 3;
@@ -218,7 +242,7 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                 bias_weight++;
 
                 //if (nodes[out_layer][j][k] > 10.0) nodes[out_layer][j][k] = 10.0;
-                nodes[out_layer][j][k] = 1.0 / (1.0 + exp(nodes[out_layer][j][k]));
+                nodes[out_layer][j][k] = activation_function(nodes[out_layer][j][k]);
                 //nodes[out_layer][j][k] = fmax(0.0, nodes[out_layer][j][k]);
                 
                 //cout << "calculated nodes[" << out_layer << "][" << j << "][" << k << "]: " << nodes[out_layer][j][k] << endl;
@@ -246,6 +270,7 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
                         if (nodes[out_layer][j][k] < val) nodes[out_layer][j][k] = val;
                     }
                 }
+
 
                 //nodes[out_layer][j][k] += weights[bias_weight];
                 //bias_weight++;
@@ -279,7 +304,8 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
             current_weight++;
 
             //apply sigmoid function
-            nodes[out_layer][0][k] = 1.0 / (1.0 + exp(nodes[out_layer][0][k]));
+            nodes[out_layer][0][k] = activation_function(nodes[out_layer][0][k]);
+            //printf("fc nodes[%d]: %f\n", k, nodes[out_layer][0][k]);
         }
     }
 
@@ -299,9 +325,11 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
     for (int i = 0; i < nodes[out_layer][0].size(); i++) {
         nodes[out_layer][0][i] /= sum;
         //cout << " " << nodes[out_layer][0][i];
+//        printf("output nodes[%d]: %f\n", i, nodes[out_layer][0][i]);
     }
     //cout << endl;
 
+//    cout << "result: " << log(nodes[out_layer][0][classification]) << endl;
     return log(nodes[out_layer][0][classification]);
 
     //return (nodes[out_layer][0][0] * classification) > 0;
@@ -312,8 +340,10 @@ double ConvolutionalNeuralNetwork::evaluate() {
 
     for (int i = 0; i < images.size(); i++) {
         for (int j = 0; j < images[i].size(); j++) {
-            result += evaluate(images[i][j], i) / images[i].size();
+            double current = evaluate(images[i][j], i) / images[i].size();
+            result += current;
 
+//            cout << "CPU class[" << setw(5) << i << "], image[" << setw(5) << j << "] prob: " << setw(20) << current << endl;
             //if (i == 0) result += evaluate(images[i][j], 1) / images[i].size();
             //else result += evaluate(images[i][j], -1) / images[i].size();
         }
@@ -325,7 +355,9 @@ double ConvolutionalNeuralNetwork::evaluate() {
 }
 
 void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &parameters) {
-    weights = vector<double>(parameters);
+    weights.resize(parameters.size());
+    for (int i = 0; i < parameters.size(); i++) weights[i] = parameters[i];
+
 
     vector<int> hit_counts(images.size());
     vector< vector<int> > misses(images.size());
@@ -372,7 +404,9 @@ double ConvolutionalNeuralNetwork::objective_function() {
 }
 
 double ConvolutionalNeuralNetwork::objective_function(const vector<double> &parameters) {
-    weights = vector<double>(parameters);
+    weights.resize(parameters.size());
+    for (int i = 0; i < parameters.size(); i++) weights[i] = parameters[i];
+
     return evaluate();
 }
 
@@ -385,5 +419,252 @@ double ConvolutionalNeuralNetwork::get_output_class(int output_class) {
 }
 
 void ConvolutionalNeuralNetwork::set_weights(const vector<double> &_weights) {
-    weights = vector<double>(_weights);
+    weights.resize(_weights.size());
+    for (int i = 0; i < _weights.size(); i++) weights[i] = _weights[i];
 }
+
+
+
+#ifdef __OPENCL__
+
+#define APPLY_KERNEL_FILE "../../tao/neural_networks/convolutional_neural_network_apply_kernel.cl"
+#define EVALUATE_KERNEL_FILE "../../tao/neural_networks/convolutional_neural_network_evaluate_kernel.cl"
+#define KERNEL_FUNC "add_numbers"
+
+void ConvolutionalNeuralNetwork::initialize_opencl() {
+    /* OpenCL structures */
+    cl_int  err;
+
+    /* Create device and context */
+    device = create_device();
+    context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+    check_error(err, "couldn't create a context");
+
+    /* Build program */
+    apply_kernel = build_program(context, device, APPLY_KERNEL_FILE);
+    evaluate_kernel = build_program(context, device, EVALUATE_KERNEL_FILE);
+
+    vector<char> _images;
+    total_images = 0;
+    for (int i = 0; i < images.size(); i++) {
+        for (int j = 0; j < images[i].size(); j++) {
+            for (int k = 0; k < images[i][j].size(); k++) {
+                _images.push_back(images[i][j][k]);
+            }
+            total_images++;
+        }
+    }
+
+    cout << "total images: " << total_images << ", input size: " << _images.size() << ", values per image: " << (_images.size() / total_images) << endl;
+
+    cout << "loading images" << endl;
+
+    //load the image into constant memory
+    image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, _images.size() * sizeof(char), &(_images[0]), &err);
+    check_error(err, "could not load input image into buffer: %d", err);
+
+    cout << "output size == total images: " << total_images << endl;
+
+    output_classifications = new float[total_images];
+    for (int i = 0; i < total_images; i++) output_classifications[i] = 0;
+
+    //allocate memory for the output nodes into global memory, should be one per class
+    output_classifications_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, total_images * sizeof(float), output_classifications, &err);
+    check_error(err, "couldn't create output nodes buffer");
+
+
+}
+
+double ConvolutionalNeuralNetwork::objective_function_opencl(const vector<double> &parameters) {
+    weights.resize(parameters.size());
+    for (int i = 0; i < parameters.size(); i++) weights[i] = parameters[i];
+
+    return evaluate_opencl();
+}
+
+double ConvolutionalNeuralNetwork::evaluate_opencl() {
+    reset();
+
+    cl_int err;
+
+    //load nn parameters into constant memory
+    int nn_params_size = 6 + (layers.size() * 2) + n_classes;
+    int nn_params[nn_params_size];
+    nn_params[0] = image_x;
+    nn_params[1] = image_y;
+    nn_params[2] = layers.size();
+    nn_params[3] = fc_size;
+    nn_params[4] = n_classes;
+
+    for (int i = 0; i < layers.size(); i++) {
+        nn_params[5 + (i * 2)    ] = layers[i].first;   // conv size
+        nn_params[5 + (i * 2) + 1] = layers[i].second;  // max pool size
+    }
+
+    int sum = 0;
+    for (int i = 0; i < images.size(); i++) {
+        sum += images[i].size();
+        nn_params[5 + (layers.size() * 2) + i] = sum;   //where the classes start
+    }
+
+    cl_mem nn_params_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, nn_params_size * sizeof(int), &(nn_params[0]), &err);
+    check_error(err, "could not load nn_parameters into buffer: %d", err);
+
+    float _weights[weights.size()];
+    for (int i = 0; i < weights.size(); i++) _weights[i] = weights[i];
+
+    //load weights into constant memory
+    cl_mem weights_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, weights.size() * sizeof(float), &(_weights[0]), &err);
+    check_error(err, "could not load conv_net weights into buffer: %d", err);
+
+    /* Create a command queue */
+    queue = clCreateCommandQueue(context, device, 0, &err);
+    check_error(err, "couldn't create a command queue: %d", err);
+
+    /* Create a kernel */
+    kernel = clCreateKernel(evaluate_kernel, KERNEL_FUNC, &err);
+    check_error(err, "couldn't create a kernel");
+
+    /* Create kernel arguments */
+    err =  clSetKernelArg(kernel, 0, sizeof(cl_mem), &image_buffer);
+    check_error(err, "couldn't create input image argument: %d", err);
+
+    err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &nn_params_buffer);
+    check_error(err, "couldn't create nn_params argument: %d", err);
+
+    err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &weights_buffer);
+    check_error(err, "couldn't create input weights argument: %d", err);
+
+    err = clSetKernelArg(kernel, 3, image_x * image_y * sizeof(float), NULL);
+    check_error(err, "couldn't create local nodes argument: %d", err);
+
+    err = clSetKernelArg(kernel, 4, fc_size * sizeof(float), NULL);
+    check_error(err, "couldn't create fully connected nodes argument: %d", err);
+
+    err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &output_classifications_buffer);
+    check_error(err, "couldn't create group result kernel argument: %d", err);
+
+    //size_t local_size = 64;
+    //size_t global_size = local_size * ceil((float)total_images / local_size);
+
+    size_t global_size = total_images;
+    size_t local_size = 1;
+
+    /* Enqueue kernel */
+    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); 
+    check_error(err, "couldn't enqueue the kernel");
+
+    /* Read the kernel's output */
+    err = clEnqueueReadBuffer(queue, output_classifications_buffer, CL_TRUE, 0, total_images * sizeof(float), &(output_classifications[0]), 0, NULL, NULL);
+    check_error(err, "couldn't read the output nodes buffer: %d", err);
+
+    clReleaseMemObject(weights_buffer);
+
+    double result = 0.0;
+    int pos = 0; 
+    for (int i = 0; i < images.size(); i++) {
+        for (int j = 0; j < images[i].size(); j++) {
+            double current = output_classifications[pos] / images[i].size();
+//            cout << "GPU class[" << setw(5) << i << "], image[" << setw(5) << j << "] prob: " << setw(20) << current << ", pos: " << pos << ", " << total_images << endl;
+            result += current;
+            pos++;
+        }
+    }
+
+    return result / images.size();
+}
+
+
+vector<float> ConvolutionalNeuralNetwork::apply_to_image_opencl(const vector<char> &image, int rows, int cols, int classification) {
+    reset();
+
+    cl_int err;
+    vector<char> _image(image);
+
+    cout << "input size: " << rows << "x" << cols << "x" << 3 << " = " << _image.size() << endl;
+
+    float _weights[weights.size()];
+    for (int i = 0; i < weights.size(); i++) _weights[i] = weights[i];
+
+    //load the image into constant memory
+    cl_mem image_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, _image.size() * sizeof(char), &(_image[0]), &err);
+    check_error(err, "could not load input image into buffer: %d", err);
+
+    //load weights into constant memory
+    cl_mem weights_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, weights.size() * sizeof(float), &(_weights[0]), &err);
+    check_error(err, "could not load conv_net weights into buffer: %d", err);
+
+    int output_size = (rows - image_y) * (cols - image_x);
+    cout << "output size: " << (rows - image_y) << "x" << (cols - image_x) << " = " << output_size << endl;
+    float output_image[output_size];
+    for (int i = 0; i < output_size; i++) output_image[i] = 0;
+    //allocate memory for the output nodes into global memory, should be one per class
+    cl_mem output_image_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, output_size * sizeof(float), output_image, &err);
+    check_error(err, "couldn't create output nodes buffer");
+
+    /* Create a command queue */
+    queue = clCreateCommandQueue(context, device, 0, &err);
+    check_error(err, "couldn't create a command queue: %d", err);
+
+    /* Create a kernel */
+    kernel = clCreateKernel(apply_kernel, KERNEL_FUNC, &err);
+    check_error(err, "couldn't create a kernel");
+
+    /* Create kernel arguments */
+    err =  clSetKernelArg(kernel, 0, sizeof(cl_mem), &image_buffer);
+    check_error(err, "couldn't create input image argument: %d", err);
+
+    err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &weights_buffer);
+    check_error(err, "couldn't create input weights argument: %d", err);
+
+    err = clSetKernelArg(kernel, 2, image_x * image_y * sizeof(float), NULL);
+    check_error(err, "couldn't create local nodes argument: %d", err);
+
+    err = clSetKernelArg(kernel, 3, fc_size * sizeof(float), NULL);
+    check_error(err, "couldn't create fully connected nodes argument: %d", err);
+
+    err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &output_image_buffer);
+    check_error(err, "couldn't create group result kernel argument: %d", err);
+
+    size_t *global_size = (size_t*)malloc(sizeof(size_t) * 2);
+    size_t *local_size = (size_t*)malloc(sizeof(size_t) * 2);
+
+    global_size[0] = cols - image_x, global_size[1] = rows - image_y;
+    local_size[0] = 1, local_size[1] = 1;
+
+//    size_t local_size = (rows - image_y);
+    /* Enqueue kernel */
+    err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, local_size, 0, NULL, NULL); 
+    check_error(err, "couldn't enqueue the kernel");
+
+    /* Read the kernel's output */
+    err = clEnqueueReadBuffer(queue, output_image_buffer, CL_TRUE, 0, output_size * sizeof(float), &output_image, 0, NULL, NULL);
+    check_error(err, "couldn't read the output nodes buffer: %d", err);
+
+    clReleaseMemObject(image_buffer);
+    clReleaseMemObject(weights_buffer);
+    clReleaseMemObject(output_image_buffer);
+
+    for (int i = 0; i < output_size; i++) {
+        cout << output_image[i] << endl;
+    }
+    vector<float> result_image(output_image, output_image + output_size);
+
+    return result_image;
+}
+
+void ConvolutionalNeuralNetwork::deinitialize_opencl() {
+    /* Deallocate resources */
+    clReleaseMemObject(image_buffer);
+    clReleaseMemObject(output_classifications_buffer);
+    delete [] output_classifications;
+
+    clReleaseKernel(kernel);
+    clReleaseCommandQueue(queue);
+    clReleaseProgram(apply_kernel);
+    clReleaseProgram(evaluate_kernel);
+    clReleaseContext(context);
+}
+#endif
+
+

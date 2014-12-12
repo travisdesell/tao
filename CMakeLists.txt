@@ -39,7 +39,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(BOINC)
 find_package(MySQL)
+find_package(OpenCL)
 
+message(STATUS "opencl libraries: ${OPENCL_LIBRARIES}")
+message(STATUS "opencl include_dirs: ${OPENCL_INCLUDE_DIRS}")
 
 add_subdirectory(neural_networks)
 add_subdirectory(asynchronous_algorithms)
