@@ -133,7 +133,9 @@ void ConvolutionalNeuralNetwork::reset() {
     }
 }
 
- float activation_function(float value) {
+float activation_function(float value) {
+//    return fmax(0, fmin(4, value));
+
      return 1.0f / (1.0f + exp(-value));
 }
 
@@ -353,9 +355,9 @@ double ConvolutionalNeuralNetwork::evaluate() {
                 }
             }
 
-            if (max_class == i) current += 0.25;
+//            if (max_class == i) current += 0.25;
 
-            result += current;
+            result += current / images[i].size();
 
             total++;
 //            cout << "CPU class[" << setw(5) << i << "], image[" << setw(5) << j << "] prob: " << setw(20) << current << endl;
@@ -366,7 +368,8 @@ double ConvolutionalNeuralNetwork::evaluate() {
 
 //    cout << "result: " << result << ", images.size(): " << images.size() << endl;
 
-    return result / total;
+    return result;
+//    return result / total;
 //    return result / images.size();
 }
 
