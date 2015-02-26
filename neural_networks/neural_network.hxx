@@ -20,13 +20,13 @@ class Neuron {
         double bias;
         double value;
 
-        vector<EdgeNew> forward_edges;
-        vector<EdgeNew> backward_edges;
+        vector<EdgeNew*> forward_edges;
+        vector<EdgeNew*> backward_edges;
 
         Neuron(uint32_t depth, uint32_t layer, uint32_t node);
 
-        void connect_forward(EdgeNew edge);
-        void connect_backward(EdgeNew edge);
+        void connect_forward(EdgeNew *edge);
+        void connect_backward(EdgeNew *edge);
 
         string json() const;
 
@@ -43,10 +43,14 @@ class NeuralNetwork {
         uint32_t n_hidden_nodes;
         uint32_t n_output_nodes;
 
-        vector< vector< vector<Neuron*> > > nodes;
+        uint32_t output_layer;
+        uint32_t active_input_nodes;
 
-        vector<EdgeNew> edges;
-        vector<EdgeNew> recurrent_edges;
+        vector< vector< vector<Neuron*> > > nodes;
+        vector<Neuron*> linear_nodes;
+
+        vector<EdgeNew*> edges;
+        vector<EdgeNew*> recurrent_edges;
 
         vector< vector<double> > inputs;
         vector< vector<double> > outputs;
@@ -56,7 +60,7 @@ class NeuralNetwork {
 
         NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes);
 
-        void set_training_data(uint32_t n_examples, uint32_t input_size, const double **_inputs, uint32_t output_size, double **_outputs);
+        void set_training_data(uint32_t n_examples, uint32_t input_size, double **_inputs, uint32_t output_size, double **_outputs);
         void set_training_data(const vector< vector<double> > &_inputs, const vector< vector<double> > &_outputs);
 
         void set_edges(const vector<EdgeNew> &_edges, const vector<EdgeNew> &_recurrent_edges);
@@ -64,6 +68,9 @@ class NeuralNetwork {
 
         string json();
         void write_to_file(string json_filename);
+
+        uint32_t get_parameter_size();
+        double evaluate(const vector<double> &values);
 
         void get_gradient(vector<double> &gradient);
         void get_gradient_stochastic(vector<double> &gradient);

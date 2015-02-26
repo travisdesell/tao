@@ -19,13 +19,13 @@ EdgeNew::EdgeNew(uint32_t _src_depth, uint32_t _src_layer, uint32_t _src_node, u
 string EdgeNew::json() {
     ostringstream oss;
     oss << "{";
-    oss << " \"src_depth : " << src_depth << ",";
-    oss << " \"src_layer : " << src_layer << ",";
-    oss << " \"src_node : " << src_node << ",";
-    oss << " \"dst_depth : " << dst_depth << ",";
-    oss << " \"dst_layer : " << dst_layer << ",";
-    oss << " \"dst_node : " << dst_node << ",";
-    oss << " \"weight : " << weight;
+    oss << " \"src_depth\" : " << src_depth << ",";
+    oss << " \"src_layer\" : " << src_layer << ",";
+    oss << " \"src_node\" : " << src_node << ",";
+    oss << " \"dst_depth\" : " << dst_depth << ",";
+    oss << " \"dst_layer\" : " << dst_layer << ",";
+    oss << " \"dst_node\" : " << dst_node << ",";
+    oss << " \"weight\" : " << weight;
     oss << "}";
 
     return oss.str();
