@@ -20,7 +20,29 @@ using std::vector;
 #include "./neural_networks/edge_new.hxx"
 #include "./neural_networks/neural_network.hxx"
 
-Neuron::Neuron(uint32_t _depth, uint32_t _layer, uint32_t _node) : depth(_depth), layer(_layer), node(_node), identifier(""), bias(0.0), value(0.0) {
+double linear_activation_function(double input) {
+    return input;
+}
+
+double sigmoid_activation_function(double input) {
+    return 1.0 / (1.0 + exp(-input));
+}
+
+double tanh_activation_function(double input) {
+    return tanh(input);
+}
+
+double sigmoid_derivative(double input) {
+    return input * (1 - input);
+}
+
+double tanh_derivative(double input) {
+    return 1 - (tanh(input) * tanh(input));
+}
+
+
+
+Neuron::Neuron(uint32_t _depth, uint32_t _layer, uint32_t _node) : depth(_depth), layer(_layer), node(_node), identifier(""), bias(0.0), value(0.0), error(0.0) {
 }
 
 void Neuron::connect_forward(EdgeNew *edge) {
@@ -39,7 +61,8 @@ string Neuron::json() const {
         << "\"node\" : " << node << ", "
         << "\"identifier\" : \"" << identifier << "\", "
         << "\"bias\" : " << bias << ", "
-        << "\"value\" : " << value
+        << "\"value\" : " << value << ", "
+        << "\"error\" : " << error 
         << "}";
 
     return oss.str();
@@ -59,7 +82,7 @@ ostream& operator<< (ostream& out, const Neuron *neuron) {
 NeuralNetwork::NeuralNetwork(string json_filename) {
 }
 
-NeuralNetwork::NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes) : recurrent_depth(_recurrent_depth), n_input_nodes(_n_input_nodes), n_hidden_layers(_n_hidden_layers), n_hidden_nodes(_n_hidden_nodes), n_output_nodes(_n_output_nodes) {
+NeuralNetwork::NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes, ActivationFunction _activation_function, DerivativeFunction _derivative_function) : recurrent_depth(_recurrent_depth), n_input_nodes(_n_input_nodes), n_hidden_layers(_n_hidden_layers), n_hidden_nodes(_n_hidden_nodes), n_output_nodes(_n_output_nodes), activation_function(_activation_function), derivative_function(_derivative_function) {
 
     //initialize all the possible nodes to null
     for (uint32_t depth = 0; depth < recurrent_depth; depth++) {
@@ -327,7 +350,50 @@ uint32_t NeuralNetwork::get_parameter_size() {
     return linear_nodes.size() + edges.size() - active_input_nodes;
 }
 
-double NeuralNetwork::evaluate(const vector<double> &weights) {
+void NeuralNetwork::evaluate_at(uint32_t example) {
+
+    //set initial bias and input values
+    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
+        if (linear_nodes.at(node)->depth == 0) {
+            if (linear_nodes.at(node)->layer == 0) {
+                linear_nodes.at(node)->value = inputs.at(example).at(linear_nodes.at(node)->node);
+            } else {
+                //reset non-recurrent node values equal to bias
+                linear_nodes.at(node)->value = linear_nodes.at(node)->bias;
+            }
+        } else {
+            //add bias to recurrent node values
+            linear_nodes.at(node)->value += linear_nodes.at(node)->bias;
+        }
+        //            cout << linear_nodes.at(node) << endl;
+    }
+
+    //        cout << "output node value: " << nodes.at(0).at(output_layer).at(0)->value << endl;
+
+    //propogate values forward
+    Neuron *current, *target;
+    uint32_t dst_depth, dst_layer, dst_node;
+    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
+        current = linear_nodes.at(node);
+        if (current->depth > 0) {
+            //cout << "current->value: " << current->value << ", after activation function: " << activation_function(current->value) << endl;
+            current->value = activation_function(current->value);
+        }
+
+        for (uint32_t next = 0; next < current->forward_edges.size(); next++) {
+            dst_depth = current->forward_edges.at(next)->dst_depth;
+            dst_layer = current->forward_edges.at(next)->dst_layer;
+            dst_node = current->forward_edges.at(next)->dst_node;
+
+            target = nodes.at(dst_depth).at(dst_layer).at(dst_node);
+
+            target->value += current->value * current->forward_edges.at(next)->weight;
+        }
+    }
+
+}
+
+void NeuralNetwork::set_weights(const vector<double> &weights) {
     if (weights.size() != get_parameter_size()) {
         cerr << "ERROR on '" << __FILE__ << ":" << __LINE__ << "':" << endl;
         cerr << "\tnumber of weights to evaluate neural network with (" << weights.size() << ") != number of nodes (" << linear_nodes.size() << ") + number of edges (" << edges.size() << ")" << endl;
@@ -359,79 +425,121 @@ double NeuralNetwork::evaluate(const vector<double> &weights) {
         edges.at(edge)->weight = weights[current];
         current++;
     }
+
     if (current != weights.size()) {
         cerr << "ERROR: current (" << current << ") != weights.size() (" << weights.size() << ")" << endl;
         exit(1);
     }
 
     //recurrent edges have no weight
+    //TODO: try recurrent edge weights?
+}
+
+void NeuralNetwork::update_recurrent_nodes() {
+
+    //copy values to recurrent neurons, starting at the deepest layer any working up
+    for (int32_t i = recurrent_edges.size() - 1; i >= 0; i--) {
+        nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = nodes.at(recurrent_edges.at(i)->src_depth).at(recurrent_edges.at(i)->src_layer).at(recurrent_edges.at(i)->src_node)->value;
+
+        if (nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value > 5000.00) {
+            nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = 5000.00;
+            //cout << "recurrent node too big!" << endl;
+        }
+
+        if (nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value < -5000.00) {
+            nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = -5000.00;
+            //cout << "recurrent node too small!" << endl;
+        }
+
+        //            cout << "set recurrent node: " << nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node) << endl;
+    }
+}
+
+double NeuralNetwork::objective_function(const vector<double> &weights) {
+    set_weights(weights);
 
     double error = 0.0;
     for (uint32_t example = 0; example < inputs.size(); example++) {
+        evaluate_at(example);
 
-        //set initial bias and input values
-        current = 0;
-        for (uint32_t node = 0; node < linear_nodes.size(); node++) {
-            if (linear_nodes.at(node)->depth == 0) {
-                if (linear_nodes.at(node)->layer == 0) {
-                    linear_nodes.at(node)->value = inputs.at(example).at(linear_nodes.at(node)->node);
-                } else {
-                    //reset non-recurrent node values equal to bias
-                    linear_nodes.at(node)->value = linear_nodes.at(node)->bias;
-                    current++;
-                }
-            } else {
-                //add bias to recurrent node values
-                linear_nodes.at(node)->value += linear_nodes.at(node)->bias;
-            }
-//            cout << linear_nodes.at(node) << endl;
+        //backward propagation of errors
+        double node_error;
+        Neuron *current;
+        for (int32_t node = 0; node < nodes.at(0).at(output_layer).size(); node++) {
+            current = nodes.at(0).at(output_layer).at(node);
+
+            node_error = outputs[example][current->node] - current->value;
+
+            error += fabs(node_error);
+
+            //error += 0.5 * (node_error * node_error);
         }
 
-//        cout << "output node value: " << nodes.at(0).at(output_layer).at(0)->value << endl;
-
-        //propogate values forward
-        for (uint32_t i = 0; i < edges.size(); i++) {
-            //cout << "node value " << nodes.at(edges.at(i)->dst_depth).at(edges.at(i)->dst_layer).at(edges.at(i)->dst_node)->value
-            //     << " += " << edges.at(i)->weight
-            //     << " * " << nodes.at(edges.at(i)->src_depth).at(edges.at(i)->src_layer).at(edges.at(i)->src_node)->value
-            //     << endl;
-
-            nodes.at(edges.at(i)->dst_depth).at(edges.at(i)->dst_layer).at(edges.at(i)->dst_node)->value += edges.at(i)->weight * nodes.at(edges.at(i)->src_depth).at(edges.at(i)->src_layer).at(edges.at(i)->src_node)->value;
-
-        }
-
-        //calculate the error
-        for (uint32_t i = 0; i < nodes.at(0).at(output_layer).size(); i++) {
-            //double example_error = (outputs[example][i] - nodes.at(0).at(output_layer).at(i)->value) * (outputs[example][i] - nodes.at(0).at(output_layer).at(i)->value);
-            double example_error = fabs(outputs[example][i] - nodes.at(0).at(output_layer).at(i)->value);
-
-//            cout << "example " << example << ": actual (" << outputs[example][i] << "), predicted (" << nodes.at(0).at(output_layer).at(i)->value << "), error: " << example_error << endl;
-
-            error += example_error;
-        }
-
-        //copy values to recurrent neurons, starting at the deepest layer any working up
-        for (int32_t i = recurrent_edges.size() - 1; i >= 0; i--) {
-            nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = nodes.at(recurrent_edges.at(i)->src_depth).at(recurrent_edges.at(i)->src_layer).at(recurrent_edges.at(i)->src_node)->value;
-
-            if (nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value > 5000.00) {
-                nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = 5000.00;
-                //cout << "recurrent node too big!" << endl;
-            }
-
-            if (nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value < -5000.00) {
-                nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = -5000.00;
-                //cout << "recurrent node too small!" << endl;
-            }
-
-//            cout << "set recurrent node: " << nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node) << endl;
-        }
+        update_recurrent_nodes();
     }
+
     error /= (-1.0 * inputs.size());
 //    cout << "error was: " << error << endl;
 
     return error;
 }
+
+double NeuralNetwork::backpropagation(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations) {
+    set_weights(starting_weights);
+
+    double error;
+    double mean_average_error;
+    for (uint32_t iteration = 0; iteration < max_iterations; iteration++) {
+        error = 0.0;
+        mean_average_error = 0.0;
+        uint32_t dst_depth, dst_layer, dst_node;
+        for (uint32_t example = 0; example < inputs.size(); example++) {
+            evaluate_at(example);
+
+            //backward propagation of errors
+            double node_error;
+            Neuron *current;
+            for (int32_t node = linear_nodes.size() - 1; node >= 0; node--) {
+                current = linear_nodes.at(node);
+
+                if (current->layer == output_layer) {
+                    node_error = outputs[example][current->node] - current->value;
+
+                    //cout << "example " << example << ": actual (" << outputs[example][current->node] << "), predicted (" << current->value << "), error: " << node_error << endl;
+
+                    mean_average_error += fabs(node_error);
+                    error += 0.5 * (node_error * node_error);
+                } else {
+                    node_error = 0.0;
+                    for (uint32_t next = 0; next < current->forward_edges.size(); next++) {
+                        dst_depth = current->forward_edges.at(next)->dst_depth;
+                        dst_layer = current->forward_edges.at(next)->dst_layer;
+                        dst_node = current->forward_edges.at(next)->dst_node;
+
+                        node_error += current->forward_edges.at(next)->weight * nodes.at(dst_depth).at(dst_layer).at(dst_node)->error;
+
+                        current->forward_edges.at(next)->weight += learning_rate * nodes.at(dst_depth).at(dst_layer).at(dst_node)->error * current->value;
+                    }
+                }
+
+                current->error = node_error * derivative_function(current->value);
+
+                //TODO: also need to update the bias
+
+                //cout << current << endl;
+            }
+
+            update_recurrent_nodes();
+        }
+        mean_average_error /= (-1.0 * inputs.size());
+        error /= (-1.0 * inputs.size());
+        cout << "[iteration: " << iteration << "] error was: " << error << ", mean_average_error: " << mean_average_error << endl;
+    }
+
+    return error;
+}
+
+
 
 void NeuralNetwork::get_gradient(vector<double> &gradient) {
 
