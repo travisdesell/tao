@@ -4,11 +4,11 @@
 #include <vector>
 using std::vector;
 
-#include "asynchronous_algorithms/ant_colony_optimization.hxx"
+#include "asynchronous_algorithms/ant_colony_optimization_new.hxx"
 
-#include "neural_networks/edge.hxx"
+#include "neural_networks/edge_new.hxx"
 
 
-void ant_colony_optimization_mpi(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges));
+void ant_colony_optimization_mpi(int maximum_iterations, AntColonyNew &ant_colony, double (*objective_function)(vector<EdgeNew> &edges, vector<EdgeNew> &recurrent_edges));
 
 #endif

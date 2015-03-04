@@ -13,12 +13,12 @@ typedef double (*ActivationFunction)(double);
 typedef double (*DerivativeFunction)(double);
 
 double linear_activation_function(double input);
-
 double sigmoid_activation_function(double input);
 double tanh_activation_function(double input);
 
 double sigmoid_derivative(double input);
 double tanh_derivative(double input);
+double linear_derivative(double input);
 
 class Neuron {
     public:
@@ -35,6 +35,7 @@ class Neuron {
         vector<EdgeNew*> backward_edges;
 
         Neuron(uint32_t depth, uint32_t layer, uint32_t node);
+        ~Neuron();
 
         void connect_forward(EdgeNew *edge);
         void connect_backward(EdgeNew *edge);
@@ -73,6 +74,9 @@ class NeuralNetwork {
         NeuralNetwork(string json_filename);
 
         NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes, ActivationFunction _activation_function, DerivativeFunction _derivative_function);
+
+        ~NeuralNetwork();
+        void reset();
 
         void set_training_data(uint32_t n_examples, uint32_t input_size, double **_inputs, uint32_t output_size, double **_outputs);
         void set_training_data(const vector< vector<double> > &_inputs, const vector< vector<double> > &_outputs);

@@ -12,34 +12,36 @@ using std::vector;
 
 #include "mpi.h"
 
-#include "asynchronous_algorithms/ant_colony_optimization.hxx"
-#include "mpi/mpi_ant_colony_optimization.hxx"
-#include "neural_networks/edge.hxx"
+#include "asynchronous_algorithms/ant_colony_optimization_new.hxx"
+#include "mpi/mpi_ant_colony_optimization_new.hxx"
+#include "neural_networks/edge_new.hxx"
 
 
 #define EDGES_SIZE_MSG 11
 #define EDGES_ARRAY_MSG 12
 #define FITNESS_MSG 12
 
-int* edges_to_array(const vector<Edge> &edges) {
-    int *edges_array = new int[edges.size() * 4];
+int* edges_to_array(const vector<EdgeNew> &edges) {
+    int *edges_array = new int[edges.size() * 6];
     for (int i = 0; i < edges.size(); i++) {
-        edges_array[(4 * i)    ] = edges[i].src_layer;
-        edges_array[(4 * i) + 1] = edges[i].dst_layer;
-        edges_array[(4 * i) + 2] = edges[i].src_node;
-        edges_array[(4 * i) + 3] = edges[i].dst_node;
+        edges_array[(6 * i)    ] = edges[i].src_depth;
+        edges_array[(6 * i) + 1] = edges[i].src_layer;
+        edges_array[(6 * i) + 2] = edges[i].src_node;
+        edges_array[(6 * i) + 3] = edges[i].dst_depth;
+        edges_array[(6 * i) + 4] = edges[i].dst_layer;
+        edges_array[(6 * i) + 5] = edges[i].dst_node;
     }
     return edges_array;
 }
 
-void array_to_edges(vector<Edge> &edges, int array_size, int* edges_array) {
+void array_to_edges(vector<EdgeNew> &edges, int array_size, int* edges_array) {
     edges.clear();
-    for (int i = 0; i < array_size; i += 4) {
-        edges.push_back(Edge(edges_array[i], edges_array[i+1], edges_array[i+2], edges_array[i+3]));
+    for (int i = 0; i < array_size; i += 6) {
+        edges.push_back(EdgeNew(edges_array[i], edges_array[i+1], edges_array[i+2], edges_array[i+3], edges_array[i+4], edges_array[i+5]));
     }
 }
 
-double* weights_to_array(const vector<Edge> &edges) {
+double* weights_to_array(const vector<EdgeNew> &edges) {
     double *weights_array = new double[edges.size()];
     for (int i = 0; i < edges.size(); i++) {
         weights_array[i] = edges[i].weight;
@@ -47,7 +49,7 @@ double* weights_to_array(const vector<Edge> &edges) {
     return weights_array;
 }
 
-void array_to_weights(vector<Edge> &edges, int array_size, double* weights_array) {
+void array_to_weights(vector<EdgeNew> &edges, int array_size, double* weights_array) {
     for (int i = 0; i < array_size; i++) {
         edges[i].weight = weights_array[i];
     }
@@ -56,7 +58,7 @@ void array_to_weights(vector<Edge> &edges, int array_size, double* weights_array
 
 
 
-void receive_edges(int source, vector<Edge> &edges, vector<Edge> &recurrent_edges) {
+void receive_edges(int source, vector<EdgeNew> &edges, vector<EdgeNew> &recurrent_edges) {
     MPI_Status status;
     int array_size;
 
@@ -88,14 +90,14 @@ void receive_edges(int source, vector<Edge> &edges, vector<Edge> &recurrent_edge
     delete [] recurrent_edge_weights_array;
 }
 
-void send_edges(int target, const vector<Edge> &edges, const vector<Edge> &recurrent_edges) {
+void send_edges(int target, const vector<EdgeNew> &edges, const vector<EdgeNew> &recurrent_edges) {
         int *edges_array = edges_to_array(edges);
         double *edge_weights_array = weights_to_array(edges);
 
         int *recurrent_edges_array = edges_to_array(recurrent_edges);
         double *recurrent_edge_weights_array = weights_to_array(recurrent_edges);
 
-        int edges_size = edges.size() * 4;
+        int edges_size = edges.size() * 6;
         MPI_Send(&edges_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
         MPI_Send(edges_array, edges_size, MPI_INT, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
 
@@ -103,7 +105,7 @@ void send_edges(int target, const vector<Edge> &edges, const vector<Edge> &recur
         MPI_Send(&edge_weights_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
         MPI_Send(edge_weights_array, edge_weights_size, MPI_DOUBLE, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
 
-        int recurrent_edges_size = recurrent_edges.size() * 4;
+        int recurrent_edges_size = recurrent_edges.size() * 6;
         MPI_Send(&recurrent_edges_size, 1, MPI_INT, target, EDGES_SIZE_MSG, MPI_COMM_WORLD);
         MPI_Send(recurrent_edges_array, recurrent_edges_size, MPI_INT, target, EDGES_ARRAY_MSG, MPI_COMM_WORLD);
 
@@ -117,16 +119,16 @@ void send_edges(int target, const vector<Edge> &edges, const vector<Edge> &recur
         delete [] recurrent_edge_weights_array;
 }
 
-void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
+void ant_colony_farmer(int maximum_iterations, AntColonyNew &ant_colony) {
     int max_rank;
     MPI_Comm_size(MPI_COMM_WORLD, &max_rank);
 
-    vector<Edge> edges;
-    vector<Edge> recurrent_edges;
+    vector<EdgeNew> edges;
+    vector<EdgeNew> recurrent_edges;
     
     //send a network to each worker
     for (int i = 1; i < max_rank; i++) {
-        ant_colony.get_ant_paths(edges, recurrent_edges);
+        ant_colony.generate_neural_network(edges, recurrent_edges);
         send_edges(i, edges, recurrent_edges);
     }
 
@@ -155,6 +157,7 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
         }
         */
 
+        //cout << "adding paths with fitness: " << fitness << endl;
         ant_colony.add_ant_paths(fitness, edges, recurrent_edges);
 
         cout << std::fixed << setw(10) << ant_colony.get_iteration() << setprecision(10) << setw(20) << fitness << setw(20) << ant_colony.get_best_fitness() << setw(20) << ant_colony.get_avg_fitness() << setw(20) << ant_colony.get_worst_fitness() << endl;
@@ -170,9 +173,9 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
     MPI_Abort(MPI_COMM_WORLD, 0 /*Success*/);
 }
 
-void ant_colony_worker(int rank, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges)) {
-    vector<Edge> edges;
-    vector<Edge> recurrent_edges;
+void ant_colony_worker(int rank, double (*objective_function)(vector<EdgeNew> &edges, vector<EdgeNew> &recurrent_edges)) {
+    vector<EdgeNew> edges;
+    vector<EdgeNew> recurrent_edges;
 
     bool finished = false;
     while (!finished) {
@@ -190,7 +193,7 @@ void ant_colony_worker(int rank, double (*objective_function)(vector<Edge> &edge
     }
 }
 
-void ant_colony_optimization_mpi(int maximum_iterations, AntColony &ant_colony, double (*objective_function)(vector<Edge> &edges, vector<Edge> &recurrent_edges)) {
+void ant_colony_optimization_mpi(int maximum_iterations, AntColonyNew &ant_colony, double (*objective_function)(vector<EdgeNew> &edges, vector<EdgeNew> &recurrent_edges)) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

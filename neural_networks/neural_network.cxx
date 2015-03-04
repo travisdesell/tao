@@ -32,6 +32,10 @@ double tanh_activation_function(double input) {
     return tanh(input);
 }
 
+double linear_derivative(double input) {
+    return 1.0;
+}
+
 double sigmoid_derivative(double input) {
     return input * (1 - input);
 }
@@ -43,6 +47,10 @@ double tanh_derivative(double input) {
 
 
 Neuron::Neuron(uint32_t _depth, uint32_t _layer, uint32_t _node) : depth(_depth), layer(_layer), node(_node), identifier(""), bias(0.0), value(0.0), error(0.0) {
+}
+
+Neuron::~Neuron() {
+    //NeuralNetwork should clean up all the neuron edges
 }
 
 void Neuron::connect_forward(EdgeNew *edge) {
@@ -120,9 +128,38 @@ NeuralNetwork::NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes,
         }
     }
     */
-
-
 }
+
+NeuralNetwork::~NeuralNetwork() {
+    reset();
+}
+
+void NeuralNetwork::reset() {
+    while (edges.size() > 0) {
+
+        EdgeNew *edge = edges.back();
+        edges.pop_back();
+        delete edge;
+    }
+
+    while (recurrent_edges.size() > 0) {
+        EdgeNew *edge = recurrent_edges.back();
+        recurrent_edges.pop_back();
+        delete edge;
+    }
+
+    for (uint32_t depth = 0; depth < nodes.size(); depth++) {
+        for (uint32_t layer = 0; layer < nodes.at(depth).size(); layer++) {
+            for (uint32_t node = 0; node < nodes.at(depth).at(layer).size(); node++) {
+                delete nodes.at(depth).at(layer).at(node);
+                nodes.at(depth).at(layer).at(node) = NULL;
+            }
+        }
+    }
+
+    linear_nodes.clear();
+}
+
 
 void NeuralNetwork::set_training_data(uint32_t n_examples, uint32_t input_size, double **_inputs, uint32_t output_size, double **_outputs) {
     inputs = vector< vector<double> >(n_examples, vector<double>(input_size, 0.0));
@@ -350,49 +387,6 @@ uint32_t NeuralNetwork::get_parameter_size() {
     return linear_nodes.size() + edges.size() - active_input_nodes;
 }
 
-void NeuralNetwork::evaluate_at(uint32_t example) {
-
-    //set initial bias and input values
-    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
-        if (linear_nodes.at(node)->depth == 0) {
-            if (linear_nodes.at(node)->layer == 0) {
-                linear_nodes.at(node)->value = inputs.at(example).at(linear_nodes.at(node)->node);
-            } else {
-                //reset non-recurrent node values equal to bias
-                linear_nodes.at(node)->value = linear_nodes.at(node)->bias;
-            }
-        } else {
-            //add bias to recurrent node values
-            linear_nodes.at(node)->value += linear_nodes.at(node)->bias;
-        }
-        //            cout << linear_nodes.at(node) << endl;
-    }
-
-    //        cout << "output node value: " << nodes.at(0).at(output_layer).at(0)->value << endl;
-
-    //propogate values forward
-    Neuron *current, *target;
-    uint32_t dst_depth, dst_layer, dst_node;
-    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
-        current = linear_nodes.at(node);
-        if (current->depth > 0) {
-            //cout << "current->value: " << current->value << ", after activation function: " << activation_function(current->value) << endl;
-            current->value = activation_function(current->value);
-        }
-
-        for (uint32_t next = 0; next < current->forward_edges.size(); next++) {
-            dst_depth = current->forward_edges.at(next)->dst_depth;
-            dst_layer = current->forward_edges.at(next)->dst_layer;
-            dst_node = current->forward_edges.at(next)->dst_node;
-
-            target = nodes.at(dst_depth).at(dst_layer).at(dst_node);
-
-            target->value += current->value * current->forward_edges.at(next)->weight;
-        }
-    }
-
-}
-
 void NeuralNetwork::set_weights(const vector<double> &weights) {
     if (weights.size() != get_parameter_size()) {
         cerr << "ERROR on '" << __FILE__ << ":" << __LINE__ << "':" << endl;
@@ -435,11 +429,56 @@ void NeuralNetwork::set_weights(const vector<double> &weights) {
     //TODO: try recurrent edge weights?
 }
 
+void NeuralNetwork::evaluate_at(uint32_t example) {
+
+    //set initial bias and input values
+    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
+        if (linear_nodes.at(node)->depth == 0) {
+            if (linear_nodes.at(node)->layer == 0) {
+                linear_nodes.at(node)->value = inputs.at(example).at(linear_nodes.at(node)->node);
+            } else {
+                //reset non-recurrent node values equal to bias
+                linear_nodes.at(node)->value = linear_nodes.at(node)->bias;
+            }
+        } else {
+            //add bias to recurrent node values
+            linear_nodes.at(node)->value += linear_nodes.at(node)->bias;
+        }
+        //            cout << linear_nodes.at(node) << endl;
+    }
+
+    //        cout << "output node value: " << nodes.at(0).at(output_layer).at(0)->value << endl;
+
+    //propogate values forward
+    Neuron *current, *target;
+    uint32_t dst_depth, dst_layer, dst_node;
+    for (uint32_t node = 0; node < linear_nodes.size(); node++) {
+        current = linear_nodes.at(node);
+        if (current->layer > 0) {
+            //cout << "current->value: " << current->value << ", after activation function: " << activation_function(current->value) << endl;
+            current->value = activation_function(current->value);
+        }
+
+        for (uint32_t next = 0; next < current->forward_edges.size(); next++) {
+            dst_depth = current->forward_edges.at(next)->dst_depth;
+            dst_layer = current->forward_edges.at(next)->dst_layer;
+            dst_node = current->forward_edges.at(next)->dst_node;
+
+            target = nodes.at(dst_depth).at(dst_layer).at(dst_node);
+
+            target->value += current->value * current->forward_edges.at(next)->weight;
+        }
+    }
+}
+
+
 void NeuralNetwork::update_recurrent_nodes() {
 
     //copy values to recurrent neurons, starting at the deepest layer any working up
     for (int32_t i = recurrent_edges.size() - 1; i >= 0; i--) {
         nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = nodes.at(recurrent_edges.at(i)->src_depth).at(recurrent_edges.at(i)->src_layer).at(recurrent_edges.at(i)->src_node)->value;
+
+        //cout << "set recurrent node: " << nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value << endl;
 
         if (nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value > 5000.00) {
             nodes.at(recurrent_edges.at(i)->dst_depth).at(recurrent_edges.at(i)->dst_layer).at(recurrent_edges.at(i)->dst_node)->value = 5000.00;
@@ -487,6 +526,7 @@ double NeuralNetwork::objective_function(const vector<double> &weights) {
 double NeuralNetwork::backpropagation(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations) {
     set_weights(starting_weights);
 
+    double previous_error = -1000000.00;
     double error;
     double mean_average_error;
     for (uint32_t iteration = 0; iteration < max_iterations; iteration++) {
@@ -524,16 +564,26 @@ double NeuralNetwork::backpropagation(const vector<double> &starting_weights, do
 
                 current->error = node_error * derivative_function(current->value);
 
-                //TODO: also need to update the bias
+                current->bias += learning_rate * current->error;
 
                 //cout << current << endl;
             }
 
             update_recurrent_nodes();
         }
+
         mean_average_error /= (-1.0 * inputs.size());
         error /= (-1.0 * inputs.size());
-        cout << "[iteration: " << iteration << "] error was: " << error << ", mean_average_error: " << mean_average_error << endl;
+
+        if (iteration % 1000 == 0) {
+            cout << "[iteration: " << iteration << "] error was: " << error << ", mean_average_error: " << mean_average_error << endl;
+        }
+
+        if (error < previous_error) {
+            learning_rate *= 0.1;
+            cout << "decrementing learning rate to: " << learning_rate << endl;
+        }
+        previous_error = error;
     }
 
     return error;
