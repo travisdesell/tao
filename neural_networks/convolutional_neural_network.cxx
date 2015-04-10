@@ -1,5 +1,8 @@
 #include "convolutional_neural_network.hxx"
 
+#include <algorithm>
+using std::random_shuffle;
+
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -305,8 +308,13 @@ double ConvolutionalNeuralNetwork::evaluate(const vector<char> &image, int class
             nodes[out_layer][0][k] += weights[current_weight]; //bias
             current_weight++;
 
-            //apply sigmoid function
-            nodes[out_layer][0][k] = activation_function(nodes[out_layer][0][k]);
+            if (out_layer == nodes.size() - 1) {
+                //softmax layer uses exp instead of sigmoid function
+                nodes[out_layer][0][k] = exp(nodes[out_layer][0][k]);
+            } else {
+                //apply sigmoid function
+                nodes[out_layer][0][k] = activation_function(nodes[out_layer][0][k]);
+            }
             //printf("fc nodes[%d]: %f\n", k, nodes[out_layer][0][k]);
         }
     }
@@ -373,6 +381,55 @@ double ConvolutionalNeuralNetwork::evaluate() {
 //    return result / images.size();
 }
 
+
+double ConvolutionalNeuralNetwork::evaluate_stochastic(uint32_t n_samples) {
+    double result = 0.0;
+
+    int total = 0;
+    for (int i = 0; i < images.size(); i++) {
+
+        if (n_samples > images[i].size()) {
+            cerr << "ERROR: on '" << __FILE__ << ":" << __LINE__ << "', n_samples (" << n_samples << ") specified for stochastic evaluation > number of images in class[" << i << "]: " << images[i].size() << endl;
+            exit(1);
+        }
+
+        //random_shuffle(images[i].begin(), images[i].end());
+
+        for (int j = 0; j < n_samples; j++) {
+            uint32_t random_image = drand48() * images[i].size();
+
+            double current = evaluate(images[i][random_image], i) / n_samples;
+
+            int out_layer = nodes.size() - 1;
+            double max_prob = 0.0;
+            int max_class;
+            for (int k = 0; k < nodes[out_layer][0].size(); k++) {
+                if (max_prob < nodes[out_layer][0][k]) {
+                    max_prob = nodes[out_layer][0][k];
+                    max_class = k;
+                }
+            }
+
+//            if (max_class == i) current += 0.25;
+
+            result += current;
+
+            total++;
+//            cout << "CPU class[" << setw(5) << i << "], image[" << setw(5) << j << "] prob: " << setw(20) << current << endl;
+            //if (i == 0) result += evaluate(images[i][j], 1) / images[i].size();
+            //else result += evaluate(images[i][j], -1) / images[i].size();
+        }
+    }
+    result /= images.size();
+
+//    cout << "result: " << result << ", images.size(): " << images.size() << endl;
+
+    return result;
+//    return result / total;
+//    return result / images.size();
+}
+
+
 void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &parameters) {
     weights.resize(parameters.size());
     for (int i = 0; i < parameters.size(); i++) weights[i] = parameters[i];
@@ -382,9 +439,10 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
     vector< vector<int> > misses(images.size());
     vector< vector<double> > miss_probs(images.size());
 
+    double error = 0.0;
     for (int i = 0; i < images.size(); i++) {
         for (int j = 0; j < images[i].size(); j++) {
-            evaluate(images[i][j], i);
+            error += evaluate(images[i][j], i) / images[i].size();
 
             int out_layer = nodes.size() - 1;
             double max_prob = 0.0;
@@ -400,16 +458,20 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
             if (max_class == i) {
                 hit_counts[i]++;
             } else {
-                misses[i].push_back(j);
-                miss_probs[i].push_back(nodes[out_layer][0][i]);
+//                misses[i].push_back(j);
+//                miss_probs[i].push_back(nodes[out_layer][0][i]);
             }
         }
     }
 
+    error /= images.size();
+
+    cout << "overall error: " << error << endl;
     for (int i = 0; i < images.size(); i++) {
         cout << "class " << i << " hits: " << hit_counts[i] << "/" << images[i].size() << endl;
     }
 
+    /*
     for (int i = 0; i < images.size(); i++) {
         cout << "class " << i << " misses: ";
         for (int j = 0; j < misses[i].size(); j++) {
@@ -418,6 +480,7 @@ void ConvolutionalNeuralNetwork::print_statistics(const vector<double> &paramete
         cout << endl;
     }
     cout << endl;
+    */
 }
 
 
@@ -432,6 +495,14 @@ double ConvolutionalNeuralNetwork::objective_function(const vector<double> &para
 
     return evaluate();
 }
+
+double ConvolutionalNeuralNetwork::objective_function_stochastic(uint32_t n_samples, const vector<double> &parameters) {
+    weights.resize(parameters.size());
+    for (int i = 0; i < parameters.size(); i++) weights[i] = parameters[i];
+
+    return evaluate_stochastic(n_samples);
+}
+
 
 int ConvolutionalNeuralNetwork::get_n_edges() {
     return total_weights;

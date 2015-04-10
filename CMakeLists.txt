@@ -5,6 +5,7 @@ set (TAO_VERSION_MAJOR 1)
 set (TAO_VERSION_MINOR 0)
  
 set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -msse3")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") 
 
 #set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
@@ -32,6 +33,8 @@ include_directories(${UNDVC_COMMON_INCLUDE_DIR})
 #UNDVC_COMMON has the FindOpenCV.cmake, FindBOINC.cmake and FindMYSQL.cmake files
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UNDVC_COMMON_INCLUDE_DIR}/cmake/Modules/")
 
+set(RAPIDJSON_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../rapidjson/include)
+MESSAGE(STATUS "RAPIDJSON include directory: ${RAPIDJSON_INCLUDE_DIR}")
 
 
 find_package(Boost REQUIRED COMPONENTS system)

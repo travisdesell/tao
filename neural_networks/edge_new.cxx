@@ -10,10 +10,10 @@ using std::string;
 #include "edge_new.hxx"
 
 
-EdgeNew::EdgeNew(uint32_t _src_depth, uint32_t _src_layer, uint32_t _src_node, uint32_t _dst_depth, uint32_t _dst_layer, uint32_t _dst_node) : src_depth(_src_depth), src_layer(_src_layer), src_node(_src_node), dst_depth(_dst_depth), dst_layer(_dst_layer), dst_node(_dst_node), weight(0.0) {
+EdgeNew::EdgeNew(uint32_t _src_depth, uint32_t _src_layer, uint32_t _src_node, uint32_t _dst_depth, uint32_t _dst_layer, uint32_t _dst_node) : src_depth(_src_depth), src_layer(_src_layer), src_node(_src_node), dst_depth(_dst_depth), dst_layer(_dst_layer), dst_node(_dst_node), weight(0.0), weight_sum(0.0), weight_carry(0.0) {
 }
 
-EdgeNew::EdgeNew(uint32_t _src_depth, uint32_t _src_layer, uint32_t _src_node, uint32_t _dst_depth, uint32_t _dst_layer, uint32_t _dst_node, double _weight) : src_depth(_src_depth), src_layer(_src_layer), src_node(_src_node), dst_depth(_dst_depth), dst_layer(_dst_layer), dst_node(_dst_node), weight(_weight) {
+EdgeNew::EdgeNew(uint32_t _src_depth, uint32_t _src_layer, uint32_t _src_node, uint32_t _dst_depth, uint32_t _dst_layer, uint32_t _dst_node, double _weight) : src_depth(_src_depth), src_layer(_src_layer), src_node(_src_node), dst_depth(_dst_depth), dst_layer(_dst_layer), dst_node(_dst_node), weight(_weight), weight_sum(0.0), weight_carry(0.0) {
 }
 
 string EdgeNew::json() {
@@ -36,6 +36,13 @@ ostream& operator<< (ostream& out, const EdgeNew &edge) {
 
     return out;
 }
+
+ostream& operator<< (ostream& out, const EdgeNew *edge) {
+    out << "[sd: " << edge->src_depth << ", sl: " << edge->src_layer << ", sn: " << edge->src_node << ", dd: " << edge->dst_depth << ", dl: " << edge->dst_layer << ", dn: " << edge->dst_node << ", w: " << edge->weight << "]";
+
+    return out;
+}
+
 
 
 bool operator<(const EdgeNew &e1, const EdgeNew &e2) {

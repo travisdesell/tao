@@ -165,6 +165,9 @@ void ant_colony_farmer(int maximum_iterations, AntColony &ant_colony) {
         }
 
         //send another set of edges to the worker
+        edges.clear();
+        recurrent_edges.clear();
+        ant_colony.get_ant_paths(edges, recurrent_edges);
         send_edges(source, edges, recurrent_edges);
     }
     MPI_Abort(MPI_COMM_WORLD, 0 /*Success*/);

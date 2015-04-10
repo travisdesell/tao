@@ -9,16 +9,20 @@ using std::vector;
 
 #include "./neural_networks/edge_new.hxx"
 
+#include "./util/tao_random.hxx"
+
 typedef double (*ActivationFunction)(double);
 typedef double (*DerivativeFunction)(double);
 
 double linear_activation_function(double input);
+double relu_activation_function(double input);
 double sigmoid_activation_function(double input);
 double tanh_activation_function(double input);
 
+double linear_derivative(double input);
+double relu_derivative(double input);
 double sigmoid_derivative(double input);
 double tanh_derivative(double input);
-double linear_derivative(double input);
 
 class Neuron {
     public:
@@ -67,13 +71,19 @@ class NeuralNetwork {
         vector< vector<double> > inputs;
         vector< vector<double> > outputs;
 
+        bool kahan_summation, batch_update;
+
+        string activation_function_str;
         ActivationFunction activation_function;
         DerivativeFunction derivative_function;
 
     public:
+        void initialize_nodes();
+        void set_activation_functions(string activation_function_str);
+
         NeuralNetwork(string json_filename);
 
-        NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes, ActivationFunction _activation_function, DerivativeFunction _derivative_function);
+        NeuralNetwork(uint32_t _recurrent_depth, uint32_t _n_input_nodes, uint32_t _n_hidden_layers, uint32_t _n_hidden_nodes, uint32_t _n_output_nodes, string _activation_function_str);
 
         ~NeuralNetwork();
         void reset();
@@ -91,12 +101,21 @@ class NeuralNetwork {
 
         void set_weights(const vector<double> &weights);
         void evaluate_at(uint32_t example);
+        void evaluate_at_softmax(uint32_t example);
+
         void update_recurrent_nodes();
         double objective_function(const vector<double> &weights);
-        double backpropagation(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations);
+        double backpropagation_time_series(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations);
+        double backpropagation_stochastic(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations, TaoRandom &generator);
 
         void get_gradient(vector<double> &gradient);
         void get_gradient_stochastic(vector<double> &gradient);
+
+        void use_kahan_summation(bool val);
+        void use_batch_update(bool val);
+
+        bool read_checkpoint(string checkpoint_filename, TaoRandom &generator, vector<uint32_t> &shuffled_examples, uint32_t &iteration);
+        void write_checkpoint(string checkpoint_filename, TaoRandom &generator, const vector<uint32_t> &shuffled_examples, uint32_t iteration);
 
         friend ostream& operator<< (ostream& out, const NeuralNetwork &neural_network);
         friend ostream& operator<< (ostream& out, const NeuralNetwork *neural_network);

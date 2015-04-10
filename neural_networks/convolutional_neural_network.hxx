@@ -61,14 +61,18 @@ class ConvolutionalNeuralNetwork {
 
         void reset();
 
-        double objective_function(const vector<double> &parameters);
-        double objective_function();
         double get_output_class(int output_class);
 
-        void print_statistics(const vector<double> &parameters);
+        double objective_function();
+        double objective_function(const vector<double> &parameters);
+        double objective_function_stochastic(uint32_t n_samples, const vector<double> &parameters);
 
-        double evaluate(const vector<char> &image, int classification);
+
         double evaluate();
+        double evaluate(const vector<char> &image, int classification);
+        double evaluate_stochastic(uint32_t n_samples);
+
+        void print_statistics(const vector<double> &parameters);
 
 
 #ifdef __OPENCL__
