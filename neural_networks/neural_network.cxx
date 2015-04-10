@@ -261,7 +261,7 @@ NeuralNetwork::NeuralNetwork(string json_filename) {
                                 edge["dst_node"].GetInt(),
                                 edge["weight"].GetDouble()));
 
-        //cout << "pushed back edge: " << _edges.back() << endl;
+        cout << "pushed back edge: " << _edges.back() << endl;
     }
 
     const Value& a2 = json_document["recurrent_edges"];
@@ -281,7 +281,7 @@ NeuralNetwork::NeuralNetwork(string json_filename) {
                                 recurrent_edge["dst_node"].GetInt(),
                                 recurrent_edge["weight"].GetDouble()));
 
-        //cout << "pushed back recurrent edge: " << _recurrent_edges.back() << endl;
+        cout << "pushed back recurrent edge: " << _recurrent_edges.back() << endl;
     }
 
     set_edges(_edges, _recurrent_edges);
