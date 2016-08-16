@@ -558,7 +558,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = '" << setprecision(10) << fitnesses[id] << "'"
+            << ", current = '" << setprecision(10) << fixed << fitnesses[id] << "'"
             << ", best = '" << best << "'"
             << ", average = '" << average << "'"
             << ", median = '" << median << "'"
