@@ -464,6 +464,17 @@ void AntColonyNew::add_ant_paths(double fitness, const vector<EdgeNew> &edges, c
     new_best = (population.size() > 0 && fitness > population[population.size() - 1]->fitness);
 
     if (population.size() < max_population_size || new_best) {
+        //if the new edges are the best found, write to output directory
+        if (population.size() > 0 && fitness > population[0]->fitness) {
+            ostringstream oss;
+            oss << output_directory << "/" << iteration;
+
+            NeuralNetwork *nn = new NeuralNetwork(recurrent_depth, n_input_nodes, n_hidden_layers, n_hidden_nodes, n_output_nodes, "linear");
+            nn->set_edges(edges, recurrent_edges, input_labels, output_labels);
+            nn->write_to_file(oss.str());
+            delete nn;
+        }
+
         AntColonyPaths *paths = new AntColonyPaths(fitness, edges, recurrent_edges);
 
         population.insert(upper_bound(population.begin(), population.end(), paths, ant_colony_paths_greater), paths);
@@ -588,6 +599,10 @@ void AntColonyNew::generate_fully_connected_neural_network(vector<EdgeNew> &edge
 }
 
 
+void AntColonyNew::set_labels(const vector<string> &_input_labels, const vector<string> &_output_labels) {
+    input_labels = _input_labels;
+    output_labels = _output_labels;
+}
 void AntColonyNew::set_output_directory(string od) {
     output_directory = od;
 }
@@ -599,7 +614,7 @@ void AntColonyNew::write_population() {
         oss << output_directory << "/" << iteration << "_" << i;
 
         NeuralNetwork *nn = new NeuralNetwork(recurrent_depth, n_input_nodes, n_hidden_layers, n_hidden_nodes, n_output_nodes, "linear");
-        nn->set_edges(population.at(i)->edges, population.at(i)->recurrent_edges);
+        nn->set_edges(population.at(i)->edges, population.at(i)->recurrent_edges, input_labels, output_labels);
 
         nn->write_to_file(oss.str());
 

@@ -80,6 +80,8 @@ class AntColonyNew {
         vector< vector< vector<AntColonyNode*> > > nodes;
 
         vector< AntColonyPaths* > population;
+        vector<string> input_labels;
+        vector<string> output_labels;
 
 
         bool node_exists(uint32_t depth, uint32_t layer, uint32_t node);
@@ -106,6 +108,7 @@ class AntColonyNew {
 
         uint32_t get_iteration();
 
+        void set_labels(const vector<string> &_input_labels, const vector<string> &_output_labels);
         void set_output_directory(string od);
         void write_population();
 };

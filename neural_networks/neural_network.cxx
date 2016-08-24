@@ -224,10 +224,10 @@ NeuralNetwork::NeuralNetwork(string json_filename) {
     boinc_assert(json_document.HasMember("n_output_nodes"), string("JSON document did not have n_output_nodes field."));
 
     recurrent_depth = json_document["recurrent_depth"].GetInt();
-    recurrent_depth = json_document["n_input_nodes"].GetInt();
-    recurrent_depth = json_document["n_hidden_layers"].GetInt();
-    recurrent_depth = json_document["n_hidden_nodes"].GetInt();
-    recurrent_depth = json_document["n_output_nodes"].GetInt();
+    n_input_nodes   = json_document["n_input_nodes"].GetInt();
+    n_hidden_layers = json_document["n_hidden_layers"].GetInt();
+    n_hidden_nodes  = json_document["n_hidden_nodes"].GetInt();
+    n_output_nodes  = json_document["n_output_nodes"].GetInt();
 
     cerr << "recurrent_depth: " << recurrent_depth << endl;
     cerr << "n_input_nodes: " << n_input_nodes << endl;
@@ -651,10 +651,11 @@ void NeuralNetwork::evaluate_at(uint32_t example) {
             //add bias to recurrent node values
             linear_nodes[node]->value += linear_nodes[node]->bias;
         }
-        //            cout << linear_nodes[node] << endl;
+        
+        //cout << "initialized " << linear_nodes[node] << endl;
     }
 
-    //        cout << "output node value: " << nodes[0][output_layer][0]->value << endl;
+    //cout << "output node value: " << nodes[0][output_layer][0]->value << endl;
 
     //propogate values forward
     Neuron *current, *target;
@@ -662,11 +663,12 @@ void NeuralNetwork::evaluate_at(uint32_t example) {
     for (uint32_t node = 0; node < linear_nodes.size(); node++) {
         current = linear_nodes[node];
 
-        //cout << "current->value: " << current->value << ", after activation function: " << activation_function(current->value) << endl;
+
+        //cout << current << ", current->value: " << current->value << ", after activation function: " << activation_function(current->value) << endl;
         current->value = activation_function(current->value);
 
-        if (current->value > 10) current->value = 10;
-        if (current->value < -10) current->value = -10;
+        if (current->value > 10000) current->value = 10000;
+        if (current->value < -10000) current->value = -10000;
 
         for (uint32_t next = 0; next < current->forward_edges.size(); next++) {
             dst_depth = current->forward_edges[next]->dst_depth;
@@ -674,10 +676,13 @@ void NeuralNetwork::evaluate_at(uint32_t example) {
             dst_node = current->forward_edges[next]->dst_node;
 
             target = nodes[dst_depth][dst_layer][dst_node];
+            
+            //cout << "setting target->value " << target->value << " += " << current->value << " * " << current->forward_edges[next]->weight << endl;
 
             target->value += current->value * current->forward_edges[next]->weight;
         }
     }
+    //cout << "output node value: " << nodes[0][output_layer][0]->value << endl;
 }
 
 
@@ -711,8 +716,8 @@ void NeuralNetwork::evaluate_at_softmax(uint32_t example) {
         double previous_value = current->value;
 
         if (current->layer == output_layer) {
-            if (current->value > 200) current->value = 200.0;
-            if (current->value < -200) current->value = -200.0;
+            if (current->value > 10000) current->value = 10000.0;
+            if (current->value < -10000) current->value = -10000.0;
         }
 
         //cout << "forward propagating from: " << current << endl;
@@ -785,13 +790,13 @@ void NeuralNetwork::update_recurrent_nodes() {
 
         //cout << "set recurrent node: " << nodes[dst_depth][dst_layer][dst_node]->value << endl;
 
-        if (nodes[dst_depth][dst_layer][dst_node]->value > 5000.00) {
-            nodes[dst_depth][dst_layer][dst_node]->value = 5000.00;
+        if (nodes[dst_depth][dst_layer][dst_node]->value > 10000.00) {
+            nodes[dst_depth][dst_layer][dst_node]->value = 10000.00;
             //cout << "recurrent node too big!" << endl;
         }
 
-        if (nodes[dst_depth][dst_layer][dst_node]->value < -5000.00) {
-            nodes[dst_depth][dst_layer][dst_node]->value = -5000.00;
+        if (nodes[dst_depth][dst_layer][dst_node]->value < -10000.00) {
+            nodes[dst_depth][dst_layer][dst_node]->value = -10000.00;
             //cout << "recurrent node too small!" << endl;
         }
 
@@ -828,6 +833,35 @@ double NeuralNetwork::objective_function(const vector<double> &weights) {
     return error;
 }
 
+void NeuralNetwork::print_predictions(ofstream &outfile) {
+    outfile << "#actual,predicted" << endl;
+
+    double error = 0.0;
+    for (uint32_t example = 0; example < inputs.size(); example++) {
+        evaluate_at(example);
+
+        //backward propagation of errors
+        double node_error;
+        Neuron *current;
+        for (int32_t node = 0; node < nodes[0][output_layer].size(); node++) {
+            current = nodes[0][output_layer][node];
+
+            node_error = outputs[example][current->node] - current->value;
+
+            error += fabs(node_error);
+
+            outfile << outputs[example][current->node] << "," << current->value << endl;
+            //error += 0.5 * (node_error * node_error);
+        }
+
+        update_recurrent_nodes();
+    }
+
+    error /= (-1.0 * inputs.size());
+    outfile << "#final error was: " << error << endl;
+}
+
+
 double NeuralNetwork::backpropagation_time_series(const vector<double> &starting_weights, double learning_rate, uint32_t max_iterations) {
     set_weights(starting_weights);
 
@@ -857,6 +891,8 @@ double NeuralNetwork::backpropagation_time_series(const vector<double> &starting
             for (int32_t node = linear_nodes.size() - 1; node >= 0; node--) {
                 current = linear_nodes[node];
 
+                //cout << "output layer: " << output_layer << ", current: " << current << endl;
+
                 if (current->layer == output_layer) {
                     node_error = outputs[example][current->node] - current->value;
 
@@ -867,7 +903,7 @@ double NeuralNetwork::backpropagation_time_series(const vector<double> &starting
 
                     if (isnan(error)) {
                         cout << "error became NAN on example " << example << " and iteration " << iteration << " from adding " << (0.5 * (node_error * node_error)) << ", node error: " << node_error << endl;
-                        cout << "outputs[example][current->node]: " << outputs[example][current->node] << ", current->value: " << current->value << endl;
+                        cout << "outputs[" << example << "][" << current->node << "]: " << outputs[example][current->node] << ", current->value: " << current->value << endl;
                         cout << "weights into current: " << endl;
 
                         double current_sum = 0.0;

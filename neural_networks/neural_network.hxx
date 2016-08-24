@@ -1,6 +1,9 @@
 #ifndef TAO_NEURAL_NETWORK_H
 #define TAO_NEURAL_NETWORK_H
 
+#include <fstream>
+using std::ofstream;
+
 #include <string>
 using std::string;
 
@@ -96,6 +99,7 @@ class NeuralNetwork {
 
         string json();
         void write_to_file(string json_filename);
+        void print_predictions(ofstream &outfile);
 
         uint32_t get_parameter_size();
 

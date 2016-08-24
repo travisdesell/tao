@@ -46,7 +46,7 @@ void DifferentialEvolutionMPI::go(double (*objective_function)(const std::vector
         worker(objective_function, this->number_parameters, max_queue_size);
     }
     
-    MPI_Finalize();
+//    MPI_Finalize();
 }
 
 #ifdef CUDA

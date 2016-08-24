@@ -46,7 +46,7 @@ void ParticleSwarmMPI::go(double (*objective_function)(const std::vector<double>
         worker(objective_function, this->number_parameters, max_queue_size);
     }
     
-    MPI_Finalize();
+//    MPI_Finalize();
 }
 
 #ifdef CUDA
