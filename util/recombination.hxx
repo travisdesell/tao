@@ -27,9 +27,9 @@
 #include "boost/random.hpp"
 #include "boost/generator_iterator.hpp"
 
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
+//using boost::variate_generator;
+//using boost::mt19937;
+//using boost::uniform_real;
 
 
 using std::vector;
@@ -45,15 +45,15 @@ class Recombination {
         static bool out_of_bounds(const vector<double> &min_bound, const vector<double> &max_bound, const vector<double> &parameters);
 
         //generates a random point within the given bounds
-        static void random_within(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng);
+        static void random_within(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, boost::variate_generator< boost::mt19937,boost::uniform_real<> > *rng);
         //generates a random point around center, with maximum radius
-        static void random_around(const vector<double> &center, const vector<double> &radius, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng);
+        static void random_around(const vector<double> &center, const vector<double> &radius, vector<double> &dest, boost::variate_generator< boost::mt19937,boost::uniform_real<> > *rng);
         //generates a random point along a line staring at center, specified by direction, and from center + ls_min * direction to center + ls_max * direction
-        static void random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng);
+        static void random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, boost::variate_generator< boost::mt19937,boost::uniform_real<> > *rng);
 
-        static void binary_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng);
+        static void binary_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, boost::variate_generator< boost::mt19937,boost::uniform_real<> > *rng);
 
-        static void exponential_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng);
+        static void exponential_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, boost::variate_generator< boost::mt19937,boost::uniform_real<> > *rng);
 };
 
 #endif

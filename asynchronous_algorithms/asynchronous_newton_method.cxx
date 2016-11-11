@@ -55,7 +55,7 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
 
 void
 AsynchronousNewtonMethod::initialize_rng() {
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = new boost::variate_generator< boost::mt19937, boost::uniform_real<> >( boost::mt19937( time(0)), boost::uniform_real<>(0.0, 1.0));
 }
 
 void

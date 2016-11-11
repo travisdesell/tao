@@ -32,6 +32,7 @@ class WorkunitInformation {
     protected:
         string search_name;
         int app_id;
+        int parameter_sets_per_WU;
 
         string workunit_xml_filename;
         string result_xml_filename;
@@ -45,7 +46,8 @@ class WorkunitInformation {
         vector<string>  get_input_filenames()           { return input_filenames; }
         string          get_command_line_options()      { return command_line_options; }
         string          get_extra_xml()                 { return extra_xml; }
-
+        int             get_parameter_sets_per_WU()     { return parameter_sets_per_WU; }
+        
         WorkunitInformation(MYSQL *conn,
                             const string search_name 
                            ) throw (string);
@@ -53,6 +55,7 @@ class WorkunitInformation {
         WorkunitInformation(MYSQL *conn,
                             const string search_name,
                             const int app_id,
+                            const int parameter_sets_per_WU,
                             const string workunit_xml_filename,
                             const string result_xml_filename,
                             const vector<string> &input_filenames,

@@ -43,8 +43,8 @@
 
 #include "stdint.h"
 
-#include "undvc_common/parse_xml.hxx"
-#include "undvc_common/vector_io.hxx"
+#include "parse_xml.hxx"
+#include "vector_io.hxx"
 
 #include "asynchronous_algorithms/evolutionary_algorithm.hxx"
 #include "asynchronous_algorithms/particle_swarm_db.hxx"
@@ -198,38 +198,69 @@ int make_jobs(uint32_t number_jobs) {
 
         for (uint32_t j = 0; j < portion; j++) {
 //            log_messages.printf(MSG_DEBUG, "        JOB %u\n", j);
-            uint32_t id;
-            uint32_t seed;
+            vector <uint32_t> id(workunit_information.get_parameter_sets_per_WU(), 0);
+            vector <uint32_t> seed(workunit_information.get_parameter_sets_per_WU(), 0);
 
-            vector<double> parameters;
-            try {
-                if (requires_seeding) unfinished_searches[i]->new_individual(id, parameters, seed);
-                else unfinished_searches[i]->new_individual(id, parameters);
-            } catch (string err_msg) {
-                log_messages.printf(MSG_CRITICAL, "ERROR: creating new individual for search '%s' threw error message: '%s'.\n", unfinished_searches[i]->get_name().c_str(), err_msg.c_str());
-                exit(1);
+            //Allow for multiple parameter sets per workunit
+            //TO DO: Check number of parameter sets to be bundled
+            vector < vector<double> > parameters(workunit_information.get_parameter_sets_per_WU(), vector<double>());
+            log_messages.printf(MSG_DEBUG, "Generating Individuals\n");
+            for (int k = 0; k < parameters.size(); ++k)
+            {
+                try {
+                    if (requires_seeding) unfinished_searches[i]->new_individual(id[k], parameters[k], seed[k]);
+                    else unfinished_searches[i]->new_individual(id[k], parameters[k]);
+                } catch (string err_msg) {
+                    log_messages.printf(MSG_CRITICAL, "ERROR: creating new individual for search '%s' threw error message: '%s'.\n", unfinished_searches[i]->get_name().c_str(), err_msg.c_str());
+                    exit(1);
+                }
             }
 
+            log_messages.printf(MSG_DEBUG, "Generating Command Line\n");
             ostringstream new_command_line;
             new_command_line << workunit_information.get_command_line_options();
-            if (requires_seeding) new_command_line << " --seed " << seed;
-            new_command_line << " -np " << parameters.size() << " -p";
-            new_command_line.precision(15);
-            for (uint32_t k = 0; k < parameters.size(); k++) new_command_line << " " << parameters[k];
-
+            if (requires_seeding)
+            {
+                new_command_line << " --seed";
+                for (uint32_t k = 0; k < seed.size(); k++)
+                {
+                    new_command_line << " " << seed[k];
+                }
+            }
+            new_command_line << " -np " << parameters[0].size() * parameters.size() << " -p";
+            new_command_line.precision(6);
+            for (uint32_t k = 0; k < parameters.size(); ++k)
+            {
+                for (uint32_t l = 0; l < parameters[k].size(); l++) new_command_line << " " << parameters[k][l];
+            }
+            
+            log_messages.printf(MSG_DEBUG, "Generating Extra XML\n");
             ostringstream new_extra_xml;
             new_extra_xml << workunit_information.get_extra_xml() << endl;
 #ifdef FPOPS_FROM_PARAMETERS
-            double rsc_fpops_est, rsc_fpops_bound;
-            calculate_fpops(parameters, rsc_fpops_est, rsc_fpops_bound, workunit_information.get_extra_xml());
+            double temp_rsc_fpops_est, temp_rsc_fpops_bound, rsc_fpops_est = 0, rsc_fpops_bound = 0;
+            for (uint32_t k = 0; k < parameters.size(); ++k)
+            {
+                calculate_fpops(parameters[k], temp_rsc_fpops_est, temp_rsc_fpops_bound, workunit_information.get_extra_xml());
+                rsc_fpops_est += temp_rsc_fpops_est;
+                rsc_fpops_bound += temp_rsc_fpops_bound;
+            }
             new_extra_xml << "<rsc_fpops_est>"   << rsc_fpops_est   << "</rsc_fpops_est>"   << endl;
             new_extra_xml << "<rsc_fpops_bound>" << rsc_fpops_bound << "</rsc_fpops_bound>" << endl;
 #endif
+            vector <double> all_parameters;
+            for (uint32_t k = 0; k < parameters.size(); ++k)
+            {
+                for(uint32_t l = 0; l < parameters[k].size(); ++l)
+                {
+                    all_parameters.push_back(parameters[k][l]);
+                }
+            }
             new_extra_xml << "<search_name>" << unfinished_searches[i]->get_name() << "</search_name>" << endl;
             new_extra_xml << "<search_id>" << unfinished_searches[i]->get_id() << "</search_id>" << endl;
-            new_extra_xml << "<position>" << id << "</position>" << endl;
-            new_extra_xml << "<parameters>" << vector_to_string(parameters) << "</parameters>" << endl;
-            if (requires_seeding) new_extra_xml << "<seed>" << seed << "</seed>" << endl;
+            new_extra_xml << "<position>" << vector_to_string(id) << "</position>" << endl;
+            new_extra_xml << "<parameters>" << vector_to_string(all_parameters) << "</parameters>" << endl;
+            if (requires_seeding) new_extra_xml << "<seed>" << vector_to_string(seed) << "</seed>" << endl;
 
 //            cerr << "new_extra_xml: " << endl;
 //            cerr << new_extra_xml.str() << endl;
@@ -237,6 +268,7 @@ int make_jobs(uint32_t number_jobs) {
             /**
              *  Generate the job with the updated workunit information
              */
+            log_messages.printf(MSG_DEBUG, "Making Job\n");
             retval = make_job(unfinished_searches[i]->get_name(),
                               workunit_information.get_workunit_xml_filename(),
                               workunit_information.get_result_xml_filename(),
@@ -273,7 +305,7 @@ void main_loop() {
     while (1) {
         check_stop_daemons();
 
-        int n;
+        long int n;
         retval = count_unsent_results(n, app.id);
 
         if (retval) {

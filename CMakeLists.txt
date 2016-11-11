@@ -5,7 +5,7 @@ set (TAO_VERSION_MAJOR 1)
 set (TAO_VERSION_MINOR 0)
  
 set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -msse3")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") 
 
 #set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
@@ -52,7 +52,7 @@ add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(util)
 add_subdirectory(examples)
-add_subdirectory(mpi)
+#add_subdirectory(mpi)
 
 link_directories(${Boost_LIBRARY_DIRS})
 

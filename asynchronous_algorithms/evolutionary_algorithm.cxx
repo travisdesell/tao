@@ -37,9 +37,9 @@
 
 using namespace std;
 
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
+//using boost::variate_generator;
+//using boost::mt19937;
+//using boost::uniform_real;
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
     random_number_generator = NULL;
@@ -53,7 +53,7 @@ EvolutionaryAlgorithm::set_log_file(ofstream *log_file) {
 
 void
 EvolutionaryAlgorithm::initialize_rng() {
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = new boost::variate_generator< boost::mt19937, boost::uniform_real<> >( boost::mt19937( time(0)), boost::uniform_real<>(0.0, 1.0));
 }
 
 
@@ -72,7 +72,7 @@ EvolutionaryAlgorithm::initialize() {
     maximum_created = 0;
     maximum_reported = 0;
 
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = new boost::variate_generator< boost::mt19937, boost::uniform_real<> >( boost::mt19937( time(0)), boost::uniform_real<>(0.0, 1.0));
     log_file = NULL;
 }
 

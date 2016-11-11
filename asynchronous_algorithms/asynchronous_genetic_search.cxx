@@ -14,9 +14,9 @@
 
 using namespace std;
 
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
+//using boost::variate_generator;
+//using boost::mt19937;
+//using boost::uniform_real;
 
 void
 GeneticAlgorithm::set_print_statistics(void (*_print_statistics)(const std::vector<int> &)) {
@@ -68,7 +68,7 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
         cerr << "\tSetting mutation_rate = 1.0 - crossover_rate = " << mutation_rate << endl;
     }
 
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = new boost::variate_generator< boost::mt19937, boost::uniform_real<> >( boost::mt19937( time(0)), boost::uniform_real<>(0.0, 1.0));
 
     individuals_created = 0;
     individuals_reported = 0;

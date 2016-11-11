@@ -4,6 +4,8 @@
 #include <utility>
 using std::pair;
 
+#include <cstdint>
+
 #include <vector>
 using std::vector;
 
