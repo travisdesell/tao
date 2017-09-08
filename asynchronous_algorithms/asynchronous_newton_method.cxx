@@ -25,22 +25,18 @@
 
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 
+#include "util/arguments.hxx"
 #include "util/recombination.hxx"
 #include "util/statistics.hxx"
-
 #include "util/newton_step.hxx"
 #include "util/hessian.hxx"
-
-//From undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
+#include "util/vector_io.hxx"
 
 
 using namespace std;
 
 
 AsynchronousNewtonMethod::~AsynchronousNewtonMethod() {
-    if (random_number_generator != NULL) delete random_number_generator;
 }
 
 AsynchronousNewtonMethod::AsynchronousNewtonMethod() {
@@ -55,7 +51,8 @@ AsynchronousNewtonMethod::AsynchronousNewtonMethod(
 
 void
 AsynchronousNewtonMethod::initialize_rng() {
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = mt19937(time(0));
+    random_0_1 = uniform_real_distribution<double>(0, 1.0);
 }
 
 void
@@ -179,7 +176,7 @@ AsynchronousNewtonMethod::parse_arguments(const vector<string> &arguments) {
     if (!center_defined &&
             !get_argument_vector(arguments, "--initial_point", false, center)) {
         cerr << "Argument '--initial_point <f1, f2, .. fn>' not specified, using random starting point:" << endl;
-        Recombination::random_within(min_bound, max_bound, center, random_number_generator);
+        Recombination::random_within(min_bound, max_bound, center, random_number_generator, random_0_1);
         cerr << "\tmin_bound: " << vector_to_string(min_bound) << endl;
         cerr << "\tmax_bound: " << vector_to_string(max_bound) << endl;
         cerr << "\tpoint:     " << vector_to_string(center) << endl;
@@ -266,7 +263,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 
     seeds.resize(number_individuals);
     for (uint32_t i = 0; i < number_individuals; i++) {
-        seeds[i] = ((*random_number_generator)() * numeric_limits<uint32_t>::max()) / 10.0;    //for some reason uint32_t is too large for milkyway_nbody
+        seeds[i] = (random_0_1(random_number_generator) * numeric_limits<uint32_t>::max()) / 10.0;    //for some reason uint32_t is too large for milkyway_nbody
     }
 
     return true;
@@ -286,7 +283,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
         parameters.resize(number_individuals, vector<double>(number_parameters));
 
         for (uint32_t i = 0; i < number_individuals; i++) {
-            Recombination::random_around(center, regression_radius, parameters[i], random_number_generator);
+            Recombination::random_around(center, regression_radius, parameters[i], random_number_generator, random_0_1);
             Recombination::bound_parameters(min_bound, max_bound, parameters[i]);
 //            cout << "generated parameters: " << vector_to_string(parameters[i]) << endl;
         }
@@ -335,7 +332,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 //        cout << "generating line search workunits (" << number_individuals << ")" << endl;
 
         for (uint32_t i = 0; i < number_individuals; i++) {
-            Recombination::random_along(center, line_search_direction, line_search_min, line_search_max, parameters[i], random_number_generator);
+            Recombination::random_along(center, line_search_direction, line_search_min, line_search_max, parameters[i], random_number_generator, random_0_1);
             Recombination::bound_parameters(min_bound, max_bound, parameters[i]);
 //            cout << "generated parameters: " << vector_to_string(parameters[i]) << endl;
         }
@@ -381,7 +378,7 @@ AsynchronousNewtonMethod::generate_individuals(uint32_t &number_individuals, uin
 //        cout << "generating regression workunits (" << number_individuals << ")" << endl;
 
         for (uint32_t i = 0; i < number_individuals; i++) {
-            Recombination::random_around(center, regression_radius, parameters[i], random_number_generator);
+            Recombination::random_around(center, regression_radius, parameters[i], random_number_generator, random_0_1);
             Recombination::bound_parameters(min_bound, max_bound, parameters[i]);
 //            cout << "generated parameters: " << vector_to_string(parameters[i]) << endl;
         }

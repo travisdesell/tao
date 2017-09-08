@@ -97,13 +97,13 @@ for edge in edge_set:
 U = nx.MultiDiGraph()
 
 for i in range(0, len(nodes)):
-    #print "node %d:"%i, nodes[i]
+    print "node %d:"%i, nodes[i]
     U.add_node(i, pos=nodes[i])
 
 for i in range(0, len(edges)):
-    #print "edge %d:"%i, edges[i]
-    #print "index of first node in edge: ", nodes.index(edges[i][0])
-    #print "index of first node in edge: ", nodes.index(edges[i][1])
+    print "edge %d:"%i, edges[i]
+    print "index of first node in edge: ", nodes.index(edges[i][0])
+    print "index of first node in edge: ", nodes.index(edges[i][1])
     #print "weight of edge: ", edges[i][2]
     U.add_weighted_edges_from( [(nodes.index(edges[i][0]), nodes.index(edges[i][1]), edges[i][2])] )
 
@@ -146,9 +146,9 @@ def draw_network(G, pos, ax, sg=None):
     seen={}
 
     for (u,v,d) in G.edges(data=True):
-        #print "node:",u,v,d
-        #print "node1: ", nodes[u]
-        #print "node2: ", nodes[v]
+        print "node:",u,v,d
+        print "node1: ", nodes[u]
+        print "node2: ", nodes[v]
 
         n1=G.node[u]['patch']
         n2=G.node[v]['patch']
@@ -163,7 +163,7 @@ def draw_network(G, pos, ax, sg=None):
         e = None
 
         if (nodes[v][0] == nodes[u][0]):
-            #print("drawing curved line to recurrent!")
+            print("drawing curved line to recurrent!")
             e = FancyArrowPatch(n1.center,n2.center,patchA=n1,patchB=n2,
                                 arrowstyle='-|>',
                                 connectionstyle='arc3,rad=%s'%-rad,
@@ -197,8 +197,9 @@ def draw_network(G, pos, ax, sg=None):
 
     return e
 
+plt.figure(1,figsize=(recurrent_depth * nodes_per_layer, (hidden_layers + 2) * 2))
 #plt.figure(1,figsize=((hidden_layers + 2) * 2, recurrent_depth * nodes_per_layer) )
-plt.figure(1,figsize=(recurrent_depth * nodes_per_layer, recurrent_depth * nodes_per_layer) )
+#plt.figure(1,figsize=(recurrent_depth * nodes_per_layer, recurrent_depth * nodes_per_layer) )
 
 pos=nx.get_node_attributes(U, 'pos')
 

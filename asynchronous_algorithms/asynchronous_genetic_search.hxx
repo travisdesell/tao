@@ -1,17 +1,13 @@
 #ifndef TAO_ASYNCHRONOUS_GENETIC_SEARCH_H
 #define TAO_ASYNCHRONOUS_GENETIC_SEARCH_H
 
-#include <vector>
 #include <queue>
+#include <random>
+using std::mt19937;
 
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
+#include <vector>
 
 using namespace std;
-
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
 
 typedef double (*objective_function_type)(const vector<int> &);
 typedef vector<int> (*random_encoding_type)();
@@ -41,7 +37,8 @@ class GeneticAlgorithm {
 
         vector<GeneticAlgorithmIndividual*> population;
 
-        boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
+        mt19937 random_number_generator;
+        uniform_real_distribution<double> random_0_1;
 
         int find_insert_position(double fitness, int min_position, int current_position, int max_position);
 

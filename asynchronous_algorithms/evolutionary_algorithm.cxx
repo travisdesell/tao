@@ -23,26 +23,22 @@
 #include <iostream>
 #include <fstream>
 
+#include <random>
+using std::mt19937;
+using std::uniform_real_distribution;
+
 #include <stdint.h>
 
 #include "asynchronous_algorithms/evolutionary_algorithm.hxx"
 
+#include "util/arguments.hxx"
 #include "util/recombination.hxx"
 
-#include "arguments.hxx"    //from undvc_common
-
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
 
 
 using namespace std;
 
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
-
 EvolutionaryAlgorithm::EvolutionaryAlgorithm() {
-    random_number_generator = NULL;
     log_file = NULL;
 }
 
@@ -53,7 +49,8 @@ EvolutionaryAlgorithm::set_log_file(ofstream *log_file) {
 
 void
 EvolutionaryAlgorithm::initialize_rng() {
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = mt19937(time(0));
+    random_0_1 = uniform_real_distribution<double>(0, 1.0);
 }
 
 
@@ -72,7 +69,8 @@ EvolutionaryAlgorithm::initialize() {
     maximum_created = 0;
     maximum_reported = 0;
 
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = mt19937(time(0));
+    random_0_1 = uniform_real_distribution<double>(0, 1.0);
     log_file = NULL;
 }
 
@@ -174,7 +172,6 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm( const vector<double> &min_bound,  
 }
 
 EvolutionaryAlgorithm::~EvolutionaryAlgorithm() {
-    if (random_number_generator != NULL) delete random_number_generator;
     if (log_file != NULL) {
         cerr << "DELETING LOG FILE!" << endl;
         delete log_file;

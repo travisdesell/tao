@@ -10,8 +10,7 @@
 #include "mpi/master_worker.hxx"
 #include "mpi/mpi_particle_swarm.hxx"
 
-//from undvc_common
-#include "arguments.hxx"
+#include "util/arguments.hxx"
 
 #ifdef CUDA
 #include "mpi/assign_device.hxx"

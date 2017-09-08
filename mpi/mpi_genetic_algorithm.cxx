@@ -10,8 +10,7 @@
 #include "mpi/master_worker.hxx"
 #include "mpi/mpi_genetic_algorithm.hxx"
 
-//from undvc_common
-#include "arguments.hxx"
+#include "util/arguments.hxx"
 
 using namespace std;
 

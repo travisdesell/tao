@@ -26,10 +26,11 @@
 #include <iostream>
 #include <fstream>
 
-#include <stdint.h>
+#include <random>
+using std::mt19937;
+using std::uniform_real_distribution;
 
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
+#include <stdint.h>
 
 #include "individual.hxx"
 
@@ -60,7 +61,9 @@ class EvolutionaryAlgorithm {
         double start_time;
 
         //For random number generation
-        boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
+        mt19937 random_number_generator;
+        uniform_real_distribution<double> random_0_1;
+
         std::ofstream *log_file;
 
         EvolutionaryAlgorithm();

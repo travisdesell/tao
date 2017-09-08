@@ -26,12 +26,10 @@
 #include "asynchronous_algorithms/particle_swarm.hxx"
 #include "asynchronous_algorithms/individual.hxx"
 
+#include "util/arguments.hxx"
 #include "util/recombination.hxx"
 #include "util/statistics.hxx"
-
-//From undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
+#include "util/vector_io.hxx"
 
 
 using namespace std;
@@ -141,7 +139,7 @@ void
 ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters, uint32_t &seed) throw (string) {
     ParticleSwarm::new_individual(id, parameters);
 
-    seeds[id] = ((*random_number_generator)() * numeric_limits<uint32_t>::max()) / 10.0;    //uint max is too large for some reason
+    seeds[id] = (random_0_1(random_number_generator) * numeric_limits<uint32_t>::max()) / 10.0;    //uint max is too large for some reason
     seed = seeds[id];
 }
 
@@ -156,8 +154,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
 
     //We haven't initialied all the particles so generate a random one
     if (initialized_individuals < particles.size()) {
-        Recombination::random_within(min_bound, max_bound, particles[id], random_number_generator);
-        Recombination::random_within(min_bound, max_bound, velocities[id], random_number_generator);
+        Recombination::random_within(min_bound, max_bound, particles[id], random_number_generator, random_0_1);
+        Recombination::random_within(min_bound, max_bound, velocities[id], random_number_generator, random_0_1);
 
         //Set each velocity to the randomly generated position minus where the particle is at now (ie., each velocity
         //the difference between where the particle is now and some other random position in the search area)
@@ -170,8 +168,8 @@ ParticleSwarm::new_individual(uint32_t &id, vector<double> &parameters) throw (s
         return;
     }
 
-    double r1 = (*random_number_generator)();
-    double r2 = (*random_number_generator)();
+    double r1 = random_0_1(random_number_generator);
+    double r2 = random_0_1(random_number_generator);
 //    cout << "r1: " << r1 << endl;
 //    cout << "r2: " << r2 << endl;
 

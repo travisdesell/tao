@@ -24,12 +24,11 @@
 
 #include "asynchronous_algorithms/evolutionary_algorithm.hxx"
 #include "asynchronous_algorithms/differential_evolution.hxx"
+
+#include "util/arguments.hxx"
 #include "util/recombination.hxx"
 #include "util/statistics.hxx"
-
-//from undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
+#include "util/vector_io.hxx"
 
 using namespace std;
 
@@ -195,7 +194,7 @@ DifferentialEvolution::DifferentialEvolution( const std::vector<double> &min_bou
                                               const bool directional,                       /* used for directional calculation of differential (this options is not really a recombination) */
                                               const uint32_t maximum_created,               /* default value is 0 which means no termination */
                                               const uint32_t maximum_reported               /* default value is 0 which means no termination */
-                                            ) throw (std::string) : EvolutionaryAlgorithm(min_bound, max_bound, population_size, maximum_iterations) {
+                                            ) throw (std::string) : EvolutionaryAlgorithm(min_bound, max_bound, population_size, maximum_created, maximum_reported) {
 
     if (parent_selection != PARENT_BEST && parent_selection != PARENT_RANDOM && parent_selection != PARENT_CURRENT_TO_BEST && parent_selection != PARENT_CURRENT_TO_RANDOM) {
         std::stringstream oss;
@@ -232,7 +231,7 @@ void
 DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &parameters, uint32_t &seed) throw (string) {
     DifferentialEvolution::new_individual(id, parameters);
 
-    seeds[id] = ((*random_number_generator)() * numeric_limits<uint32_t>::max()) / 10.0;    //uint max is too large for some reason
+    seeds[id] = (random_0_1(random_number_generator) * numeric_limits<uint32_t>::max()) / 10.0;    //uint max is too large for some reason
     seed = seeds[id];
 }
 
@@ -246,7 +245,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
     }
 
     if (initialized_individuals < population_size) { //The search has not been fully initalized so keep generating random individuals
-        Recombination::random_within(min_bound, max_bound, parameters, random_number_generator);
+        Recombination::random_within(min_bound, max_bound, parameters, random_number_generator, random_0_1);
         population[id].assign(parameters.begin(), parameters.end());
         individuals_created++;
         return;
@@ -264,7 +263,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 
         case PARENT_RANDOM:
             {   //Need a block here to avoid comiler error reusing random_individual variable
-                uint32_t random_individual = (*random_number_generator)() * population_size;
+                uint32_t random_individual = random_0_1(random_number_generator) * population_size;
                 parent.assign(population[random_individual].begin(), population[random_individual].end());
             }
             break;
@@ -277,7 +276,7 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 
         case PARENT_CURRENT_TO_RANDOM:
             {   //Need a block here to avoid comiler error reusing random_individual variable
-                uint32_t random_individual = (*random_number_generator)() * population_size;
+                uint32_t random_individual = random_0_1(random_number_generator) * population_size;
                 for (uint32_t i = 0; i < number_parameters; i++) {
                     parent[i] = parent_scaling_factor * (population[random_individual][i] - population[id][i]);
                 }
@@ -299,8 +298,8 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
     uint32_t random_individual1;
     uint32_t random_individual2; 
     for (uint32_t i = 0; i < number_pairs * 2; i++) {
-        random_individual1 = (*random_number_generator)() * population_size;
-        random_individual2 = (*random_number_generator)() * population_size;
+        random_individual1 = random_0_1(random_number_generator) * population_size;
+        random_individual2 = random_0_1(random_number_generator) * population_size;
 
         if (directional) { //Used for directional recombination (although that part is not the recombination step)
             if (fitnesses[random_individual2] > fitnesses[random_individual1]) {
@@ -326,12 +325,12 @@ DifferentialEvolution::new_individual(uint32_t &id, std::vector<double> &paramet
 
     switch (recombination_selection) {
         case RECOMBINATION_BINARY:
-            Recombination::binary_recombination(population[id], parent, crossover_rate, parameters, random_number_generator);
+            Recombination::binary_recombination(population[id], parent, crossover_rate, parameters, random_number_generator, random_0_1);
             Recombination::bound_parameters(min_bound, max_bound, parameters, wrap_radians);
             break;
 
         case RECOMBINATION_EXPONENTIAL:
-            Recombination::exponential_recombination(population[id], parent, crossover_rate, parameters, random_number_generator);
+            Recombination::exponential_recombination(population[id], parent, crossover_rate, parameters, random_number_generator, random_0_1);
             Recombination::bound_parameters(min_bound, max_bound, parameters, wrap_radians);
             break;
 

@@ -16,11 +16,9 @@
 #include "synchronous_algorithms/line_search.hxx"
 
 //#include "util/regression.hxx"
+#include "util/arguments.hxx"
 #include "util/recombination.hxx"
-
-//from undvc_common
-#include "arguments.hxx"
-#include "vector_io.hxx"
+#include "util/vector_io.hxx"
 
 using std::string;
 using std::ostringstream;

@@ -24,14 +24,11 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <random>
+using std::mt19937;
+using std::uniform_real_distribution;
+
 #include "recombination.hxx"
-
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
-
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
 
 using std::vector;
 using std::cout;
@@ -102,42 +99,42 @@ Recombination::check_step(const vector<double> &step) throw (std::string) {
  */
 
 void
-Recombination::random_within(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_within(const vector<double> &min_bound, const vector<double> &max_bound, vector<double> &dest, mt19937 &rng, uniform_real_distribution<double> &distribution) {
     if (dest.size() != min_bound.size()) dest.resize(min_bound.size());
 
     for (uint32_t i = 0; i < min_bound.size(); i++) {
-        dest[i] = min_bound[i] + ((*rng)() * (max_bound[i] - min_bound[i]));
+        dest[i] = min_bound[i] + (distribution(rng) * (max_bound[i] - min_bound[i]));
     }
 }
 
 void
-Recombination::random_around(const vector<double> &center, const vector<double> &radius, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_around(const vector<double> &center, const vector<double> &radius, vector<double> &dest, mt19937 &rng, uniform_real_distribution<double> &distribution) {
     if (dest.size() != center.size()) dest.resize(center.size());
 
     for (uint32_t i = 0; i < center.size(); i++) {
-        dest[i] = center[i] - radius[i] + ((*rng)() * 2.0 * radius[i]);
+        dest[i] = center[i] - radius[i] + (distribution(rng) * 2.0 * radius[i]);
     }
 }
 
 //generate a set of parameters randomly along a direction
 void
-Recombination::random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
+Recombination::random_along(const vector<double> &center, const vector<double> &direction, double ls_min, double ls_max, vector<double> &dest, mt19937 &rng, uniform_real_distribution<double> &distribution) {
     if (dest.size() != center.size()) dest.resize(center.size());
 
-    double distance = (*rng)();
+    double distance = distribution(rng);
     for (uint32_t i = 0; i < center.size(); i++) {
         dest[i] = center[i] + (ls_min * direction[i]) + (distance * (ls_max - ls_min) * direction[i]);
     }
 }
 
 void
-Recombination::binary_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
-    uint32_t selected = (uint32_t)((*rng)() * src1.size());
+Recombination::binary_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, mt19937 &rng, uniform_real_distribution<double> &distribution) {
+    uint32_t selected = (uint32_t)(distribution(rng) * src1.size());
 
     if (dest.size() != src1.size()) dest.resize(src1.size());
 
     for (uint32_t i = 0; i < src1.size(); i++) {
-        if (i == selected || (*rng)() < crossover_rate) {
+        if (i == selected || distribution(rng) < crossover_rate) {
             dest[i] = src2[i];
         } else {
             dest[i] = src1[i];
@@ -146,14 +143,14 @@ Recombination::binary_recombination(const vector<double> &src1, const vector<dou
 }
 
 void
-Recombination::exponential_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, variate_generator< mt19937,uniform_real<> > *rng) {
-    uint32_t selected = (uint32_t)((*rng)() * src1.size());
+Recombination::exponential_recombination(const vector<double> &src1, const vector<double> &src2, double crossover_rate, vector<double> &dest, mt19937 &rng, uniform_real_distribution<double> &distribution) {
+    uint32_t selected = (uint32_t)(distribution(rng) * src1.size());
 
     if (dest.size() != src1.size()) dest.resize(src1.size());
 
     uint32_t i;
     for (i = 0; i < src1.size(); i++) {
-        if (i == selected || (*rng)() < crossover_rate) break;
+        if (i == selected || distribution(rng) < crossover_rate) break;
         dest[i] = src1[i];
     }
 

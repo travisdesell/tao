@@ -29,14 +29,6 @@
 #include "util/recombination.hxx"
 #include "util/statistics.hxx"
 
-//From undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
-
-//From Boost
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
-
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 
 using namespace std;

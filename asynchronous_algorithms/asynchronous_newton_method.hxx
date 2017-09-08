@@ -29,14 +29,6 @@
 #include "util/recombination.hxx"
 #include "util/statistics.hxx"
 
-//From undvc_common
-#include "vector_io.hxx"
-#include "arguments.hxx"
-
-//From Boost
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
-
 
 using namespace std;
 
@@ -90,7 +82,8 @@ class AsynchronousNewtonMethod {
         bool max_failed_improvements_defined;
         uint32_t max_failed_improvements;
 
-        boost::variate_generator< boost::mt19937, boost::uniform_real<> > *random_number_generator;
+        mt19937 random_number_generator;
+        uniform_real_distribution<double> random_0_1;
 
         AsynchronousNewtonMethod();
     public:

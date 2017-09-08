@@ -4,19 +4,11 @@
 #include <iomanip>
 #include <limits>
 
-#include "boost/random.hpp"
-#include "boost/generator_iterator.hpp"
-
 #include "asynchronous_algorithms/asynchronous_genetic_search.hxx"
 
-//from undvc_common
-#include "arguments.hxx"
+#include "util/arguments.hxx"
 
 using namespace std;
-
-using boost::variate_generator;
-using boost::mt19937;
-using boost::uniform_real;
 
 void
 GeneticAlgorithm::set_print_statistics(void (*_print_statistics)(const std::vector<int> &)) {
@@ -68,7 +60,9 @@ GeneticAlgorithm::GeneticAlgorithm(const vector<string> &arguments,
         cerr << "\tSetting mutation_rate = 1.0 - crossover_rate = " << mutation_rate << endl;
     }
 
-    random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
+    random_number_generator = mt19937(time(0));
+    random_0_1 = uniform_real_distribution<double>(0, 1.0);
+    //random_number_generator = new variate_generator< mt19937, uniform_real<> >( mt19937( time(0)), uniform_real<>(0.0, 1.0));
 
     individuals_created = 0;
     individuals_reported = 0;
@@ -107,12 +101,12 @@ void GeneticAlgorithm::new_individual(uint32_t &individual_position, vector<int>
         if (population.size() < population_size) {
             individual = random_encoding();
         } else {
-            if ( (*random_number_generator)() < mutation_rate) {
-                int position = (*random_number_generator)() * population_size;
+            if (random_0_1(random_number_generator) < mutation_rate) {
+                int position = random_0_1(random_number_generator) * population_size;
                 individual = mutate( population[position]->encoding );
             } else {
-                int position1 = (*random_number_generator)() * population_size;
-                int position2 = (*random_number_generator)() * (population_size - 1);
+                int position1 = random_0_1(random_number_generator) * population_size;
+                int position2 = random_0_1(random_number_generator) * (population_size - 1);
 
                 if (position2 >= position1) position2++;
 

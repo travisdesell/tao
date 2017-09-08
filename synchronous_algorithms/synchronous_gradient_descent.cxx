@@ -8,9 +8,8 @@
 #include "synchronous_algorithms/gradient.hxx"
 #include "synchronous_algorithms/line_search.hxx"
 
-//from undvc_common
-#include "vector_io.hxx"                                                             
-#include "arguments.hxx"                                                             
+#include "util/vector_io.hxx"                                                             
+#include "util/arguments.hxx"                                                             
 
 using std::vector;
 

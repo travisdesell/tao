@@ -1,9 +1,8 @@
 include_directories (${PROJECT_SOURCE_DIR}/evolutionary_algorithms)
 include_directories (${PROJECT_SOURCE_DIR}/deterministic_algorithms)
-include_directories (${Boost_INCLUDE_DIR})
 
 add_executable(StandardBenchmarks standard_benchmarks)
-target_link_libraries(StandardBenchmarks ${UNDVC_COMMON_LIBRARY} asynchronous_algorithms tao_util ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(StandardBenchmarks ${UNDVC_COMMON_LIBRARY} asynchronous_algorithms tao_util)
 
 if (MYSQL_FOUND)
     include_directories (${MYSQL_INCLUDE_DIR})

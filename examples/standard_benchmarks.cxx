@@ -31,8 +31,7 @@
 #include "asynchronous_algorithms/differential_evolution.hxx"
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 
-//from undvc_common
-#include "arguments.hxx"
+#include "util/arguments.hxx"
 
 /**
  *  Define a type for our objective function so we

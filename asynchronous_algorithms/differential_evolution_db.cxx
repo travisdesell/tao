@@ -26,10 +26,10 @@
 
 #include "evolutionary_algorithm_db.hxx"
 #include "differential_evolution_db.hxx"
-#include "vector_io.hxx"
-#include "arguments.hxx"
 
+#include "util/arguments.hxx"
 #include "util/statistics.hxx"
+#include "util/vector_io.hxx"
 
 /**
  *  From MYSQL

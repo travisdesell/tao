@@ -23,7 +23,7 @@
 #include <iostream>
 #include <vector>
 
-#include "vector_io.hxx"
+#include "util/vector_io.hxx"
 
 using std::cerr;
 using std::endl;

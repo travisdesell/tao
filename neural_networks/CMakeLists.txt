@@ -1,5 +1,3 @@
-include_directories(${Boost_INCLUDE_DIR})
-
 include_directories(${RAPIDJSON_INCLUDE_DIR})
 
 IF (OPENCL_INCLUDE_DIRS)

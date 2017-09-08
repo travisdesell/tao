@@ -23,7 +23,7 @@
 #include "stdint.h"
 
 #include "parameter_sweep.hxx"
-#include "vector_io.hxx"
+#include "util/vector_io.hxx"
 
 using namespace std;
 
