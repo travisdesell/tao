@@ -27,16 +27,16 @@ include_directories(
 )
 
 add_executable(tao_work_generator tao_work_generator workunit_information)
-#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
-target_link_libraries(tao_work_generator db_asynchronous_algorithms asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(tao_work_generator db_asynchronous_algorithms asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 add_executable(tao_stop_search tao_stop_search messages)
-#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
-target_link_libraries(tao_stop_search db_asynchronous_algorithms asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(tao_stop_search db_asynchronous_algorithms asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 add_executable(tao_search_status tao_search_status messages)
-#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
-target_link_libraries(tao_search_status db_asynchronous_algorithms asynchronous_algorithms ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+#target_link_libraries(tao_work_generator asynchronous_algorithms db_asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(tao_search_status db_asynchronous_algorithms asynchronous_algorithms ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 add_library(workunit_information workunit_information)
-target_link_libraries(workunit_information ${UNDVC_COMMON_LIBRARY} ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})
+target_link_libraries(workunit_information ${BOINC_SERVER_LIBRARIES} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES})

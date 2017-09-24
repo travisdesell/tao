@@ -34,7 +34,6 @@
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"
 #include "asynchronous_algorithms/asynchronous_newton_method_db.hxx"
 
-//from undvc_common
 #include "util/arguments.hxx"
 
 #include "mysql.h"
