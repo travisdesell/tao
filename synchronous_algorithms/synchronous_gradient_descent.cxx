@@ -1,8 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 #include "synchronous_algorithms/synchronous_gradient_descent.hxx"
 #include "synchronous_algorithms/gradient.hxx"

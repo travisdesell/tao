@@ -1,4 +1,5 @@
 add_library(tao_util recombination statistics matrix hessian newton_step tao_random vector_io arguments)
+target_link_libraries(tao_util asynchronous_algorithms)
 
 add_executable(matrix_mul_test matrix)
 target_link_libraries(matrix_mul_test tao_util)

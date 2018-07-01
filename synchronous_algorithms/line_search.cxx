@@ -1,14 +1,8 @@
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <vector>
 #include <string>
 #include <sstream>
 
-#ifdef _MSC_VER
-#include <float.h> //for _isnan and _isinf on windows
-#define isnan(x) _isnan(x)
-#define isinf(x) !_finite(x)
-#endif
+#include <cmath>
 
 #include "stdint.h"
 
@@ -195,7 +189,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
     if (!ls_quiet) cout << "\t\tloop 2, evaluations: " << evaluations_done << ", step: " << (d3 * step) << ", fitness: " << f3 << endl;
 
     uint32_t eval_count = 0;
-    while (f3 >= (f2 + tol) && !isnan(f1) && !isnan(f2) && !isnan(f3) && eval_count < LOOP2_MAX) {
+    while (f3 >= (f2 + tol) && !std::isnan(f1) && !std::isnan(f2) && !std::isnan(f3) && eval_count < LOOP2_MAX) {
         d1 = d2;
         f1 = f2;
         d2 = d3;
@@ -221,12 +215,12 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         }
     }
 
-    if (isnan(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_NAN, "f1 was NAN in loop 2"); 
-    if (isnan(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_NAN, "f2 was NAN in loop 2"); 
-    if (isnan(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_NAN, "f3 was NAN in loop 2"); 
-    if (isinf(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_INF, "f1 was INF in loop 2"); 
-    if (isinf(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_INF, "f2 was INF in loop 2"); 
-    if (isinf(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_INF, "f3 was INF in loop 2"); 
+    if (std::isnan(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_NAN, "f1 was NAN in loop 2"); 
+    if (std::isnan(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_NAN, "f2 was NAN in loop 2"); 
+    if (std::isnan(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_NAN, "f3 was NAN in loop 2"); 
+    if (std::isinf(f1)) throw new LineSearchException(LineSearchException::LOOP_2_F1_INF, "f1 was INF in loop 2"); 
+    if (std::isinf(f2)) throw new LineSearchException(LineSearchException::LOOP_2_F2_INF, "f2 was INF in loop 2"); 
+    if (std::isinf(f3)) throw new LineSearchException(LineSearchException::LOOP_2_F3_INF, "f3 was INF in loop 2"); 
 
     if (eval_count >= LOOP2_MAX) {
         ostringstream ex_msg;
@@ -287,7 +281,7 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         if (dstar < d2 + tol && dstar >= d2) dstar = d2 + tol;
         else if (dstar > d2 - tol && dstar <= d2) dstar = d2 - tol;
 
-        if (isnan(dstar) || isinf(dstar)) {
+        if (std::isnan(dstar) || std::isinf(dstar)) {
             if (!ls_quiet) cout << "\t\tterminating loop 3 because dstar is NAN or INF" << endl;
             break;
         }
@@ -309,8 +303,8 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
             throw new LineSearchException(LineSearchException::LOOP_3_OUT_OF_BOUNDS, "parameters out of bounds in loop 3");
         }
 
-        if (isnan(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_NAN, "fs was NAN in loop 3"); 
-        if (isinf(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_INF, "fs was INF in loop 3"); 
+        if (std::isnan(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_NAN, "fs was NAN in loop 3"); 
+        if (std::isinf(fs)) throw new LineSearchException(LineSearchException::LOOP_3_FS_INF, "fs was INF in loop 3"); 
 
         if (dstar > d2 ) {
             if (fs < f2) {
