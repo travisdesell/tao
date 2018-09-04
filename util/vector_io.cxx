@@ -9,28 +9,16 @@
 #include "stdint.h"
 #include "vector_io.hxx"
 
-#include <boost/algorithm/string.hpp>
-
-#ifdef BOOST_NO_EXCEPTIONS
-namespace boost
-{
-	extern inline void throw_exception(std::exception const& e) {
-		std::cerr << "uncaught exception: " << e.what() << std::endl;
-		std::exit(1);
-	}
-}
-#endif
-
 using namespace std;
 
 template <typename T>  
 void string_to_vector_2d(string s, T (*convert)(const char*), vector< vector<T> > &v) { 
     v.clear();
 
-    uint32_t begin = 1;
-    uint32_t v_start = 0, v_end = 0;
+    int32_t begin = 1;
+    int32_t v_start = 0, v_end = 0;
 
-    while (v_start != string::npos) {
+    while (v_start != std::string::npos) {
         v_start = s.find('[', begin);
         v_end = s.find(']', v_start);
 
@@ -58,17 +46,40 @@ string vector_2d_to_string(const vector< vector<T> > &v) {
     return oss.str();
 }
 
+void split_string(string s, string delimiters, vector<string> &splits) {
+    splits.clear();
+
+    stringstream stringStream(s);
+    string line;
+
+    while (getline(stringStream, line)) {
+        std::size_t prev = 0, pos;
+
+        while ((pos = line.find_first_of(delimiters, prev)) != std::string::npos) {
+            if (pos > prev) {
+                splits.push_back(line.substr(prev, pos - prev));
+            }
+
+            prev = pos + 1;
+        }
+
+        if (prev < line.length()) {
+            splits.push_back(line.substr(prev, std::string::npos));
+        }
+    }
+}
+
 template <typename T>  
 void string_to_vector(string s, vector<T> &v) { 
     v.clear();
 
-    vector<std::string> split_string;
-    boost::split(split_string, s, boost::is_any_of("[], "));
+    vector<string> splits;
+    split_string(s, "[], ", splits);
 
-    for (uint32_t i = 0; i < split_string.size(); i++) {
-        if (split_string[i].size() > 0) {
+    for (uint32_t i = 0; i < splits.size(); i++) {
+        if (splits[i].size() > 0) {
             T value;
-            stringstream(split_string[i]) >> value;
+            stringstream(splits[i]) >> value;
             v.push_back(value);
         }
     }
@@ -78,12 +89,12 @@ template <>
 void string_to_vector(string s, vector<string> &v) {
     v.clear();
 
-    vector<std::string> split_string;
-    boost::split(split_string, s, boost::is_any_of("[], "));
+    vector<string> splits;
+    split_string(s, "[], ", splits);
 
-    for (uint32_t i = 0; i < split_string.size(); i++) {
-        if (split_string[i].size() > 0) {
-            v.push_back(split_string[i]);
+    for (uint32_t i = 0; i < splits.size(); i++) {
+        if (splits[i].size() > 0) {
+            v.push_back(splits[i]);
         }
     }
 }

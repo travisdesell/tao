@@ -22,8 +22,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <boost/filesystem.hpp>
-
 #include "mysql.h"
 
 //From BOINC

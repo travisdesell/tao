@@ -27,7 +27,6 @@ find_package(OpenCL)
 message(STATUS "opencl libraries: ${OPENCL_LIBRARIES}")
 message(STATUS "opencl include_dirs: ${OPENCL_INCLUDE_DIRS}")
 
-add_subdirectory(neural_networks)
 add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(clustering)
