@@ -27,6 +27,7 @@
 
 #include "examples/benchmarks.hxx"
 
+#include "asynchronous_algorithms/individual.hxx"
 #include "asynchronous_algorithms/particle_swarm.hxx"
 #include "asynchronous_algorithms/differential_evolution.hxx"
 #include "asynchronous_algorithms/asynchronous_newton_method.hxx"

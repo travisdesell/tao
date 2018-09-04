@@ -3,9 +3,11 @@ project (TAO)
 # The version number.
 set (TAO_VERSION_MAJOR 1)
 set (TAO_VERSION_MINOR 0)
- 
-set(CMAKE_CXX_FLAGS "-g -Wall -O3 -funroll-loops -msse3")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11") 
+
+SET (CMAKE_CXX_FLAGS                "-std=c++11 -Wall -O3 -funroll-loops -msse3")
+SET (CMAKE_CXX_FLAGS_DEBUG          "-g")
+SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -funroll-loops -DNDEBUG")
 
 #set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/local/lib)
 
@@ -13,10 +15,6 @@ include_directories(${PROJECT_SOURCE_DIR})
 #message("project source dir = ${PROJECT_SOURCE_DIR}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/Modules/")
-
-set(RAPIDJSON_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../rapidjson/include)
-MESSAGE(STATUS "RAPIDJSON include directory: ${RAPIDJSON_INCLUDE_DIR}")
-
 
 #find_package(OpenCV COMPONENTS features2d nonfree flann imgproc highgui core)
 
@@ -31,8 +29,8 @@ add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(clustering)
 add_subdirectory(util)
-add_subdirectory(examples)
 add_subdirectory(mpi)
+add_subdirectory(examples)
 
 
 if (BOINC_SERVER_FOUND AND MYSQL_FOUND)

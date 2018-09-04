@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <limits>
 
+#include <algorithm>
+using std::sort;
+
 #include "asynchronous_algorithms/asynchronous_genetic_search.hxx"
 
 #include "util/arguments.hxx"
