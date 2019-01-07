@@ -256,6 +256,11 @@ ParticleSwarm::insert_individual(uint32_t id, const vector<double> &parameters, 
         global_best_fitness = fitness;
         global_best.assign(parameters.begin(), parameters.end());
 
+        //print statistics when a new global best found
+        if (print_statistics != NULL) {
+            print_statistics(parameters);
+        }
+
         if (log_file == NULL) {
             cout.precision(10);
             if (!quiet) {

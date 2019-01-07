@@ -105,7 +105,7 @@ void master(EvolutionaryAlgorithmsType *ea) {
 
         send_individual(source, MPI_DATATYPE, new_individual, individual_position);
 
-        if ((ea->get_current_iteration() % 100 == 0) && ea->get_current_iteration() != last_printed_iteration) {
+        if ((ea->get_current_iteration() % 25 == 0) && ea->get_current_iteration() != last_printed_iteration) {
             last_printed_iteration = ea->get_current_iteration();
 
             if (previous_best_fitness == ea->get_global_best_fitness()) {

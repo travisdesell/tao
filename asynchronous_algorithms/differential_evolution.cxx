@@ -373,6 +373,11 @@ DifferentialEvolution::insert_individual(uint32_t id, const std::vector<double> 
             global_best_id = id;
             global_best_fitness = fitness;
 
+            //print statistics when a new global best found
+            if (print_statistics != NULL) {
+                print_statistics(parameters);
+            }
+
             if (log_file == NULL) {
                 if (!quiet) {
                     cout.precision(10);
