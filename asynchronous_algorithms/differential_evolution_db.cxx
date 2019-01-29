@@ -330,7 +330,7 @@ DifferentialEvolutionDB::insert_to_database() throw (string) {
                          << " SET "
                          << "  differential_evolution_id = " << id
                          << ", position = " << i
-                         << ", fitness = '" << setprecision(10) << fitnesses[i] << "'"
+                         << ", fitness = '" << setprecision(10) << fixed << fitnesses[i] << "'"
                          << ", parameters = '" << vector_to_string<double>(population[i]) << "'"
                          << ", seed = " << seeds[i];
 
@@ -558,7 +558,7 @@ DifferentialEvolutionDB::insert_individual(uint32_t id, const vector<double> &pa
             << " SET "
             << "  search_id = " << this->id
             << ", evaluation = " << this->individuals_reported
-            << ", current = '" << setprecision(10) << fitnesses[id] << "'"
+            << ", current = '" << setprecision(10) << fixed << fitnesses[id] << "'"
             << ", best = '" << best << "'"
             << ", average = '" << average << "'"
             << ", median = '" << median << "'"

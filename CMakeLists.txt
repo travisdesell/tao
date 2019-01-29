@@ -29,8 +29,8 @@ add_subdirectory(asynchronous_algorithms)
 add_subdirectory(synchronous_algorithms)
 add_subdirectory(clustering)
 add_subdirectory(util)
-add_subdirectory(mpi)
 add_subdirectory(examples)
+#add_subdirectory(mpi)
 
 
 if (BOINC_SERVER_FOUND AND MYSQL_FOUND)

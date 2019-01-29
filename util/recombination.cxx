@@ -50,8 +50,26 @@ Recombination::bound_parameters(const vector<double> &min_bound, const vector<do
 //            cout << "\tbounding radian end:   " << dest[i] << endl;
 
         } else {
-            if (dest[i] < min_bound[i]) dest[i] = min_bound[i];
-            if (dest[i] > max_bound[i]) dest[i] = max_bound[i];
+            bool runAgain = false;
+            int count = 0;
+            do {
+                runAgain = false; 
+                if (dest[i] < min_bound[i]) {
+		    dest[i] = min_bound[i] + (min_bound[i] - dest[i]);
+                    runAgain = true;
+                    ++count;
+                }
+                if (dest[i] > max_bound[i]) {
+                    dest[i] = max_bound[i] + (max_bound[i] - dest[i]);
+                    runAgain = true;
+                    ++count;
+                }
+                if (count > 20) {
+                    std::stringstream oss; 
+                    oss << "ERROR: bound_parameters has looped >20 times.  Infinite loop detected.";
+                    throw oss.str();
+                }
+            } while(runAgain);
         }
     }
 }

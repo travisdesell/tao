@@ -24,7 +24,7 @@
 
 #include "stdlib.h"
 
-#include "undvc_common/vector_io.hxx"
+#include "vector_io.hxx"
 
 #include "mysql.h"
 #include "workunit_information.hxx"
@@ -39,6 +39,7 @@ WorkunitInformation::create_table(MYSQL *conn) throw (string) {
     string query = "CREATE TABLE `tao_workunit_information` ("
                    "  `search_name` varchar(256) NOT NULL,"
                    "  `app_id` int (11) NOT NULL DEFAULT '0',"
+                   "  `parameter_sets_per_WU` int(11) NOT NULL DEFAULT '1',"
                    "  `workunit_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `result_xml_filename` varchar(256) NOT NULL DEFAULT '',"
                    "  `input_filenames` varchar(1024) NOT NULL DEFAULT '',"
@@ -63,7 +64,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
     this->search_name = search_name;
 
     ostringstream query;
-    query << "SELECT search_name, app_id, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information"
+    query << "SELECT search_name, app_id, parameter_sets_per_WU, workunit_xml_filename, result_xml_filename, input_filenames, command_line_options, extra_xml FROM tao_workunit_information"
           << " WHERE search_name = '" << search_name << "'";
 
     mysql_query(conn, query.str().c_str());
@@ -74,7 +75,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 
         if (row == NULL) {
             ostringstream ex_msg;
-            ex_msg << "ERROR: could not row from workunit query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
+            ex_msg << "ERROR: could not fetch row from workunit query: '" << query.str() << "'. Error: " << mysql_errno(conn) << " -- '" << mysql_error(conn) << "'. Thrown on " << __FILE__ << ":" << __LINE__;
             throw ex_msg.str();
         }
 
@@ -82,11 +83,12 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 //        cerr << "workunit info row: " << row[1] << ", " << row[2] << ", " << row[3] << ", " << row[4] << ", " << row[5] << ", " << row[6] << endl;
 
         app_id = atoi(row[1]);
-        workunit_xml_filename = row[2];
-        result_xml_filename = row[3];
-        string_to_vector<string>(row[4], input_filenames);
-        command_line_options = row[5];
-        extra_xml = row[6];
+        parameter_sets_per_WU = atoi(row[2]);
+        workunit_xml_filename = row[3];
+        result_xml_filename = row[4];
+        string_to_vector<string>(row[5], input_filenames);
+        command_line_options = row[6];
+        extra_xml = row[7];
 
     } else {
         ostringstream ex_msg;
@@ -105,6 +107,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn, const string search_name) 
 WorkunitInformation::WorkunitInformation(MYSQL *conn,
                                          const string search_name, 
                                          const int app_id,
+                                         const int parameter_sets_per_WU,
                                          const string workunit_xml_filename,
                                          const string result_xml_filename,
                                          const vector<string> &input_filenames,
@@ -118,6 +121,7 @@ WorkunitInformation::WorkunitInformation(MYSQL *conn,
           << " SET "
           << "  search_name = '" << search_name << "'"
           << ", app_id = " << app_id
+          << ", parameter_sets_per_WU = " << parameter_sets_per_WU
           << ", workunit_xml_filename = '" << workunit_xml_filename << "'"
           << ", result_xml_filename = '" << result_xml_filename << "'"
           << ", input_filenames = '" << vector_to_string<string>(input_filenames) << "'"
@@ -138,6 +142,7 @@ WorkunitInformation::print_to(ostream& stream) {
     stream << "[WorkunitInformation " << endl
            << "    search_name = " << search_name << endl
            << "    app_id = " << app_id << endl
+           << "    parameter_sets_per_WU = " << parameter_sets_per_WU << endl
            << "    workunit_xml_filename = '" << workunit_xml_filename << "'" << endl
            << "    result_xml_filename = '" << result_xml_filename << "'" << endl
            << "    input_filenames = '" << vector_to_string(input_filenames) << "'" << endl
