@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+#define _USE_MATH_DEFINES
+#include <cmath>
+>>>>>>> 11528b2f27fcd9b2fffcf0223139574cbe11bc38
 #include <vector>
 #include <string>
 #include <sstream>
@@ -282,6 +287,10 @@ void LineSearch::line_search(const vector<double> &point, double initial_fitness
         else if (dstar > d2 - tol && dstar <= d2) dstar = d2 - tol;
 
         if (std::isnan(dstar) || std::isinf(dstar)) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 11528b2f27fcd9b2fffcf0223139574cbe11bc38
             if (!ls_quiet) cout << "\t\tterminating loop 3 because dstar is NAN or INF" << endl;
             break;
         }
